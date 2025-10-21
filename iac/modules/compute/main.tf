@@ -31,7 +31,9 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
         Action = [
           "dynamodb:GetItem",
           "dynamodb:Scan",
-          "dynamodb:Query"
+          "dynamodb:Query",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
         ]
         Resource = "arn:aws:dynamodb:*:*:table/${var.dynamodb_table_name}"
       }
@@ -73,6 +75,34 @@ resource "aws_lambda_function" "list_raffles" {
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-list-raffles"
+    Type = "Lambda"
+  })
+}
+
+data "archive_file" "create_raffle_zip" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../../app/lambdas/create-raffle"
+  output_path = "${path.module}/../../../app/lambdas/create-raffle.zip"
+}
+
+resource "aws_lambda_function" "create_raffle" {
+  filename         = data.archive_file.create_raffle_zip.output_path
+  function_name    = "${var.name_prefix}-create-raffle"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "index.handler"
+  source_code_hash = data.archive_file.create_raffle_zip.output_base64sha256
+  runtime          = "nodejs22.x"
+  timeout          = 10
+  memory_size      = 512
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE = var.dynamodb_table_name
+    }
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-create-raffle"
     Type = "Lambda"
   })
 }
