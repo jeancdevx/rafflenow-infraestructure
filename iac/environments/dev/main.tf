@@ -33,6 +33,10 @@ module "api_gateway" {
   lambda_list_raffles_arn  = module.compute.lambda_list_raffles_arn
   lambda_list_raffles_name = module.compute.lambda_list_raffles_name
 
+  lambda_create_raffle_arn        = module.compute.lambda_create_raffle_arn
+  lambda_create_raffle_name       = module.compute.lambda_create_raffle_name
+  lambda_create_raffle_invoke_arn = module.compute.lambda_create_raffle_invoke_arn
+
   tags = {
     Environment = var.environment
     Project     = "RaffleNow"
