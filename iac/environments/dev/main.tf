@@ -23,3 +23,18 @@ module "compute" {
     Project     = "RaffleNow"
   }
 }
+
+module "api_gateway" {
+  source = "../../modules/api-gateway"
+
+  name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+  environment = var.environment
+
+  lambda_list_raffles_arn  = module.compute.lambda_list_raffles_arn
+  lambda_list_raffles_name = module.compute.lambda_list_raffles_name
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}

@@ -37,3 +37,13 @@ output "lambda_list_raffles_arn" {
   description = "ARN of list raffles Lambda"
   value       = module.compute.lambda_list_raffles_arn
 }
+
+output "api_gateway_url" {
+  description = "API Gateway base URL"
+  value       = module.api_gateway.api_gateway_url
+}
+
+output "api_endpoint_get_raffles" {
+  description = "GET /raffles endpoint"
+  value       = module.api_gateway.api_endpoint_get_raffles
+}
