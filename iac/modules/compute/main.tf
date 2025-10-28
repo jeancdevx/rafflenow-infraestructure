@@ -35,7 +35,11 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
         ]
-        Resource = "arn:aws:dynamodb:*:*:table/${var.dynamodb_table_name}"
+        Resource = [
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_table_name}",
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_participants_table_name}",
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_participants_table_name}/index/*"
+        ]
       }
     ]
   })
@@ -103,6 +107,36 @@ resource "aws_lambda_function" "create_raffle" {
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-create-raffle"
+    Type = "Lambda"
+  })
+}
+
+# Lambda: ingest-participation
+data "archive_file" "ingest_participation_zip" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../../app/lambdas/ingest-participation"
+  output_path = "${path.module}/../../../app/lambdas/ingest-participation.zip"
+}
+
+resource "aws_lambda_function" "ingest_participation" {
+  filename         = data.archive_file.ingest_participation_zip.output_path
+  function_name    = "${var.name_prefix}-ingest-participation"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "index.handler"
+  source_code_hash = data.archive_file.ingest_participation_zip.output_base64sha256
+  runtime          = "nodejs22.x"
+  timeout          = 10
+  memory_size      = 512
+
+  environment {
+    variables = {
+      DYNAMODB_RAFFLES_TABLE      = var.dynamodb_table_name
+      DYNAMODB_PARTICIPANTS_TABLE = var.dynamodb_participants_table_name
+    }
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-ingest-participation"
     Type = "Lambda"
   })
 }
