@@ -52,3 +52,8 @@ output "api_endpoint_post_raffles" {
   description = "POST /raffles endpoint"
   value       = module.api_gateway.api_endpoint_post_raffles
 }
+
+output "api_endpoint_post_participate" {
+  description = "POST /raffles/{id}/participate endpoint"
+  value       = module.api_gateway.api_endpoint_post_participate
+}

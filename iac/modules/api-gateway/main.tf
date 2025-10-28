@@ -85,6 +85,47 @@ resource "aws_lambda_permission" "api_gateway_invoke_create_raffle" {
   source_arn    = "${aws_api_gateway_rest_api.rafflenow_api.execution_arn}/*/*"
 }
 
+# Resource: /api/v1/raffles/{id}
+resource "aws_api_gateway_resource" "raffle_id" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  parent_id   = aws_api_gateway_resource.raffles.id
+  path_part   = "{id}"
+}
+
+# Resource: /api/v1/raffles/{id}/participate
+resource "aws_api_gateway_resource" "participate" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  parent_id   = aws_api_gateway_resource.raffle_id.id
+  path_part   = "participate"
+}
+
+# Method: POST /api/v1/raffles/{id}/participate
+resource "aws_api_gateway_method" "post_participate" {
+  rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id   = aws_api_gateway_resource.participate.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+# Integration: POST /api/v1/raffles/{id}/participate -> Lambda ingest-participation
+resource "aws_api_gateway_integration" "post_participate_lambda" {
+  rest_api_id             = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id             = aws_api_gateway_resource.participate.id
+  http_method             = aws_api_gateway_method.post_participate.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.lambda_ingest_participation_invoke_arn
+}
+
+# Permission: Allow API Gateway to invoke ingest-participation Lambda
+resource "aws_lambda_permission" "api_gateway_invoke_ingest_participation" {
+  statement_id  = "AllowAPIGatewayInvokeIngestParticipation"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_ingest_participation_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.rafflenow_api.execution_arn}/*/*"
+}
+
 # Data source for current region
 data "aws_region" "current" {}
 
@@ -97,10 +138,14 @@ resource "aws_api_gateway_deployment" "api_deployment" {
       aws_api_gateway_resource.api.id,
       aws_api_gateway_resource.v1.id,
       aws_api_gateway_resource.raffles.id,
+      aws_api_gateway_resource.raffle_id.id,
+      aws_api_gateway_resource.participate.id,
       aws_api_gateway_method.get_raffles.id,
       aws_api_gateway_method.post_raffles.id,
+      aws_api_gateway_method.post_participate.id,
       aws_api_gateway_integration.get_raffles_lambda.id,
       aws_api_gateway_integration.post_raffles_lambda.id,
+      aws_api_gateway_integration.post_participate_lambda.id,
     ]))
   }
 
@@ -109,7 +154,9 @@ resource "aws_api_gateway_deployment" "api_deployment" {
   }
 
   depends_on = [
-    aws_api_gateway_integration.get_raffles_lambda
+    aws_api_gateway_integration.get_raffles_lambda,
+    aws_api_gateway_integration.post_raffles_lambda,
+    aws_api_gateway_integration.post_participate_lambda,
   ]
 }
 

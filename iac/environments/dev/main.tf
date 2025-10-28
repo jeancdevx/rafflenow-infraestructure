@@ -16,7 +16,8 @@ module "compute" {
   name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
   environment = var.environment
 
-  dynamodb_table_name = module.storage.dynamodb_raffles_table_name
+  dynamodb_table_name              = module.storage.dynamodb_raffles_table_name
+  dynamodb_participants_table_name = module.storage.dynamodb_participants_table_name
 
   tags = {
     Environment = var.environment
@@ -36,6 +37,10 @@ module "api_gateway" {
   lambda_create_raffle_arn        = module.compute.lambda_create_raffle_arn
   lambda_create_raffle_name       = module.compute.lambda_create_raffle_name
   lambda_create_raffle_invoke_arn = module.compute.lambda_create_raffle_invoke_arn
+
+  lambda_ingest_participation_arn        = module.compute.lambda_ingest_participation_arn
+  lambda_ingest_participation_name       = module.compute.lambda_ingest_participation_name
+  lambda_ingest_participation_invoke_arn = module.compute.lambda_ingest_participation_invoke_arn
 
   tags = {
     Environment = var.environment

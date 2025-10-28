@@ -22,3 +22,18 @@ output "lambda_create_raffle_invoke_arn" {
   description = "Invoke ARN of the create raffle Lambda function"
   value       = aws_lambda_function.create_raffle.invoke_arn
 }
+
+output "lambda_ingest_participation_arn" {
+  description = "ARN of the ingest participation Lambda function"
+  value       = aws_lambda_function.ingest_participation.arn
+}
+
+output "lambda_ingest_participation_name" {
+  description = "Name of the ingest participation Lambda function"
+  value       = aws_lambda_function.ingest_participation.function_name
+}
+
+output "lambda_ingest_participation_invoke_arn" {
+  description = "Invoke ARN of the ingest participation Lambda function"
+  value       = aws_lambda_function.ingest_participation.invoke_arn
+}

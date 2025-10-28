@@ -27,3 +27,8 @@ output "api_endpoint_post_raffles" {
   description = "Full URL endpoint for POST /api/v1/raffles"
   value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles"
 }
+
+output "api_endpoint_post_participate" {
+  description = "Full URL endpoint for POST /api/v1/raffles/{id}/participate"
+  value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles/{id}/participate"
+}
