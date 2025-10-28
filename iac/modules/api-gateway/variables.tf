@@ -38,3 +38,18 @@ variable "lambda_create_raffle_invoke_arn" {
   description = "Invoke ARN of the create raffle Lambda function"
   type        = string
 }
+
+variable "lambda_ingest_participation_arn" {
+  description = "ARN of the ingest participation Lambda function"
+  type        = string
+}
+
+variable "lambda_ingest_participation_name" {
+  description = "Name of the ingest participation Lambda function"
+  type        = string
+}
+
+variable "lambda_ingest_participation_invoke_arn" {
+  description = "Invoke ARN of the ingest participation Lambda function"
+  type        = string
+}
