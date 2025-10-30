@@ -57,3 +57,8 @@ output "api_endpoint_post_participate" {
   description = "POST /raffles/{id}/participate endpoint"
   value       = module.api_gateway.api_endpoint_post_participate
 }
+
+output "api_endpoint_post_close" {
+  description = "POST /raffles/{id}/close endpoint"
+  value       = module.api_gateway.api_endpoint_post_close
+}

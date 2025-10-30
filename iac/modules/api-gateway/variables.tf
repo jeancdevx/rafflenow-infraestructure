@@ -53,3 +53,18 @@ variable "lambda_ingest_participation_invoke_arn" {
   description = "Invoke ARN of the ingest participation Lambda function"
   type        = string
 }
+
+variable "lambda_close_raffle_arn" {
+  description = "ARN of the close raffle Lambda function"
+  type        = string
+}
+
+variable "lambda_close_raffle_name" {
+  description = "Name of the close raffle Lambda function"
+  type        = string
+}
+
+variable "lambda_close_raffle_invoke_arn" {
+  description = "Invoke ARN of the close raffle Lambda function"
+  type        = string
+}
