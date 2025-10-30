@@ -23,3 +23,8 @@ variable "dynamodb_participants_table_name" {
   description = "Name of the DynamoDB table for participants"
   type        = string
 }
+
+variable "sqs_queue_url" {
+  description = "URL of the SQS queue for winner selection"
+  type        = string
+}

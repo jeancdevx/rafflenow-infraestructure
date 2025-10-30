@@ -37,3 +37,18 @@ output "lambda_ingest_participation_invoke_arn" {
   description = "Invoke ARN of the ingest participation Lambda function"
   value       = aws_lambda_function.ingest_participation.invoke_arn
 }
+
+output "lambda_close_raffle_arn" {
+  description = "ARN of the close raffle Lambda function"
+  value       = aws_lambda_function.close_raffle.arn
+}
+
+output "lambda_close_raffle_name" {
+  description = "Name of the close raffle Lambda function"
+  value       = aws_lambda_function.close_raffle.function_name
+}
+
+output "lambda_close_raffle_invoke_arn" {
+  description = "Invoke ARN of the close raffle Lambda function"
+  value       = aws_lambda_function.close_raffle.invoke_arn
+}
