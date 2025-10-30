@@ -18,6 +18,7 @@ module "compute" {
 
   dynamodb_table_name              = module.storage.dynamodb_raffles_table_name
   dynamodb_participants_table_name = module.storage.dynamodb_participants_table_name
+  sqs_queue_url                    = module.storage.sqs_raffle_winner_queue_url
 
   tags = {
     Environment = var.environment
@@ -41,6 +42,10 @@ module "api_gateway" {
   lambda_ingest_participation_arn        = module.compute.lambda_ingest_participation_arn
   lambda_ingest_participation_name       = module.compute.lambda_ingest_participation_name
   lambda_ingest_participation_invoke_arn = module.compute.lambda_ingest_participation_invoke_arn
+
+  lambda_close_raffle_arn        = module.compute.lambda_close_raffle_arn
+  lambda_close_raffle_name       = module.compute.lambda_close_raffle_name
+  lambda_close_raffle_invoke_arn = module.compute.lambda_close_raffle_invoke_arn
 
   tags = {
     Environment = var.environment
