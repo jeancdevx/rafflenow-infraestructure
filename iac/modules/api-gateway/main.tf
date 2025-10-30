@@ -126,6 +126,40 @@ resource "aws_lambda_permission" "api_gateway_invoke_ingest_participation" {
   source_arn    = "${aws_api_gateway_rest_api.rafflenow_api.execution_arn}/*/*"
 }
 
+# Resource: /api/v1/raffles/{id}/close
+resource "aws_api_gateway_resource" "close" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  parent_id   = aws_api_gateway_resource.raffle_id.id
+  path_part   = "close"
+}
+
+# Method: POST /api/v1/raffles/{id}/close
+resource "aws_api_gateway_method" "post_close" {
+  rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id   = aws_api_gateway_resource.close.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+# Integration: POST /api/v1/raffles/{id}/close -> Lambda close-raffle
+resource "aws_api_gateway_integration" "post_close_lambda" {
+  rest_api_id             = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id             = aws_api_gateway_resource.close.id
+  http_method             = aws_api_gateway_method.post_close.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.lambda_close_raffle_invoke_arn
+}
+
+# Permission: Allow API Gateway to invoke close-raffle Lambda
+resource "aws_lambda_permission" "api_gateway_invoke_close_raffle" {
+  statement_id  = "AllowAPIGatewayInvokeCloseRaffle"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_close_raffle_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.rafflenow_api.execution_arn}/*/*"
+}
+
 # Data source for current region
 data "aws_region" "current" {}
 
@@ -140,12 +174,15 @@ resource "aws_api_gateway_deployment" "api_deployment" {
       aws_api_gateway_resource.raffles.id,
       aws_api_gateway_resource.raffle_id.id,
       aws_api_gateway_resource.participate.id,
+      aws_api_gateway_resource.close.id,
       aws_api_gateway_method.get_raffles.id,
       aws_api_gateway_method.post_raffles.id,
       aws_api_gateway_method.post_participate.id,
+      aws_api_gateway_method.post_close.id,
       aws_api_gateway_integration.get_raffles_lambda.id,
       aws_api_gateway_integration.post_raffles_lambda.id,
       aws_api_gateway_integration.post_participate_lambda.id,
+      aws_api_gateway_integration.post_close_lambda.id,
     ]))
   }
 
@@ -157,6 +194,7 @@ resource "aws_api_gateway_deployment" "api_deployment" {
     aws_api_gateway_integration.get_raffles_lambda,
     aws_api_gateway_integration.post_raffles_lambda,
     aws_api_gateway_integration.post_participate_lambda,
+    aws_api_gateway_integration.post_close_lambda,
   ]
 }
 
