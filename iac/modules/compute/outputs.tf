@@ -52,3 +52,12 @@ output "lambda_close_raffle_invoke_arn" {
   description = "Invoke ARN of the close raffle Lambda function"
   value       = aws_lambda_function.close_raffle.invoke_arn
 }
+output "lambda_worker_process_arn" {
+  description = "ARN of the worker process Lambda function"
+  value       = aws_lambda_function.worker_process.arn
+}
+
+output "lambda_worker_process_name" {
+  description = "Name of the worker process Lambda function"
+  value       = aws_lambda_function.worker_process.function_name
+}
