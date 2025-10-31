@@ -19,6 +19,7 @@ module "compute" {
   dynamodb_table_name              = module.storage.dynamodb_raffles_table_name
   dynamodb_participants_table_name = module.storage.dynamodb_participants_table_name
   sqs_queue_url                    = module.storage.sqs_raffle_winner_queue_url
+  sqs_queue_arn                    = module.storage.sqs_raffle_winner_queue_arn
 
   tags = {
     Environment = var.environment
