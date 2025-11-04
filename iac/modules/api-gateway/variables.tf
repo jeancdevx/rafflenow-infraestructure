@@ -68,3 +68,18 @@ variable "lambda_close_raffle_invoke_arn" {
   description = "Invoke ARN of the close raffle Lambda function"
   type        = string
 }
+
+variable "lambda_get_raffle_arn" {
+  description = "ARN of the get raffle Lambda function"
+  type        = string
+}
+
+variable "lambda_get_raffle_name" {
+  description = "Name of the get raffle Lambda function"
+  type        = string
+}
+
+variable "lambda_get_raffle_invoke_arn" {
+  description = "Invoke ARN of the get raffle Lambda function"
+  type        = string
+}
