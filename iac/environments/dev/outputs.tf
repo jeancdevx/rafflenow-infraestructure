@@ -48,6 +48,11 @@ output "api_endpoint_get_raffles" {
   value       = module.api_gateway.api_endpoint_get_raffles
 }
 
+output "api_endpoint_get_raffle_by_id" {
+  description = "GET /raffles/{id} endpoint"
+  value       = module.api_gateway.api_endpoint_get_raffle_by_id
+}
+
 output "api_endpoint_post_raffles" {
   description = "POST /raffles endpoint"
   value       = module.api_gateway.api_endpoint_post_raffles

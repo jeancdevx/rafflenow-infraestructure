@@ -52,6 +52,22 @@ output "lambda_close_raffle_invoke_arn" {
   description = "Invoke ARN of the close raffle Lambda function"
   value       = aws_lambda_function.close_raffle.invoke_arn
 }
+
+output "lambda_get_raffle_arn" {
+  description = "ARN of the get raffle Lambda function"
+  value       = aws_lambda_function.get_raffle.arn
+}
+
+output "lambda_get_raffle_name" {
+  description = "Name of the get raffle Lambda function"
+  value       = aws_lambda_function.get_raffle.function_name
+}
+
+output "lambda_get_raffle_invoke_arn" {
+  description = "Invoke ARN of the get raffle Lambda function"
+  value       = aws_lambda_function.get_raffle.invoke_arn
+}
+
 output "lambda_worker_process_arn" {
   description = "ARN of the worker process Lambda function"
   value       = aws_lambda_function.worker_process.arn

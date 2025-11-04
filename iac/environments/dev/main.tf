@@ -48,6 +48,10 @@ module "api_gateway" {
   lambda_close_raffle_name       = module.compute.lambda_close_raffle_name
   lambda_close_raffle_invoke_arn = module.compute.lambda_close_raffle_invoke_arn
 
+  lambda_get_raffle_arn        = module.compute.lambda_get_raffle_arn
+  lambda_get_raffle_name       = module.compute.lambda_get_raffle_name
+  lambda_get_raffle_invoke_arn = module.compute.lambda_get_raffle_invoke_arn
+
   tags = {
     Environment = var.environment
     Project     = "RaffleNow"

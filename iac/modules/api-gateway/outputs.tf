@@ -23,6 +23,11 @@ output "api_endpoint_get_raffles" {
   value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles"
 }
 
+output "api_endpoint_get_raffle_by_id" {
+  description = "Full URL endpoint for GET /api/v1/raffles/{id}"
+  value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles/{id}"
+}
+
 output "api_endpoint_post_raffles" {
   description = "Full URL endpoint for POST /api/v1/raffles"
   value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles"

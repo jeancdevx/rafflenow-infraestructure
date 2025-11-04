@@ -226,6 +226,35 @@ resource "aws_lambda_function" "worker_process" {
   })
 }
 
+# Lambda: get-raffle
+data "archive_file" "get_raffle_zip" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../../app/lambdas/get-raffle"
+  output_path = "${path.module}/../../../app/lambdas/get-raffle.zip"
+}
+
+resource "aws_lambda_function" "get_raffle" {
+  filename         = data.archive_file.get_raffle_zip.output_path
+  function_name    = "${var.name_prefix}-get-raffle"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "index.handler"
+  source_code_hash = data.archive_file.get_raffle_zip.output_base64sha256
+  runtime          = "nodejs22.x"
+  timeout          = 10
+  memory_size      = 512
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE = var.dynamodb_table_name
+    }
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-get-raffle"
+    Type = "Lambda"
+  })
+}
+
 # Event source mapping: SQS -> Lambda worker-process
 resource "aws_lambda_event_source_mapping" "sqs_to_worker" {
   event_source_arn = var.sqs_queue_arn
