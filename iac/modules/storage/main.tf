@@ -17,6 +17,23 @@ resource "aws_dynamodb_table" "raffles" {
     type = "S"
   }
 
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  attribute {
+    name = "end_date"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "StatusEndDateIndex"
+    hash_key        = "status"
+    range_key       = "end_date"
+    projection_type = "ALL"
+  }
+
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-raffles-table"
     Type = "DynamoDB"
