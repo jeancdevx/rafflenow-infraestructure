@@ -18,7 +18,7 @@ rafflenow-v2/
 │ │ ├─ main.tf
 │ │ ├─ variables.tf
 │ │ ├─ outputs.tf
-│ │ └─ dev.tfvars ← archivo de variables del entorno
+│ │ └─ terraform.tfvars ← archivo de variables del entorno
 │ ├─ qa/
 │ └─ prod/
 ```
