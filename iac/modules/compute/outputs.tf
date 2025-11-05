@@ -68,6 +68,16 @@ output "lambda_get_raffle_invoke_arn" {
   value       = aws_lambda_function.get_raffle.invoke_arn
 }
 
+output "lambda_check_expired_raffles_arn" {
+  description = "ARN of the check expired raffles Lambda function"
+  value       = aws_lambda_function.check_expired_raffles.arn
+}
+
+output "lambda_check_expired_raffles_name" {
+  description = "Name of the check expired raffles Lambda function"
+  value       = aws_lambda_function.check_expired_raffles.function_name
+}
+
 output "lambda_worker_process_arn" {
   description = "ARN of the worker process Lambda function"
   value       = aws_lambda_function.worker_process.arn

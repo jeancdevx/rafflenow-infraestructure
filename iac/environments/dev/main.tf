@@ -57,3 +57,17 @@ module "api_gateway" {
     Project     = "RaffleNow"
   }
 }
+
+module "scheduler" {
+  source = "../../modules/scheduler"
+
+  name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+
+  lambda_check_expired_raffles_arn  = module.compute.lambda_check_expired_raffles_arn
+  lambda_check_expired_raffles_name = module.compute.lambda_check_expired_raffles_name
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
