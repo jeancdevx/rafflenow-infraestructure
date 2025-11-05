@@ -1,0 +1,23 @@
+{
+  "name": "check-expired-raffles",
+  "version": "1.0.0",
+  "description": "Lambda function to check and close expired raffles automatically",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "lambda",
+    "raffle",
+    "dynamodb",
+    "sqs",
+    "scheduler"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.922.0",
+    "@aws-sdk/client-sqs": "3.922.0",
+    "@aws-sdk/lib-dynamodb": "3.922.0"
+  }
+}
