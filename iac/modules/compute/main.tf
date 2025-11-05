@@ -37,6 +37,7 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
         ]
         Resource = [
           "arn:aws:dynamodb:*:*:table/${var.dynamodb_table_name}",
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_table_name}/index/*",
           "arn:aws:dynamodb:*:*:table/${var.dynamodb_participants_table_name}",
           "arn:aws:dynamodb:*:*:table/${var.dynamodb_participants_table_name}/index/*"
         ]
@@ -251,6 +252,36 @@ resource "aws_lambda_function" "get_raffle" {
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-get-raffle"
+    Type = "Lambda"
+  })
+}
+
+# Lambda: check-expired-raffles
+data "archive_file" "check_expired_raffles_zip" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../../app/lambdas/check-expired-raffles"
+  output_path = "${path.module}/../../../app/lambdas/check-expired-raffles.zip"
+}
+
+resource "aws_lambda_function" "check_expired_raffles" {
+  filename         = data.archive_file.check_expired_raffles_zip.output_path
+  function_name    = "${var.name_prefix}-check-expired-raffles"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "index.handler"
+  source_code_hash = data.archive_file.check_expired_raffles_zip.output_base64sha256
+  runtime          = "nodejs22.x"
+  timeout          = 60
+  memory_size      = 512
+
+  environment {
+    variables = {
+      DYNAMODB_RAFFLES_TABLE = var.dynamodb_table_name
+      SQS_QUEUE_URL          = var.sqs_queue_url
+    }
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-check-expired-raffles"
     Type = "Lambda"
   })
 }
