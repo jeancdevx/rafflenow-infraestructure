@@ -67,3 +67,40 @@ output "api_endpoint_post_close" {
   description = "POST /raffles/{id}/close endpoint"
   value       = module.api_gateway.api_endpoint_post_close
 }
+
+output "api_endpoint_post_upload" {
+  description = "POST /assets/upload endpoint"
+  value       = module.api_gateway.api_endpoint_post_upload
+}
+
+# CloudFront / CDN
+output "cloudfront_domain_name" {
+  description = "CloudFront distribution domain name"
+  value       = module.cdn.cloudfront_domain_name
+}
+
+output "cloudfront_url" {
+  description = "Full HTTPS URL for CloudFront CDN"
+  value       = module.cdn.cloudfront_distribution_url
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID"
+  value       = module.cdn.cloudfront_distribution_id
+}
+
+# Cognito
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  value       = module.cognito.user_pool_id
+}
+
+output "cognito_client_id" {
+  description = "Cognito User Pool Client ID"
+  value       = module.cognito.user_pool_client_id
+}
+
+output "cognito_domain" {
+  description = "Cognito Domain prefix"
+  value       = module.cognito.user_pool_domain
+}
