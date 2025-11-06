@@ -12,6 +12,15 @@ resource "aws_api_gateway_rest_api" "rafflenow_api" {
   })
 }
 
+resource "aws_api_gateway_authorizer" "cognito" {
+  name          = "${var.name_prefix}-cognito-authorizer"
+  type          = "COGNITO_USER_POOLS"
+  rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
+  provider_arns = [var.cognito_user_pool_arn]
+
+  identity_source = "method.request.header.Authorization"
+}
+
 resource "aws_api_gateway_resource" "api" {
   rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
   parent_id   = aws_api_gateway_rest_api.rafflenow_api.root_resource_id
@@ -63,7 +72,10 @@ resource "aws_api_gateway_method" "post_raffles" {
   rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
   resource_id   = aws_api_gateway_resource.raffles.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito.id
+
+  authorization_scopes = []
 }
 
 # Integration: POST /api/v1/raffles -> Lambda create-raffle
@@ -131,7 +143,10 @@ resource "aws_api_gateway_method" "post_participate" {
   rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
   resource_id   = aws_api_gateway_resource.participate.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito.id
+
+  authorization_scopes = []
 }
 
 # Integration: POST /api/v1/raffles/{id}/participate -> Lambda ingest-participation
@@ -165,7 +180,10 @@ resource "aws_api_gateway_method" "post_close" {
   rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
   resource_id   = aws_api_gateway_resource.close.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito.id
+
+  authorization_scopes = []
 }
 
 # Integration: POST /api/v1/raffles/{id}/close -> Lambda close-raffle

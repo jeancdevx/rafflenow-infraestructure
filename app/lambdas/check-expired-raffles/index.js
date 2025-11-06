@@ -14,7 +14,6 @@ exports.handler = async (event) => {
   console.log('Event received:', JSON.stringify(event));
 
   try {
-    // Obtener fecha/hora actual
     const now = new Date();
     const targetDate = now.toISOString();
     
@@ -51,12 +50,10 @@ exports.handler = async (event) => {
 
     const results = [];
 
-    // Procesar cada sorteo expirado
     for (const raffle of expiredRaffles) {
       try {
         console.log(`Processing raffle: ${raffle.raffle_id}`);
 
-        // Verificar que tiene participantes
         if (raffle.current_participants === 0) {
           console.log(`Raffle ${raffle.raffle_id} has no participants, skipping`);
           results.push({
@@ -69,7 +66,6 @@ exports.handler = async (event) => {
 
         const closedTimestamp = new Date().toISOString();
 
-        // Actualizar estado a "processing"
         const updateParams = {
           TableName: process.env.DYNAMODB_RAFFLES_TABLE,
           Key: { raffle_id: raffle.raffle_id },
@@ -89,7 +85,6 @@ exports.handler = async (event) => {
 
         await docClient.send(new UpdateCommand(updateParams));
 
-        // Enviar mensaje a SQS para que worker-process seleccione el ganador
         const sqsMessage = {
           QueueUrl: process.env.SQS_QUEUE_URL,
           MessageBody: JSON.stringify({

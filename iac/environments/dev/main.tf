@@ -27,6 +27,20 @@ module "compute" {
   }
 }
 
+module "cognito" {
+  source = "../../modules/cognito"
+
+  name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+
+  callback_urls = ["http://localhost:3000/callback", "https://rafflenow.com/callback"]
+  logout_urls   = ["http://localhost:3000/logout", "https://rafflenow.com/logout"]
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
+
 module "api_gateway" {
   source = "../../modules/api-gateway"
 
@@ -51,6 +65,8 @@ module "api_gateway" {
   lambda_get_raffle_arn        = module.compute.lambda_get_raffle_arn
   lambda_get_raffle_name       = module.compute.lambda_get_raffle_name
   lambda_get_raffle_invoke_arn = module.compute.lambda_get_raffle_invoke_arn
+
+  cognito_user_pool_arn = module.cognito.user_pool_arn
 
   tags = {
     Environment = var.environment

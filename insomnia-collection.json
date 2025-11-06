@@ -1,0 +1,194 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "resources": [
+    {
+      "_id": "env_rafflenow",
+      "_type": "environment",
+      "name": "RaffleNow Dev",
+      "data": {
+        "base_url": "YOUR_API_GATEWAY_URL",
+        "user_pool_id": "YOUR_USER_POOL_ID",
+        "client_id": "YOUR_CLIENT_ID",
+        "region": "us-east-2",
+        "admin_email": "admin@rafflenow.com",
+        "admin_password": "AdminPass123!",
+        "user_email": "user@rafflenow.com",
+        "user_password": "UserPass123!",
+        "admin_token": "",
+        "user_token": "",
+        "test_raffle_id": ""
+      }
+    },
+    {
+      "_id": "req_auth_admin",
+      "_type": "request",
+      "name": "Auth - Get Admin Token",
+      "method": "POST",
+      "url": "https://cognito-idp.{{ _.region }}.amazonaws.com/",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/x-amz-json-1.1"
+        },
+        {
+          "name": "X-Amz-Target",
+          "value": "AWSCognitoIdentityProviderService.InitiateAuth"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"{{ _.client_id }}\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"{{ _.admin_email }}\",\n    \"PASSWORD\": \"{{ _.admin_password }}\"\n  }\n}"
+      }
+    },
+    {
+      "_id": "req_auth_user",
+      "_type": "request",
+      "name": "Auth - Get User Token",
+      "method": "POST",
+      "url": "https://cognito-idp.{{ _.region }}.amazonaws.com/",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/x-amz-json-1.1"
+        },
+        {
+          "name": "X-Amz-Target",
+          "value": "AWSCognitoIdentityProviderService.InitiateAuth"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"{{ _.client_id }}\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"{{ _.user_email }}\",\n    \"PASSWORD\": \"{{ _.user_password }}\"\n  }\n}"
+      }
+    },
+    {
+      "_id": "req_get_raffles",
+      "_type": "request",
+      "name": "GET Raffles (Public)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/raffles"
+    },
+    {
+      "_id": "req_get_raffle_by_id",
+      "_type": "request",
+      "name": "GET Raffle by ID (Public)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}"
+    },
+    {
+      "_id": "req_create_raffle_admin",
+      "_type": "request",
+      "name": "POST Create Raffle (Admin)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/raffles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.admin_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"MacBook Pro M3\",\n  \"description\": \"Sorteo de una MacBook Pro M3 Pro 14 pulgadas con 18GB RAM y 512GB SSD\",\n  \"end_date\": \"2025-11-25\",\n  \"max_participants\": 500,\n  \"prize_image_url\": \"https://store.storeimages.cdn-apple.com/macbook-pro-14.jpg\"\n}"
+      }
+    },
+    {
+      "_id": "req_create_raffle_user_fail",
+      "_type": "request",
+      "name": "POST Create Raffle (User - Should Fail)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/raffles",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.user_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"Test Raffle\",\n  \"description\": \"Este request debe fallar con 403 Forbidden\",\n  \"end_date\": \"2025-11-25\",\n  \"max_participants\": 100,\n  \"prize_image_url\": \"https://example.com/image.jpg\"\n}"
+      }
+    },
+    {
+      "_id": "req_participate_user",
+      "_type": "request",
+      "name": "POST Participate (User)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.user_token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"participant_name\": \"Juan Pérez\",\n  \"participant_email\": \"user@rafflenow.com\"\n}"
+      }
+    },
+    {
+      "_id": "req_participate_no_auth_fail",
+      "_type": "request",
+      "name": "POST Participate (No Auth - Should Fail)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"participant_name\": \"Sin Autenticación\",\n  \"participant_email\": \"test@test.com\"\n}"
+      }
+    },
+    {
+      "_id": "req_close_raffle_admin",
+      "_type": "request",
+      "name": "POST Close Raffle (Admin)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.admin_token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_close_raffle_user_fail",
+      "_type": "request",
+      "name": "POST Close Raffle (User - Should Fail)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.user_token }}"
+        }
+      ]
+    }
+  ]
+}

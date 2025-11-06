@@ -39,6 +39,11 @@ variable "lambda_create_raffle_invoke_arn" {
   type        = string
 }
 
+variable "cognito_user_pool_arn" {
+  description = "ARN of the Cognito User Pool for authorization"
+  type        = string
+}
+
 variable "lambda_ingest_participation_arn" {
   description = "ARN of the ingest participation Lambda function"
   type        = string
