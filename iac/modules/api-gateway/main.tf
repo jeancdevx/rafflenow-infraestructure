@@ -205,6 +205,51 @@ resource "aws_lambda_permission" "api_gateway_invoke_close_raffle" {
   source_arn    = "${aws_api_gateway_rest_api.rafflenow_api.execution_arn}/*/*"
 }
 
+# Resource: /api/v1/assets
+resource "aws_api_gateway_resource" "assets" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  parent_id   = aws_api_gateway_resource.v1.id
+  path_part   = "assets"
+}
+
+# Resource: /api/v1/assets/upload
+resource "aws_api_gateway_resource" "assets_upload" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  parent_id   = aws_api_gateway_resource.assets.id
+  path_part   = "upload"
+}
+
+# Method: POST /api/v1/assets/upload (Admin only)
+resource "aws_api_gateway_method" "post_assets_upload" {
+  rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id   = aws_api_gateway_resource.assets_upload.id
+  http_method   = "POST"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito.id
+
+  authorization_scopes = []
+}
+
+# Integration: POST /api/v1/assets/upload -> Lambda upload-image
+resource "aws_api_gateway_integration" "post_assets_upload_lambda" {
+  rest_api_id             = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id             = aws_api_gateway_resource.assets_upload.id
+  http_method             = aws_api_gateway_method.post_assets_upload.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.lambda_upload_image_invoke_arn
+}
+
+# Permission: Allow API Gateway to invoke upload-image Lambda
+resource "aws_lambda_permission" "api_gateway_invoke_upload_image" {
+  statement_id  = "AllowAPIGatewayInvokeUploadImage"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_upload_image_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.rafflenow_api.execution_arn}/*/*"
+}
+
+
 # Data source for current region
 data "aws_region" "current" {}
 
@@ -220,16 +265,20 @@ resource "aws_api_gateway_deployment" "api_deployment" {
       aws_api_gateway_resource.raffle_id.id,
       aws_api_gateway_resource.participate.id,
       aws_api_gateway_resource.close.id,
+      aws_api_gateway_resource.assets.id,
+      aws_api_gateway_resource.assets_upload.id,
       aws_api_gateway_method.get_raffles.id,
       aws_api_gateway_method.get_raffle_by_id.id,
       aws_api_gateway_method.post_raffles.id,
       aws_api_gateway_method.post_participate.id,
       aws_api_gateway_method.post_close.id,
+      aws_api_gateway_method.post_assets_upload.id,
       aws_api_gateway_integration.get_raffles_lambda.id,
       aws_api_gateway_integration.get_raffle_by_id_lambda.id,
       aws_api_gateway_integration.post_raffles_lambda.id,
       aws_api_gateway_integration.post_participate_lambda.id,
       aws_api_gateway_integration.post_close_lambda.id,
+      aws_api_gateway_integration.post_assets_upload_lambda.id,
     ]))
   }
 
@@ -243,6 +292,7 @@ resource "aws_api_gateway_deployment" "api_deployment" {
     aws_api_gateway_integration.post_raffles_lambda,
     aws_api_gateway_integration.post_participate_lambda,
     aws_api_gateway_integration.post_close_lambda,
+    aws_api_gateway_integration.post_assets_upload_lambda,
   ]
 }
 
