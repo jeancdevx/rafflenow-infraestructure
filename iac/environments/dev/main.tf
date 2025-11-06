@@ -9,9 +9,6 @@ module "storage" {
     Environment = var.environment
     Project     = "RaffleNow"
   }
-
-
-
 }
 
 module "compute" {
@@ -25,9 +22,6 @@ module "compute" {
   sqs_queue_arn                    = module.storage.sqs_raffle_winner_queue_arn
   s3_bucket_arn                    = module.storage.s3_assets_bucket_arn
   cf_distribution_arn              = module.front.cloudfront_distribution_arn
-
-
-
 
   tags = {
     Environment = var.environment
@@ -90,10 +84,6 @@ module "front" {
   s3_bucket_arn               = module.storage.s3_assets_bucket_arn
   origin_bucket_policy_in     = module.compute.origin_bucket_policy
   bucket_regional_domain_name = module.storage.bucket_regional_domain_name
-
-
-
-
 
   tags = {
     Environment = var.environment

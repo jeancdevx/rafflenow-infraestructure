@@ -87,3 +87,7 @@ output "lambda_worker_process_name" {
   description = "Name of the worker process Lambda function"
   value       = aws_lambda_function.worker_process.function_name
 }
+output "origin_bucket_policy" {
+  description = "politica para cloudfront acceder al bucket s3"
+  value = data.aws_iam_policy_document.origin_bucket_policy.json
+}

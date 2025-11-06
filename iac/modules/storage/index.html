@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RaffleNow | Plataforma de Sorteos</title>
+
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #1e90ff, #00bcd4);
+      color: #fff;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      max-width: 500px;
+    }
+    button {
+      background-color: #fff;
+      color: #1e90ff;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #e1f5fe;
+    }
+    footer {
+      position: absolute;
+      bottom: 15px;
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎉 Bienvenido a RaffleNow</h1>
+  <p>Participa en sorteos de forma segura y transparente.  
+     Inicia sesión para acceder a tus sorteos activos y ganar premios.</p>
+
+  <button id="loginBtn">Iniciar sesión</button>
+
+  <footer>
+    Proyecto universitario - AWS Free Tier | <span id="year"></span>
+  </footer>
+
+  <!-- <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    const cognitoLoginUrl =
+      "https://rafflenow-auth-useast2.auth.us-east-2.amazoncognito.com/login" +
+      "?client_id=78qlq3271po5uogtaghb2f23tl" +
+      "&response_type=code" +
+      "&scope=openid+email+profile" +
+      "&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2F";
+
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      window.location.href = cognitoLoginUrl;
+    });
+  </script> -->
+</body>
+</html>

@@ -296,3 +296,30 @@ resource "aws_lambda_event_source_mapping" "sqs_to_worker" {
   # Configuración de manejo de errores
   function_response_types = ["ReportBatchItemFailures"]
 }
+
+#politica para cloudfront acceder al bucket s3
+data "aws_iam_policy_document" "origin_bucket_policy" {
+  statement {
+    sid = "AllowCloudFrontOACRead"
+    effect = "Allow"
+
+    principals {
+      type = "Service"
+      identifiers = [ "cloudfront.amazonaws.com" ]
+    }
+
+    actions = [
+      "s3:GetObject"
+    ]
+
+    resources = [
+      "${var.s3_bucket_arn}/*"#1
+    ]
+
+    condition {
+      test = "StringEquals"
+      variable = "AWS:SourceArn"
+      values = [ "${var.cf_distribution_arn}" ]
+    }
+  }
+}

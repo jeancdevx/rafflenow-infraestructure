@@ -47,3 +47,8 @@ output "sqs_raffle_winner_dlq_arn" {
   description = "ARN of the raffle winner DLQ"
   value       = aws_sqs_queue.raffle_winner_dlq.arn
 }
+
+output "bucket_regional_domain_name" {
+  description = "Regional domain name"
+  value = aws_s3_bucket.assets.bucket_regional_domain_name
+}

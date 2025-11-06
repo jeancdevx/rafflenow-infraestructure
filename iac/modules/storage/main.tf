@@ -100,3 +100,22 @@ resource "aws_sqs_queue_redrive_policy" "raffle_winner_queue_redrive" {
     maxReceiveCount     = 3
   })
 }
+resource "aws_s3_bucket_public_access_block" "block_public_access" {
+
+  bucket = aws_s3_bucket.assets.bucket
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+
+}
+resource "aws_s3_object" "website_index" {
+
+  bucket            = aws_s3_bucket.assets.id
+  key               = "index.html"
+  source            = "${path.module}/index.html"
+  content_type      = "text/html"
+  acl               = "private"
+
+}
