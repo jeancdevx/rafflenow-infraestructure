@@ -12,6 +12,23 @@ const docClient = DynamoDBDocumentClient.from(client)
 exports.handler = async (event) => {
   console.log('Event received:', JSON.stringify(event))
 
+  const claims = event.requestContext?.authorizer?.claims
+  if (!claims) {
+    return {
+      statusCode: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        message: 'Unauthorized',
+        error: 'Authentication required to participate',
+      }),
+    }
+  }
+
+  const authenticatedEmail = claims.email
+
   try {
     const raffleId = event.pathParameters?.id
     if (!raffleId) {

@@ -13,6 +13,38 @@ const sqsClient = new SQSClient({})
 exports.handler = async (event) => {
   console.log('Event received:', JSON.stringify(event))
 
+  const claims = event.requestContext?.authorizer?.claims
+  if (!claims) {
+    return {
+      statusCode: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        message: 'Unauthorized',
+        error: 'Authentication required',
+      }),
+    }
+  }
+
+  const groups = claims['cognito:groups']
+  const isAdmin = groups && (Array.isArray(groups) ? groups.includes('Admin') : groups === 'Admin')
+
+  if (!isAdmin) {
+    return {
+      statusCode: 403,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        message: 'Forbidden',
+        error: 'Admin role required to close raffles',
+      }),
+    }
+  }
+
   try {
     const raffleId = event.pathParameters?.id
     if (!raffleId) {

@@ -8,6 +8,38 @@ const docClient = DynamoDBDocumentClient.from(client);
 exports.handler = async (event) => {
   console.log("Event received:", JSON.stringify(event));
 
+  const claims = event.requestContext?.authorizer?.claims;
+  if (!claims) {
+    return {
+      statusCode: 401,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({
+        message: "Unauthorized",
+        error: "Authentication required",
+      }),
+    };
+  }
+
+  const groups = claims["cognito:groups"];
+  const isAdmin = groups && (Array.isArray(groups) ? groups.includes("Admin") : groups === "Admin");
+
+  if (!isAdmin) {
+    return {
+      statusCode: 403,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({
+        message: "Forbidden",
+        error: "Admin role required to create raffles",
+      }),
+    };
+  }
+
   try {
     const body = JSON.parse(event.body);
 
@@ -33,14 +65,11 @@ exports.handler = async (event) => {
       }
     }
 
-    // Validaciones de reglas de negocio
     const now = new Date();
     const startDate = body.start_date ? new Date(body.start_date) : now;
     
-    // end_date puede venir como solo fecha "2025-11-15" o como ISO completo
     let endDate;
     if (body.end_date.includes('T')) {
-      // Ya viene con hora, validar que sea 23:59:00
       endDate = new Date(body.end_date);
       if (endDate.getUTCHours() !== 23 || endDate.getUTCMinutes() !== 59) {
         return {
@@ -56,11 +85,9 @@ exports.handler = async (event) => {
         };
       }
     } else {
-      // Solo fecha, agregar 23:59:00 UTC automáticamente
       endDate = new Date(`${body.end_date}T23:59:00Z`);
     }
 
-    // Validar duración mínima (7 días)
     const diffMs = endDate - startDate;
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
@@ -79,7 +106,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Validar duración máxima (60 días)
     if (diffDays > 60) {
       return {
         statusCode: 400,
@@ -95,8 +121,23 @@ exports.handler = async (event) => {
       };
     }
 
+    if (!body.prize_image_url || body.prize_image_url.trim() === "") {
+      return {
+        statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({
+          message: "Validation error",
+          error: "prize_image_url is required and cannot be empty",
+        }),
+      };
+    }
+
     const raffleId = `raffle-${randomUUID()}`;
     const nowISO = new Date().toISOString();
+    const createdByEmail = claims.email;
 
     const raffle = {
       raffle_id: raffleId,
@@ -107,8 +148,8 @@ exports.handler = async (event) => {
       end_date: endDate.toISOString(),
       max_participants: parseInt(body.max_participants),
       current_participants: 0,
-      prize_image_url: body.prize_image_url || "",
-      created_by: body.created_by || "system",
+      prize_image_url: body.prize_image_url,
+      created_by: createdByEmail,
       created_at: nowISO,
       updated_at: nowISO,
     };
