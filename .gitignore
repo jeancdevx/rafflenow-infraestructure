@@ -19,6 +19,9 @@ terraform.rc
 *.pem
 *.key
 
+# Scripts con configuración local
+scripts/create-test-users.ps1
+
 # IDE and Editors
 .vscode/
 .idea/

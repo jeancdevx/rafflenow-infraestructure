@@ -2,37 +2,62 @@
 
 ## 1. Configuración Inicial
 
-### Información de Cognito
-- **User Pool ID**: `us-east-2_0pco0yiVE`
-- **Client ID**: `8puupsr2sodm3befja1p1g99p`
-- **Region**: `us-east-2`
-- **API Base URL**: `https://qnbxxcb2ni.execute-api.us-east-2.amazonaws.com/dev`
+### Obtener Información de Cognito
+
+**Desde Terraform:**
+```powershell
+cd iac/environments/dev
+terraform output
+```
+
+Necesitarás estos valores:
+- **User Pool ID**: Copiar de terraform output
+- **Client ID**: Copiar de terraform output
+- **Region**: us-east-2 (o tu región)
+- **API Base URL**: Copiar de terraform output (api_gateway_invoke_url)
 
 ---
 
 ## 2. Crear Usuarios de Prueba
 
-### Configurar el Script
+### Paso 1: Configurar el Script
 
-Edita el archivo `scripts/create-test-users.ps1` y ajusta estas variables según tu configuración:
-
+**Primera vez:**
 ```powershell
-# Configuración personalizable
-$UserPoolId = "us-east-2_0pco0yiVE"  # Obtener de: terraform output o AWS Console
-$Profile = "jeancdev"                 # Tu perfil de AWS CLI (aws configure sso)
+# Copiar el archivo de ejemplo
+cd c:\Dev\rafflenow
+Copy-Item scripts/create-test-users.ps1.example scripts/create-test-users.ps1
 ```
 
-**Obtener User Pool ID:**
+### Paso 2: Obtener User Pool ID
+
 ```powershell
-# Opción 1: Desde Terraform
+# Desde Terraform
 cd iac/environments/dev
 terraform output
 
-# Opción 2: Desde AWS CLI
-aws cognito-idp list-user-pools --max-results 10 --profile jeancdev
+# O desde AWS CLI
+aws cognito-idp list-user-pools --max-results 10 --profile your-aws-profile
 ```
 
-### Ejecutar el Script
+### Paso 3: Editar Configuración
+
+Edita el archivo `scripts/create-test-users.ps1` y reemplaza:
+
+```powershell
+# ===== CONFIGURACIÓN PERSONALIZABLE =====
+$UserPoolId = "YOUR_USER_POOL_ID"     # ⚙️ Cambiar por: us-east-2_AbCdEfGhI
+$Profile = "your-aws-profile"         # ⚙️ Cambiar por: default, jeancdev, etc.
+# ========================================
+```
+
+**Ejemplo:**
+```powershell
+$UserPoolId = "us-east-2_0pco0yiVE"  # Tu User Pool ID real
+$Profile = "jeancdev"                 # Tu perfil de AWS CLI
+```
+
+### Paso 4: Ejecutar el Script
 
 ```powershell
 # Navegar al directorio del proyecto
@@ -42,7 +67,22 @@ cd c:\Dev\rafflenow
 .\scripts\create-test-users.ps1
 ```
 
-**Salida esperada:**
+**Si no configuraste el script, verás:**
+```
+❌ ERROR: Debes configurar las variables UserPoolId y Profile
+
+Pasos para configurar:
+1. Obtén tu User Pool ID:
+   cd iac/environments/dev && terraform output
+
+2. Edita este archivo (scripts/create-test-users.ps1) y reemplaza:
+   - YOUR_USER_POOL_ID por tu User Pool ID real
+   - your-aws-profile por tu perfil AWS CLI
+
+3. Vuelve a ejecutar el script
+```
+
+**Salida esperada (configurado correctamente):**
 ```
 === Creando usuarios de prueba en Cognito ===
 
@@ -67,13 +107,13 @@ Credenciales para Insomnia:
 
 ### Paso 1: Crear Environment
 
-En Insomnia, crea un nuevo Environment con las siguientes variables:
+En Insomnia, crea un nuevo Environment con las siguientes variables (reemplaza con tus valores reales de terraform output):
 
 ```json
 {
-  "base_url": "https://qnbxxcb2ni.execute-api.us-east-2.amazonaws.com/dev",
-  "user_pool_id": "us-east-2_0pco0yiVE",
-  "client_id": "8puupsr2sodm3befja1p1g99p",
+  "base_url": "TU_API_GATEWAY_URL",
+  "user_pool_id": "TU_USER_POOL_ID",
+  "client_id": "TU_CLIENT_ID",
   "region": "us-east-2",
   "admin_email": "admin@rafflenow.com",
   "admin_password": "AdminPass123!",
@@ -208,13 +248,18 @@ cd iac/environments/dev
 terraform output
 ```
 
-### Paso 2: Actualizar el script
-Edita `scripts/create-test-users.ps1` con el nuevo `UserPoolId`
+### Paso 2: Actualizar configuración
+Edita `scripts/create-test-users.ps1` con el nuevo `UserPoolId`:
+```powershell
+$UserPoolId = "us-east-2_NUEVOID"  # Nuevo User Pool ID
+```
 
 ### Paso 3: Ejecutar script
 ```powershell
 .\scripts\create-test-users.ps1
 ```
+
+> **Nota**: El script está en `.gitignore`, por lo que tus credenciales locales no se subirán al repositorio.
 
 ### Alternativa: Comandos CLI Individuales
 
@@ -254,80 +299,16 @@ aws cognito-idp admin-set-user-password `
 
 ## 6. Script PowerShell (Referencia)
 
-El script completo está en `scripts/create-test-users.ps1`:
+El script completo está en `scripts/create-test-users.ps1.example`. 
 
-```powershell
-# Script para crear usuarios de prueba en Cognito
-$UserPoolId = "us-east-2_0pco0yiVE"
-$Profile = "jeancdev"
+**Uso:**
+1. Copia el archivo de ejemplo: `Copy-Item scripts/create-test-users.ps1.example scripts/create-test-users.ps1`
+2. Edita `scripts/create-test-users.ps1` con tu configuración
+3. Ejecuta el script
 
-Write-Host "=== Creando usuarios de prueba en Cognito ===" -ForegroundColor Green
+**Archivo en el repositorio:** `scripts/create-test-users.ps1.example`
 
-# Admin User
-Write-Host "`nCreando usuario Admin..." -ForegroundColor Yellow
-aws cognito-idp admin-create-user `
-  --user-pool-id $UserPoolId `
-  --username admin@rafflenow.com `
-  --user-attributes Name=email,Value=admin@rafflenow.com Name=email_verified,Value=true `
-  --temporary-password "TempAdmin123!" `
-  --message-action SUPPRESS `
-  --profile $Profile 2>$null
-
-if ($LASTEXITCODE -eq 0) {
-    aws cognito-idp admin-add-user-to-group `
-      --user-pool-id $UserPoolId `
-      --username admin@rafflenow.com `
-      --group-name Admin `
-      --profile $Profile
-
-    aws cognito-idp admin-set-user-password `
-      --user-pool-id $UserPoolId `
-      --username admin@rafflenow.com `
-      --password "AdminPass123!" `
-      --permanent `
-      --profile $Profile
-
-    Write-Host "✓ Usuario Admin creado: admin@rafflenow.com / AdminPass123!" -ForegroundColor Green
-} else {
-    Write-Host "⚠ Usuario Admin ya existe o error en creación" -ForegroundColor Yellow
-}
-
-# Regular User
-Write-Host "`nCreando usuario regular..." -ForegroundColor Yellow
-aws cognito-idp admin-create-user `
-  --user-pool-id $UserPoolId `
-  --username user@rafflenow.com `
-  --user-attributes Name=email,Value=user@rafflenow.com Name=email_verified,Value=true `
-  --temporary-password "TempUser123!" `
-  --message-action SUPPRESS `
-  --profile $Profile 2>$null
-
-if ($LASTEXITCODE -eq 0) {
-    aws cognito-idp admin-add-user-to-group `
-      --user-pool-id $UserPoolId `
-      --username user@rafflenow.com `
-      --group-name User `
-      --profile $Profile
-
-    aws cognito-idp admin-set-user-password `
-      --user-pool-id $UserPoolId `
-      --username user@rafflenow.com `
-      --password "UserPass123!" `
-      --permanent `
-      --profile $Profile
-
-    Write-Host "✓ Usuario regular creado: user@rafflenow.com / UserPass123!" -ForegroundColor Green
-} else {
-    Write-Host "⚠ Usuario regular ya existe o error en creación" -ForegroundColor Yellow
-}
-
-Write-Host "`n=== Proceso completado ===" -ForegroundColor Green
-Write-Host "`nCredenciales para Insomnia:" -ForegroundColor Cyan
-Write-Host "  Admin: admin@rafflenow.com / AdminPass123!"
-Write-Host "  User:  user@rafflenow.com / UserPass123!"
-Write-Host "`nUser Pool ID: $UserPoolId" -ForegroundColor Gray
-Write-Host "Client ID: 8puupsr2sodm3befja1p1g99p" -ForegroundColor Gray
-```
+**Tu archivo local (no commiteable):** `scripts/create-test-users.ps1` ← Este está en `.gitignore`
 
 ---
 

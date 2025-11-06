@@ -7,9 +7,9 @@
       "_type": "environment",
       "name": "RaffleNow Dev",
       "data": {
-        "base_url": "https://qnbxxcb2ni.execute-api.us-east-2.amazonaws.com/dev",
-        "user_pool_id": "us-east-2_0pco0yiVE",
-        "client_id": "8puupsr2sodm3befja1p1g99p",
+        "base_url": "YOUR_API_GATEWAY_URL",
+        "user_pool_id": "YOUR_USER_POOL_ID",
+        "client_id": "YOUR_CLIENT_ID",
         "region": "us-east-2",
         "admin_email": "admin@rafflenow.com",
         "admin_password": "AdminPass123!",

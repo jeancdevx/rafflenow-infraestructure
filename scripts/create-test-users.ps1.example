@@ -1,0 +1,100 @@
+# Script para crear usuarios de prueba en Cognito
+# 
+# CONFIGURACIÓN:
+# 1. Obtén tu User Pool ID desde:
+#    - Terraform: cd iac/environments/dev && terraform output
+#    - AWS CLI: aws cognito-idp list-user-pools --max-results 10 --profile <tu-perfil>
+# 2. Ajusta las variables $UserPoolId y $Profile según tu entorno
+#
+
+# ===== CONFIGURACIÓN PERSONALIZABLE =====
+# TODO: Cambiar estos valores por los de tu entorno
+$UserPoolId = "YOUR_USER_POOL_ID"     # ⚙️ Ejemplo: us-east-2_AbCdEfGhI
+$Profile = "your-aws-profile"         # ⚙️ Ejemplo: default, dev, prod, etc.
+# ========================================
+
+# Validación de configuración
+if ($UserPoolId -eq "YOUR_USER_POOL_ID" -or $Profile -eq "your-aws-profile") {
+    Write-Host "❌ ERROR: Debes configurar las variables UserPoolId y Profile" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Pasos para configurar:" -ForegroundColor Yellow
+    Write-Host "1. Obtén tu User Pool ID:"
+    Write-Host "   cd iac/environments/dev && terraform output"
+    Write-Host ""
+    Write-Host "2. Edita este archivo (scripts/create-test-users.ps1) y reemplaza:"
+    Write-Host "   - YOUR_USER_POOL_ID por tu User Pool ID real"
+    Write-Host "   - your-aws-profile por tu perfil AWS CLI"
+    Write-Host ""
+    Write-Host "3. Vuelve a ejecutar el script"
+    exit 1
+}
+
+Write-Host "=== Creando usuarios de prueba en Cognito ===" -ForegroundColor Green
+Write-Host "User Pool ID: $UserPoolId" -ForegroundColor Gray
+Write-Host "AWS Profile: $Profile" -ForegroundColor Gray
+Write-Host ""
+
+# Admin User
+Write-Host "`nCreando usuario Admin..." -ForegroundColor Yellow
+aws cognito-idp admin-create-user `
+  --user-pool-id $UserPoolId `
+  --username admin@rafflenow.com `
+  --user-attributes Name=email,Value=admin@rafflenow.com Name=email_verified,Value=true `
+  --temporary-password "TempAdmin123!" `
+  --message-action SUPPRESS `
+  --profile $Profile 2>$null
+
+if ($LASTEXITCODE -eq 0) {
+    aws cognito-idp admin-add-user-to-group `
+      --user-pool-id $UserPoolId `
+      --username admin@rafflenow.com `
+      --group-name Admin `
+      --profile $Profile
+
+    aws cognito-idp admin-set-user-password `
+      --user-pool-id $UserPoolId `
+      --username admin@rafflenow.com `
+      --password "AdminPass123!" `
+      --permanent `
+      --profile $Profile
+
+    Write-Host "✓ Usuario Admin creado: admin@rafflenow.com / AdminPass123!" -ForegroundColor Green
+} else {
+    Write-Host "⚠ Usuario Admin ya existe o error en creación" -ForegroundColor Yellow
+}
+
+# Regular User
+Write-Host "`nCreando usuario regular..." -ForegroundColor Yellow
+aws cognito-idp admin-create-user `
+  --user-pool-id $UserPoolId `
+  --username user@rafflenow.com `
+  --user-attributes Name=email,Value=user@rafflenow.com Name=email_verified,Value=true `
+  --temporary-password "TempUser123!" `
+  --message-action SUPPRESS `
+  --profile $Profile 2>$null
+
+if ($LASTEXITCODE -eq 0) {
+    aws cognito-idp admin-add-user-to-group `
+      --user-pool-id $UserPoolId `
+      --username user@rafflenow.com `
+      --group-name User `
+      --profile $Profile
+
+    aws cognito-idp admin-set-user-password `
+      --user-pool-id $UserPoolId `
+      --username user@rafflenow.com `
+      --password "UserPass123!" `
+      --permanent `
+      --profile $Profile
+
+    Write-Host "✓ Usuario regular creado: user@rafflenow.com / UserPass123!" -ForegroundColor Green
+} else {
+    Write-Host "⚠ Usuario regular ya existe o error en creación" -ForegroundColor Yellow
+}
+
+Write-Host "`n=== Proceso completado ===" -ForegroundColor Green
+Write-Host "`nCredenciales para Insomnia:" -ForegroundColor Cyan
+Write-Host "  Admin: admin@rafflenow.com / AdminPass123!"
+Write-Host "  User:  user@rafflenow.com / UserPass123!"
+Write-Host "`nUser Pool ID: $UserPoolId" -ForegroundColor Gray
+Write-Host "Client ID: 8puupsr2sodm3befja1p1g99p" -ForegroundColor Gray
