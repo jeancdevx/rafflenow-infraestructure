@@ -8,6 +8,16 @@ output "s3_assets_bucket_arn" {
   value       = aws_s3_bucket.assets.arn
 }
 
+output "s3_assets_bucket_id" {
+  description = "ID of the assets S3 bucket"
+  value       = aws_s3_bucket.assets.id
+}
+
+output "s3_assets_bucket_regional_domain_name" {
+  description = "Regional domain name of the assets S3 bucket"
+  value       = aws_s3_bucket.assets.bucket_regional_domain_name
+}
+
 output "dynamodb_raffles_table_name" {
   description = "Name of the raffles DynamoDB table"
   value       = aws_dynamodb_table.raffles.name
