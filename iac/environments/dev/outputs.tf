@@ -67,3 +67,8 @@ output "api_endpoint_post_close" {
   description = "POST /raffles/{id}/close endpoint"
   value       = module.api_gateway.api_endpoint_post_close
 }
+
+output "cloudfront_domain" {
+  description = "domino del cloudfront"
+  value       = module.front.cloudfront_domain
+}

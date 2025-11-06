@@ -9,6 +9,9 @@ module "storage" {
     Environment = var.environment
     Project     = "RaffleNow"
   }
+
+
+
 }
 
 module "compute" {
@@ -20,6 +23,11 @@ module "compute" {
   dynamodb_participants_table_name = module.storage.dynamodb_participants_table_name
   sqs_queue_url                    = module.storage.sqs_raffle_winner_queue_url
   sqs_queue_arn                    = module.storage.sqs_raffle_winner_queue_arn
+  s3_bucket_arn                    = module.storage.s3_assets_bucket_arn
+  cf_distribution_arn              = module.front.cloudfront_distribution_arn
+
+
+
 
   tags = {
     Environment = var.environment
@@ -71,3 +79,26 @@ module "scheduler" {
     Project     = "RaffleNow"
   }
 }
+
+module "front" {
+  source = "../../modules/front"
+
+  name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+  environment = var.environment
+
+  s3_bucket_name              = module.storage.s3_assets_bucket_name
+  s3_bucket_arn               = module.storage.s3_assets_bucket_arn
+  origin_bucket_policy_in     = module.compute.origin_bucket_policy
+  bucket_regional_domain_name = module.storage.bucket_regional_domain_name
+
+
+
+
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
+
+
