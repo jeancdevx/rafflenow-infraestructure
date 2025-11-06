@@ -81,6 +81,29 @@ resource "aws_iam_role_policy_attachment" "lambda_sqs" {
   policy_arn = aws_iam_policy.lambda_sqs_policy.arn
 }
 
+resource "aws_iam_policy" "lambda_s3_policy" {
+  name = "${var.name_prefix}-lambda-s3-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+        ]
+        Resource = "${var.s3_assets_bucket_arn}/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_s3" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_s3_policy.arn
+}
+
 data "archive_file" "list_raffles_zip" {
   type        = "zip"
   source_dir  = "${path.root}/../../../app/lambdas/list-raffles"
@@ -285,6 +308,37 @@ resource "aws_lambda_function" "check_expired_raffles" {
     Type = "Lambda"
   })
 }
+
+# Lambda: upload-image
+data "archive_file" "upload_image_zip" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../../app/lambdas/upload-image"
+  output_path = "${path.module}/../../../app/lambdas/upload-image.zip"
+}
+
+resource "aws_lambda_function" "upload_image" {
+  filename         = data.archive_file.upload_image_zip.output_path
+  function_name    = "${var.name_prefix}-upload-image"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "index.handler"
+  source_code_hash = data.archive_file.upload_image_zip.output_base64sha256
+  runtime          = "nodejs22.x"
+  timeout          = 10
+  memory_size      = 512
+
+  environment {
+    variables = {
+      S3_BUCKET_NAME = var.s3_assets_bucket_name
+      CLOUDFRONT_URL = var.cloudfront_url
+    }
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-upload-image"
+    Type = "Lambda"
+  })
+}
+
 
 # Event source mapping: SQS -> Lambda worker-process
 resource "aws_lambda_event_source_mapping" "sqs_to_worker" {
