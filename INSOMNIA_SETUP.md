@@ -10,61 +10,56 @@
 
 ---
 
-## 2. Crear Usuarios de Prueba (CLI)
+## 2. Crear Usuarios de Prueba
 
-### Usuario Admin
-```bash
-# Crear usuario Admin
-aws cognito-idp admin-create-user \
-  --user-pool-id us-east-2_0pco0yiVE \
-  --username admin@rafflenow.com \
-  --user-attributes Name=email,Value=admin@rafflenow.com Name=email_verified,Value=true \
-  --temporary-password "TempAdmin123!" \
-  --message-action SUPPRESS \
-  --profile jeancdev
+### Configurar el Script
 
-# Agregar al grupo Admin
-aws cognito-idp admin-add-user-to-group \
-  --user-pool-id us-east-2_0pco0yiVE \
-  --username admin@rafflenow.com \
-  --group-name Admin \
-  --profile jeancdev
+Edita el archivo `scripts/create-test-users.ps1` y ajusta estas variables según tu configuración:
 
-# Establecer contraseña permanente
-aws cognito-idp admin-set-user-password \
-  --user-pool-id us-east-2_0pco0yiVE \
-  --username admin@rafflenow.com \
-  --password "AdminPass123!" \
-  --permanent \
-  --profile jeancdev
+```powershell
+# Configuración personalizable
+$UserPoolId = "us-east-2_0pco0yiVE"  # Obtener de: terraform output o AWS Console
+$Profile = "jeancdev"                 # Tu perfil de AWS CLI (aws configure sso)
 ```
 
-### Usuario Regular
-```bash
-# Crear usuario regular
-aws cognito-idp admin-create-user \
-  --user-pool-id us-east-2_0pco0yiVE \
-  --username user@rafflenow.com \
-  --user-attributes Name=email,Value=user@rafflenow.com Name=email_verified,Value=true \
-  --temporary-password "TempUser123!" \
-  --message-action SUPPRESS \
-  --profile jeancdev
+**Obtener User Pool ID:**
+```powershell
+# Opción 1: Desde Terraform
+cd iac/environments/dev
+terraform output
 
-# Agregar al grupo User
-aws cognito-idp admin-add-user-to-group \
-  --user-pool-id us-east-2_0pco0yiVE \
-  --username user@rafflenow.com \
-  --group-name User \
-  --profile jeancdev
-
-# Establecer contraseña permanente
-aws cognito-idp admin-set-user-password \
-  --user-pool-id us-east-2_0pco0yiVE \
-  --username user@rafflenow.com \
-  --password "UserPass123!" \
-  --permanent \
-  --profile jeancdev
+# Opción 2: Desde AWS CLI
+aws cognito-idp list-user-pools --max-results 10 --profile jeancdev
 ```
+
+### Ejecutar el Script
+
+```powershell
+# Navegar al directorio del proyecto
+cd c:\Dev\rafflenow
+
+# Ejecutar script de creación de usuarios
+.\scripts\create-test-users.ps1
+```
+
+**Salida esperada:**
+```
+=== Creando usuarios de prueba en Cognito ===
+
+Creando usuario Admin...
+✓ Usuario Admin creado: admin@rafflenow.com / AdminPass123!
+
+Creando usuario regular...
+✓ Usuario regular creado: user@rafflenow.com / UserPass123!
+
+=== Proceso completado ===
+
+Credenciales para Insomnia:
+  Admin: admin@rafflenow.com / AdminPass123!
+  User:  user@rafflenow.com / UserPass123!
+```
+
+> **Nota**: Si los usuarios ya existen, el script mostrará un warning ⚠ pero no fallará.
 
 ---
 
@@ -203,19 +198,34 @@ En Insomnia, crea un nuevo Environment con las siguientes variables:
 
 ---
 
-## 5. Script PowerShell para Crear Usuarios Automáticamente
+## 5. Recrear Usuarios (Después de terraform destroy)
 
-Guarda este script como `create-test-users.ps1`:
+Si destruyes y vuelves a crear la infraestructura con Terraform, los usuarios se perderán. Para recrearlos:
+
+### Paso 1: Obtener nuevo User Pool ID
+```powershell
+cd iac/environments/dev
+terraform output
+```
+
+### Paso 2: Actualizar el script
+Edita `scripts/create-test-users.ps1` con el nuevo `UserPoolId`
+
+### Paso 3: Ejecutar script
+```powershell
+.\scripts\create-test-users.ps1
+```
+
+### Alternativa: Comandos CLI Individuales
+
+Si prefieres crear usuarios manualmente:
 
 ```powershell
-# Script para crear usuarios de prueba en Cognito
-$UserPoolId = "us-east-2_0pco0yiVE"
-$Profile = "jeancdev"
+# Variables de configuración
+$UserPoolId = "us-east-2_XXXXXXXXX"  # Tu User Pool ID
+$Profile = "tu-perfil-aws"            # Tu perfil AWS
 
-Write-Host "=== Creando usuarios de prueba en Cognito ===" -ForegroundColor Green
-
-# Admin User
-Write-Host "`nCreando usuario Admin..." -ForegroundColor Yellow
+# Crear Admin
 aws cognito-idp admin-create-user `
   --user-pool-id $UserPoolId `
   --username admin@rafflenow.com `
@@ -237,7 +247,50 @@ aws cognito-idp admin-set-user-password `
   --permanent `
   --profile $Profile
 
-Write-Host "✓ Usuario Admin creado: admin@rafflenow.com / AdminPass123!" -ForegroundColor Green
+# Crear User (repetir pasos similares)
+```
+
+---
+
+## 6. Script PowerShell (Referencia)
+
+El script completo está en `scripts/create-test-users.ps1`:
+
+```powershell
+# Script para crear usuarios de prueba en Cognito
+$UserPoolId = "us-east-2_0pco0yiVE"
+$Profile = "jeancdev"
+
+Write-Host "=== Creando usuarios de prueba en Cognito ===" -ForegroundColor Green
+
+# Admin User
+Write-Host "`nCreando usuario Admin..." -ForegroundColor Yellow
+aws cognito-idp admin-create-user `
+  --user-pool-id $UserPoolId `
+  --username admin@rafflenow.com `
+  --user-attributes Name=email,Value=admin@rafflenow.com Name=email_verified,Value=true `
+  --temporary-password "TempAdmin123!" `
+  --message-action SUPPRESS `
+  --profile $Profile 2>$null
+
+if ($LASTEXITCODE -eq 0) {
+    aws cognito-idp admin-add-user-to-group `
+      --user-pool-id $UserPoolId `
+      --username admin@rafflenow.com `
+      --group-name Admin `
+      --profile $Profile
+
+    aws cognito-idp admin-set-user-password `
+      --user-pool-id $UserPoolId `
+      --username admin@rafflenow.com `
+      --password "AdminPass123!" `
+      --permanent `
+      --profile $Profile
+
+    Write-Host "✓ Usuario Admin creado: admin@rafflenow.com / AdminPass123!" -ForegroundColor Green
+} else {
+    Write-Host "⚠ Usuario Admin ya existe o error en creación" -ForegroundColor Yellow
+}
 
 # Regular User
 Write-Host "`nCreando usuario regular..." -ForegroundColor Yellow
@@ -247,38 +300,38 @@ aws cognito-idp admin-create-user `
   --user-attributes Name=email,Value=user@rafflenow.com Name=email_verified,Value=true `
   --temporary-password "TempUser123!" `
   --message-action SUPPRESS `
-  --profile $Profile
+  --profile $Profile 2>$null
 
-aws cognito-idp admin-add-user-to-group `
-  --user-pool-id $UserPoolId `
-  --username user@rafflenow.com `
-  --group-name User `
-  --profile $Profile
+if ($LASTEXITCODE -eq 0) {
+    aws cognito-idp admin-add-user-to-group `
+      --user-pool-id $UserPoolId `
+      --username user@rafflenow.com `
+      --group-name User `
+      --profile $Profile
 
-aws cognito-idp admin-set-user-password `
-  --user-pool-id $UserPoolId `
-  --username user@rafflenow.com `
-  --password "UserPass123!" `
-  --permanent `
-  --profile $Profile
+    aws cognito-idp admin-set-user-password `
+      --user-pool-id $UserPoolId `
+      --username user@rafflenow.com `
+      --password "UserPass123!" `
+      --permanent `
+      --profile $Profile
 
-Write-Host "✓ Usuario regular creado: user@rafflenow.com / UserPass123!" -ForegroundColor Green
+    Write-Host "✓ Usuario regular creado: user@rafflenow.com / UserPass123!" -ForegroundColor Green
+} else {
+    Write-Host "⚠ Usuario regular ya existe o error en creación" -ForegroundColor Yellow
+}
 
-Write-Host "`n=== Usuarios creados exitosamente ===" -ForegroundColor Green
-Write-Host "`nCredenciales:" -ForegroundColor Cyan
+Write-Host "`n=== Proceso completado ===" -ForegroundColor Green
+Write-Host "`nCredenciales para Insomnia:" -ForegroundColor Cyan
 Write-Host "  Admin: admin@rafflenow.com / AdminPass123!"
 Write-Host "  User:  user@rafflenow.com / UserPass123!"
-```
-
-**Uso**:
-```powershell
-cd c:\Dev\rafflenow
-.\create-test-users.ps1
+Write-Host "`nUser Pool ID: $UserPoolId" -ForegroundColor Gray
+Write-Host "Client ID: 8puupsr2sodm3befja1p1g99p" -ForegroundColor Gray
 ```
 
 ---
 
-## 6. Workflow de Prueba
+## 7. Workflow de Prueba
 
 ### Escenario 1: Admin crea raffle
 1. Ejecutar `Auth - Get Admin Token`
@@ -302,7 +355,7 @@ cd c:\Dev\rafflenow
 
 ---
 
-## 7. Respuestas Esperadas
+## 8. Respuestas Esperadas
 
 ### 200/201 - Success
 ```json
@@ -337,7 +390,7 @@ cd c:\Dev\rafflenow
 
 ---
 
-## 8. Tips y Troubleshooting
+## 9. Tips y Troubleshooting
 
 ### Token expirado
 - Los IdTokens expiran después de 60 minutos

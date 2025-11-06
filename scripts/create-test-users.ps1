@@ -1,8 +1,21 @@
 # Script para crear usuarios de prueba en Cognito
-$UserPoolId = "us-east-2_0pco0yiVE"
-$Profile = "jeancdev"
+# 
+# CONFIGURACIÓN:
+# 1. Obtén tu User Pool ID desde:
+#    - Terraform: cd iac/environments/dev && terraform output
+#    - AWS CLI: aws cognito-idp list-user-pools --max-results 10 --profile <tu-perfil>
+# 2. Ajusta las variables $UserPoolId y $Profile según tu entorno
+#
+
+# ===== CONFIGURACIÓN PERSONALIZABLE =====
+$UserPoolId = "us-east-2_0pco0yiVE"  # ⚙️ Cambiar por tu User Pool ID
+$Profile = "jeancdev"                 # ⚙️ Cambiar por tu perfil AWS CLI (aws configure sso)
+# ========================================
 
 Write-Host "=== Creando usuarios de prueba en Cognito ===" -ForegroundColor Green
+Write-Host "User Pool ID: $UserPoolId" -ForegroundColor Gray
+Write-Host "AWS Profile: $Profile" -ForegroundColor Gray
+Write-Host ""
 
 # Admin User
 Write-Host "`nCreando usuario Admin..." -ForegroundColor Yellow
