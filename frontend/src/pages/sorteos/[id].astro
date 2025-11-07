@@ -1,0 +1,21 @@
+---
+import { Header } from "@/components/header";
+import Layout from "@/layouts/Layout.astro";
+import { RaffleDetail } from "@/modules/raffles/components/raffle-detail";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect("/sorteos");
+}
+---
+
+<Layout title="Detalles del Sorteo - RaffleNow">
+  <Header />
+
+  <main class="container mx-auto px-4 py-8">
+    <RaffleDetail client:load raffleId={id} />
+  </main>
+</Layout>
