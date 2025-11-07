@@ -52,6 +52,30 @@ resource "aws_cognito_user_pool" "rafflenow_pool" {
     }
   }
 
+  schema {
+    name                = "given_name"
+    attribute_data_type = "String"
+    required            = false
+    mutable             = true
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
+
+  schema {
+    name                = "family_name"
+    attribute_data_type = "String"
+    required            = false
+    mutable             = true
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
+
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-user-pool"
     Type = "Cognito"
@@ -82,8 +106,8 @@ resource "aws_cognito_user_pool_client" "rafflenow_client" {
   generate_secret = false
 
   # Scopes permitidos
-  read_attributes  = ["email", "name", "email_verified"]
-  write_attributes = ["email", "name"]
+  read_attributes  = ["email", "name", "email_verified", "given_name", "family_name"]
+  write_attributes = ["email", "name", "given_name", "family_name"]
 
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["code", "implicit"]

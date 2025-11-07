@@ -1,0 +1,16 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { SignInForm } from "@/modules/auth/ui/components/sign-in-form";
+import { Toaster } from "@/components/ui/sonner";
+---
+
+<Layout title="Iniciar Sesión">
+  <div class="grid place-items-center min-h-screen content-center bg-gray-50 px-4">
+    <SignInForm client:load />
+    <Toaster client:load />
+  </div>
+
+  <script>
+    import "@/lib/amplify";
+  </script>
+</Layout>
