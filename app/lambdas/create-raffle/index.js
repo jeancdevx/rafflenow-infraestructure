@@ -24,7 +24,9 @@ exports.handler = async (event) => {
   }
 
   const groups = claims["cognito:groups"];
-  const isAdmin = groups && (Array.isArray(groups) ? groups.includes("Admin") : groups === "Admin");
+  const isAdmin =
+    groups &&
+    (Array.isArray(groups) ? groups.includes("Admin") : groups === "Admin");
 
   if (!isAdmin) {
     return {
@@ -67,9 +69,9 @@ exports.handler = async (event) => {
 
     const now = new Date();
     const startDate = body.start_date ? new Date(body.start_date) : now;
-    
+
     let endDate;
-    if (body.end_date.includes('T')) {
+    if (body.end_date.includes("T")) {
       endDate = new Date(body.end_date);
       if (endDate.getUTCHours() !== 23 || endDate.getUTCMinutes() !== 59) {
         return {
@@ -80,7 +82,8 @@ exports.handler = async (event) => {
           },
           body: JSON.stringify({
             message: "Validation error",
-            error: "end_date must be set to 23:59 UTC. Use format: YYYY-MM-DD or YYYY-MM-DDT23:59:00Z",
+            error:
+              "end_date must be set to 23:59 UTC. Use format: YYYY-MM-DD or YYYY-MM-DDT23:59:00Z",
           }),
         };
       }
@@ -121,7 +124,7 @@ exports.handler = async (event) => {
       };
     }
 
-    if (!body.prize_image_url || body.prize_image_url.trim() === "") {
+    if (!body.prize_images || !Array.isArray(body.prize_images)) {
       return {
         statusCode: 400,
         headers: {
@@ -130,9 +133,58 @@ exports.handler = async (event) => {
         },
         body: JSON.stringify({
           message: "Validation error",
-          error: "prize_image_url is required and cannot be empty",
+          error: "prize_images is required and must be an array",
         }),
       };
+    }
+
+    if (body.prize_images.length < 1) {
+      return {
+        statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({
+          message: "Validation error",
+          error: "At least 1 prize image is required",
+          images_count: body.prize_images.length,
+        }),
+      };
+    }
+
+    if (body.prize_images.length > 5) {
+      return {
+        statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({
+          message: "Validation error",
+          error: "Maximum 5 prize images allowed",
+          images_count: body.prize_images.length,
+        }),
+      };
+    }
+
+    for (let i = 0; i < body.prize_images.length; i++) {
+      if (
+        typeof body.prize_images[i] !== "string" ||
+        body.prize_images[i].trim() === ""
+      ) {
+        return {
+          statusCode: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+          body: JSON.stringify({
+            message: "Validation error",
+            error: `prize_images[${i}] must be a non-empty string URL`,
+          }),
+        };
+      }
     }
 
     const raffleId = `raffle-${randomUUID()}`;
@@ -148,7 +200,7 @@ exports.handler = async (event) => {
       end_date: endDate.toISOString(),
       max_participants: parseInt(body.max_participants),
       current_participants: 0,
-      prize_image_url: body.prize_image_url,
+      prize_images: body.prize_images,
       created_by: createdByEmail,
       created_at: nowISO,
       updated_at: nowISO,
