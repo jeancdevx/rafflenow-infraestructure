@@ -1,0 +1,16 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { SignUpForm } from "@/modules/auth/ui/components/sign-up-form";
+import { Toaster } from "@/components/ui/sonner";
+---
+
+<Layout title="Crear Cuenta">
+  <div class="grid place-items-center min-h-screen content-center bg-gray-50 px-4">
+    <SignUpForm client:load />
+    <Toaster client:load />
+  </div>
+
+  <script>
+    import "@/lib/amplify";
+  </script>
+</Layout>
