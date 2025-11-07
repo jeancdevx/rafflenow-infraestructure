@@ -88,3 +88,18 @@ variable "lambda_get_raffle_invoke_arn" {
   description = "Invoke ARN of the get raffle Lambda function"
   type        = string
 }
+
+variable "lambda_upload_image_arn" {
+  description = "ARN of the upload image Lambda function"
+  type        = string
+}
+
+variable "lambda_upload_image_name" {
+  description = "Name of the upload image Lambda function"
+  type        = string
+}
+
+variable "lambda_upload_image_invoke_arn" {
+  description = "Invoke ARN of the upload image Lambda function"
+  type        = string
+}

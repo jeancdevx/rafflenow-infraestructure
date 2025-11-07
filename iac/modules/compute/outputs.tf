@@ -87,3 +87,18 @@ output "lambda_worker_process_name" {
   description = "Name of the worker process Lambda function"
   value       = aws_lambda_function.worker_process.function_name
 }
+
+output "lambda_upload_image_arn" {
+  description = "ARN of the upload image Lambda function"
+  value       = aws_lambda_function.upload_image.arn
+}
+
+output "lambda_upload_image_name" {
+  description = "Name of the upload image Lambda function"
+  value       = aws_lambda_function.upload_image.function_name
+}
+
+output "lambda_upload_image_invoke_arn" {
+  description = "Invoke ARN of the upload image Lambda function"
+  value       = aws_lambda_function.upload_image.invoke_arn
+}

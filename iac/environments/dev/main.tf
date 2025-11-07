@@ -11,6 +11,21 @@ module "storage" {
   }
 }
 
+module "cdn" {
+  source = "../../modules/cdn"
+
+  name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+
+  assets_bucket_id                   = module.storage.s3_assets_bucket_id
+  assets_bucket_arn                  = module.storage.s3_assets_bucket_arn
+  assets_bucket_regional_domain_name = module.storage.s3_assets_bucket_regional_domain_name
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
+
 module "compute" {
   source      = "../../modules/compute"
   name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
@@ -20,6 +35,9 @@ module "compute" {
   dynamodb_participants_table_name = module.storage.dynamodb_participants_table_name
   sqs_queue_url                    = module.storage.sqs_raffle_winner_queue_url
   sqs_queue_arn                    = module.storage.sqs_raffle_winner_queue_arn
+  s3_assets_bucket_arn             = module.storage.s3_assets_bucket_arn
+  s3_assets_bucket_name            = module.storage.s3_assets_bucket_id
+  cloudfront_url                   = module.cdn.cloudfront_distribution_url
 
   tags = {
     Environment = var.environment
@@ -65,6 +83,10 @@ module "api_gateway" {
   lambda_get_raffle_arn        = module.compute.lambda_get_raffle_arn
   lambda_get_raffle_name       = module.compute.lambda_get_raffle_name
   lambda_get_raffle_invoke_arn = module.compute.lambda_get_raffle_invoke_arn
+
+  lambda_upload_image_arn        = module.compute.lambda_upload_image_arn
+  lambda_upload_image_name       = module.compute.lambda_upload_image_name
+  lambda_upload_image_invoke_arn = module.compute.lambda_upload_image_invoke_arn
 
   cognito_user_pool_arn = module.cognito.user_pool_arn
 

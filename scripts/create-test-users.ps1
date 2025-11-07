@@ -1,19 +1,21 @@
-# Script para crear usuarios de prueba en Cognito
-# 
-# CONFIGURACIÓN:
-# 1. Obtén tu User Pool ID desde:
-#    - Terraform: cd iac/environments/dev && terraform output
-#    - AWS CLI: aws cognito-idp list-user-pools --max-results 10 --profile <tu-perfil>
-# 2. Ajusta las variables $UserPoolId y $Profile según tu entorno
-#
-
-# ===== CONFIGURACIÓN PERSONALIZABLE =====
-$UserPoolId = "us-east-2_0pco0yiVE"  # ⚙️ Cambiar por tu User Pool ID
-$Profile = "jeancdev"                 # ⚙️ Cambiar por tu perfil AWS CLI (aws configure sso)
-# ========================================
+$Profile = "jeancdev"
+$TerraformDir = "$PSScriptRoot\..\iac\environments\dev"
 
 Write-Host "=== Creando usuarios de prueba en Cognito ===" -ForegroundColor Green
+Write-Host "Obteniendo configuración desde Terraform..." -ForegroundColor Cyan
+
+Push-Location $TerraformDir
+$UserPoolId = terraform output -raw cognito_user_pool_id
+$ClientId = terraform output -raw cognito_client_id
+Pop-Location
+
+if (-not $UserPoolId -or -not $ClientId) {
+    Write-Host "❌ Error: No se pudieron obtener los valores de Terraform" -ForegroundColor Red
+    exit 1
+}
+
 Write-Host "User Pool ID: $UserPoolId" -ForegroundColor Gray
+Write-Host "Client ID: $ClientId" -ForegroundColor Gray
 Write-Host "AWS Profile: $Profile" -ForegroundColor Gray
 Write-Host ""
 
@@ -79,5 +81,6 @@ Write-Host "`n=== Proceso completado ===" -ForegroundColor Green
 Write-Host "`nCredenciales para Insomnia:" -ForegroundColor Cyan
 Write-Host "  Admin: admin@rafflenow.com / AdminPass123!"
 Write-Host "  User:  user@rafflenow.com / UserPass123!"
-Write-Host "`nUser Pool ID: $UserPoolId" -ForegroundColor Gray
-Write-Host "Client ID: 8puupsr2sodm3befja1p1g99p" -ForegroundColor Gray
+Write-Host "`nCognito Configuration:" -ForegroundColor Gray
+Write-Host "  User Pool ID: $UserPoolId" -ForegroundColor Gray
+Write-Host "  Client ID: $ClientId" -ForegroundColor Gray

@@ -42,3 +42,7 @@ output "api_endpoint_post_close" {
   description = "Full URL endpoint for POST /api/v1/raffles/{id}/close"
   value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles/{id}/close"
 }
+output "api_endpoint_post_upload" {
+  description = "Full URL endpoint for POST /api/v1/assets/upload"
+  value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/assets/upload"
+}

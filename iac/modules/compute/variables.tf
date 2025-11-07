@@ -32,3 +32,18 @@ variable "sqs_queue_arn" {
   description = "ARN of the SQS queue for winner selection"
   type        = string
 }
+
+variable "s3_assets_bucket_arn" {
+  description = "ARN of the S3 bucket for assets"
+  type        = string
+}
+
+variable "s3_assets_bucket_name" {
+  description = "Name of the S3 bucket for assets"
+  type        = string
+}
+
+variable "cloudfront_url" {
+  description = "CloudFront distribution URL"
+  type        = string
+}
