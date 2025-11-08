@@ -1,0 +1,20 @@
+---
+import { Header } from "@/components/header";
+import Layout from "@/layouts/Layout.astro";
+import { RaffleList } from "@/modules/raffles/components/raffle-list";
+---
+
+<Layout title="Sorteos - RaffleNow">
+  <Header />
+
+  <main class="container min-h-svh mx-auto px-4 py-8">
+    <div class="mb-8 flex flex-col items-center text-center">
+      <h1 class="text-7xl font-bold mb-2">Sorteos Activos</h1>
+      <p class="text-muted-foreground">
+        Participa en nuestros sorteos y gana increíbles premios
+      </p>
+    </div>
+
+    <RaffleList client:load />
+  </main>
+</Layout>
