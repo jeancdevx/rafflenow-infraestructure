@@ -51,8 +51,13 @@ export function SignInForm() {
         toast.success("¡Bienvenido!", {
           description: "Inicio de sesión exitoso",
         });
+
+        // Obtener redirect de URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get("redirect") || "/sorteos";
+
         setTimeout(() => {
-          window.location.href = "/sorteos";
+          window.location.href = redirect;
         }, 500);
       }
     } catch (err: any) {
