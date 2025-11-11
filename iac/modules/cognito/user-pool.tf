@@ -1,3 +1,4 @@
+# Cognito User Pool
 resource "aws_cognito_user_pool" "rafflenow_pool" {
   name = "${var.name_prefix}-user-pool"
 
@@ -80,59 +81,4 @@ resource "aws_cognito_user_pool" "rafflenow_pool" {
     Name = "${var.name_prefix}-user-pool"
     Type = "Cognito"
   })
-}
-
-resource "aws_cognito_user_pool_client" "rafflenow_client" {
-  name         = "${var.name_prefix}-client"
-  user_pool_id = aws_cognito_user_pool.rafflenow_pool.id
-
-  explicit_auth_flows = [
-    "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_REFRESH_TOKEN_AUTH",
-    "ALLOW_USER_SRP_AUTH",
-    "ALLOW_ADMIN_USER_PASSWORD_AUTH"
-  ]
-
-  refresh_token_validity = 30 # días
-  access_token_validity  = 60 # minutos
-  id_token_validity      = 60 # minutos
-
-  token_validity_units {
-    refresh_token = "days"
-    access_token  = "minutes"
-    id_token      = "minutes"
-  }
-
-  generate_secret = false
-
-  # Scopes permitidos
-  read_attributes  = ["email", "name", "email_verified", "given_name", "family_name"]
-  write_attributes = ["email", "name", "given_name", "family_name"]
-
-  allowed_oauth_flows_user_pool_client = true
-  allowed_oauth_flows                  = ["code", "implicit"]
-  allowed_oauth_scopes                 = ["email", "openid", "profile"]
-  callback_urls                        = var.callback_urls
-  logout_urls                          = var.logout_urls
-
-  prevent_user_existence_errors = "ENABLED"
-}
-
-resource "aws_cognito_user_group" "admin" {
-  name         = "Admin"
-  user_pool_id = aws_cognito_user_pool.rafflenow_pool.id
-  description  = "Administrators with full access to create and manage raffles"
-  precedence   = 1
-}
-
-resource "aws_cognito_user_group" "user" {
-  name         = "User"
-  user_pool_id = aws_cognito_user_pool.rafflenow_pool.id
-  description  = "Regular users who can participate in raffles"
-  precedence   = 2
-}
-
-resource "aws_cognito_user_pool_domain" "rafflenow_domain" {
-  domain       = "${var.name_prefix}-auth"
-  user_pool_id = aws_cognito_user_pool.rafflenow_pool.id
 }
