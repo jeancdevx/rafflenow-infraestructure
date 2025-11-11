@@ -21,9 +21,19 @@ export class RafflesAPI {
     }
   }
 
-  static async getRaffleById(id: string): Promise<Raffle> {
+  static async getRaffleById(id: string, token?: string | null): Promise<{ raffle: Raffle; hasParticipated: boolean }> {
     try {
-      const response = await fetch(RAFFLES_API.DETAIL(id));
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = token;
+      }
+
+      const response = await fetch(RAFFLES_API.DETAIL(id), {
+        headers,
+      });
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -32,8 +42,11 @@ export class RafflesAPI {
         throw new Error(`Error fetching raffle: ${response.status}`);
       }
 
-      const data: RaffleDetailResponse = await response.json();
-      return data.raffle;
+      const data = await response.json();
+      return {
+        raffle: data.raffle,
+        hasParticipated: data.user_has_participated || false,
+      };
     } catch (error) {
       console.error('Error in getRaffleById:', error);
       throw error;
@@ -74,5 +87,52 @@ export class RafflesAPI {
       return `${(num / 1_000).toFixed(1)}K`;
     }
     return num.toString();
+  }
+
+  static async participateInRaffle(
+    raffleId: string,
+    token: string,
+    participantName: string,
+    participantEmail: string
+  ): Promise<{ message: string; participation_id: string }> {
+    try {
+      const response = await fetch(RAFFLES_API.PARTICIPATE(raffleId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token,
+        },
+        body: JSON.stringify({
+          participant_name: participantName,
+          participant_email: participantEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || 'Error al participar en el sorteo';
+        
+        if (response.status === 400) {
+          throw new Error(errorMessage);
+        }
+        if (response.status === 401) {
+          throw new Error('Debes iniciar sesión para participar');
+        }
+        if (response.status === 403) {
+          throw new Error('No tienes permiso para participar en este sorteo');
+        }
+        if (response.status === 409) {
+          throw new Error('Ya participaste en este sorteo');
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error in participateInRaffle:', error);
+      throw error;
+    }
   }
 }
