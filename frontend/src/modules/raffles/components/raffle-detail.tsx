@@ -17,27 +17,33 @@ import { CalendarIcon, TicketIcon, OctagonAlertIcon } from "lucide-react";
 import { RafflesAPI } from "../api/raffles-api";
 import type { Raffle } from "../types";
 import { RaffleCountdown } from "./raffle-countdown";
+import { ParticipateButton } from "./participate-button";
+import { AmplifyProvider } from "@/components/amplify-provider";
+import { useAuth } from "@/hooks/use-auth";
 
 interface RaffleDetailProps {
   raffleId: string;
 }
 
-export function RaffleDetail({ raffleId }: RaffleDetailProps) {
+function RaffleDetailContent({ raffleId }: RaffleDetailProps) {
+  const { token } = useAuth();
   const [raffle, setRaffle] = useState<Raffle | null>(null);
+  const [hasParticipated, setHasParticipated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
     loadRaffle();
-  }, [raffleId]);
+  }, [raffleId, token]);
 
   const loadRaffle = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await RafflesAPI.getRaffleById(raffleId);
-      setRaffle(data);
+      const data = await RafflesAPI.getRaffleById(raffleId, token);
+      setRaffle(data.raffle);
+      setHasParticipated(data.hasParticipated);
     } catch (err) {
       console.error("Error loading raffle:", err);
       setError(
@@ -200,18 +206,12 @@ export function RaffleDetail({ raffleId }: RaffleDetailProps) {
             <Progress value={progress} className="h-3" />
           </div>
 
-          <Button
-            className="w-full h-12 text-lg"
-            size="lg"
-            disabled={isFull || isExpired}
-          >
-            <TicketIcon className="mr-2 h-5 w-5" />
-            {isFull
-              ? "Sorteo Lleno"
-              : isExpired
-              ? "Sorteo Finalizado"
-              : "Participar Ahora"}
-          </Button>
+          <ParticipateButton
+            raffle={raffle}
+            hasParticipated={hasParticipated}
+            onSuccess={loadRaffle}
+            className="w-full h-12 text-lg flex items-center cursor-pointer justify-center gap-x-2"
+          />
 
           <div className="space-y-3">
             <h2 className="text-xl font-semibold">Descripción</h2>
@@ -264,5 +264,13 @@ export function RaffleDetail({ raffleId }: RaffleDetailProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+export function RaffleDetail({ raffleId }: RaffleDetailProps) {
+  return (
+    <AmplifyProvider>
+      <RaffleDetailContent raffleId={raffleId} />
+    </AmplifyProvider>
   );
 }
