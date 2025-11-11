@@ -97,11 +97,123 @@ resource "aws_lambda_permission" "api_gateway_invoke_create_raffle" {
   source_arn    = "${aws_api_gateway_rest_api.rafflenow_api.execution_arn}/*/*"
 }
 
+# Method: OPTIONS /api/v1/raffles
+resource "aws_api_gateway_method" "options_raffles" {
+  rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id   = aws_api_gateway_resource.raffles.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# Integration: OPTIONS /api/v1/raffles -> Mock
+resource "aws_api_gateway_integration" "options_raffles_mock" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.raffles.id
+  http_method = aws_api_gateway_method.options_raffles.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+# Method Response: OPTIONS /api/v1/raffles
+resource "aws_api_gateway_method_response" "options_raffles_200" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.raffles.id
+  http_method = aws_api_gateway_method.options_raffles.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+# Integration Response: OPTIONS /api/v1/raffles
+resource "aws_api_gateway_integration_response" "options_raffles_200" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.raffles.id
+  http_method = aws_api_gateway_method.options_raffles.http_method
+  status_code = aws_api_gateway_method_response.options_raffles_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.options_raffles_mock
+  ]
+}
+
 # Resource: /api/v1/raffles/{id}
 resource "aws_api_gateway_resource" "raffle_id" {
   rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
   parent_id   = aws_api_gateway_resource.raffles.id
   path_part   = "{id}"
+}
+
+# Method: OPTIONS /api/v1/raffles/{id}
+resource "aws_api_gateway_method" "options_raffle_by_id" {
+  rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id   = aws_api_gateway_resource.raffle_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# Integration: OPTIONS /api/v1/raffles/{id} -> MOCK
+resource "aws_api_gateway_integration" "options_raffle_by_id_mock" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.raffle_id.id
+  http_method = aws_api_gateway_method.options_raffle_by_id.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+# Method Response: OPTIONS /api/v1/raffles/{id}
+resource "aws_api_gateway_method_response" "options_raffle_by_id_200" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.raffle_id.id
+  http_method = aws_api_gateway_method.options_raffle_by_id.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+# Integration Response: OPTIONS /api/v1/raffles/{id}
+resource "aws_api_gateway_integration_response" "options_raffle_by_id_200" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.raffle_id.id
+  http_method = aws_api_gateway_method.options_raffle_by_id.http_method
+  status_code = aws_api_gateway_method_response.options_raffle_by_id_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.options_raffle_by_id_mock
+  ]
 }
 
 # Method: GET /api/v1/raffles/{id}
@@ -168,6 +280,62 @@ resource "aws_lambda_permission" "api_gateway_invoke_ingest_participation" {
   source_arn    = "${aws_api_gateway_rest_api.rafflenow_api.execution_arn}/*/*"
 }
 
+# Method: OPTIONS /api/v1/raffles/{id}/participate (CORS preflight)
+resource "aws_api_gateway_method" "options_participate" {
+  rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id   = aws_api_gateway_resource.participate.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# Integration: OPTIONS /api/v1/raffles/{id}/participate -> Mock
+resource "aws_api_gateway_integration" "options_participate_mock" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.participate.id
+  http_method = aws_api_gateway_method.options_participate.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+# Method Response: OPTIONS /api/v1/raffles/{id}/participate
+resource "aws_api_gateway_method_response" "options_participate_200" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.participate.id
+  http_method = aws_api_gateway_method.options_participate.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+# Integration Response: OPTIONS /api/v1/raffles/{id}/participate
+resource "aws_api_gateway_integration_response" "options_participate_200" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.participate.id
+  http_method = aws_api_gateway_method.options_participate.http_method
+  status_code = aws_api_gateway_method_response.options_participate_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.options_participate_mock
+  ]
+}
+
 # Resource: /api/v1/raffles/{id}/close
 resource "aws_api_gateway_resource" "close" {
   rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
@@ -203,6 +371,62 @@ resource "aws_lambda_permission" "api_gateway_invoke_close_raffle" {
   function_name = var.lambda_close_raffle_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.rafflenow_api.execution_arn}/*/*"
+}
+
+# Method: OPTIONS /api/v1/raffles/{id}/close (CORS preflight)
+resource "aws_api_gateway_method" "options_close" {
+  rest_api_id   = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id   = aws_api_gateway_resource.close.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# Integration: OPTIONS /api/v1/raffles/{id}/close -> Mock
+resource "aws_api_gateway_integration" "options_close_mock" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.close.id
+  http_method = aws_api_gateway_method.options_close.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+# Method Response: OPTIONS /api/v1/raffles/{id}/close
+resource "aws_api_gateway_method_response" "options_close_200" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.close.id
+  http_method = aws_api_gateway_method.options_close.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+# Integration Response: OPTIONS /api/v1/raffles/{id}/close
+resource "aws_api_gateway_integration_response" "options_close_200" {
+  rest_api_id = aws_api_gateway_rest_api.rafflenow_api.id
+  resource_id = aws_api_gateway_resource.close.id
+  http_method = aws_api_gateway_method.options_close.http_method
+  status_code = aws_api_gateway_method_response.options_close_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.options_close_mock
+  ]
 }
 
 # Resource: /api/v1/assets
@@ -273,12 +497,20 @@ resource "aws_api_gateway_deployment" "api_deployment" {
       aws_api_gateway_method.post_participate.id,
       aws_api_gateway_method.post_close.id,
       aws_api_gateway_method.post_assets_upload.id,
+      aws_api_gateway_method.options_raffles.id,
+      aws_api_gateway_method.options_raffle_by_id.id,
+      aws_api_gateway_method.options_participate.id,
+      aws_api_gateway_method.options_close.id,
       aws_api_gateway_integration.get_raffles_lambda.id,
       aws_api_gateway_integration.get_raffle_by_id_lambda.id,
       aws_api_gateway_integration.post_raffles_lambda.id,
       aws_api_gateway_integration.post_participate_lambda.id,
       aws_api_gateway_integration.post_close_lambda.id,
       aws_api_gateway_integration.post_assets_upload_lambda.id,
+      aws_api_gateway_integration.options_raffles_mock.id,
+      aws_api_gateway_integration.options_raffle_by_id_mock.id,
+      aws_api_gateway_integration.options_participate_mock.id,
+      aws_api_gateway_integration.options_close_mock.id,
     ]))
   }
 
@@ -293,6 +525,10 @@ resource "aws_api_gateway_deployment" "api_deployment" {
     aws_api_gateway_integration.post_participate_lambda,
     aws_api_gateway_integration.post_close_lambda,
     aws_api_gateway_integration.post_assets_upload_lambda,
+    aws_api_gateway_integration_response.options_raffles_200,
+    aws_api_gateway_integration_response.options_raffle_by_id_200,
+    aws_api_gateway_integration_response.options_participate_200,
+    aws_api_gateway_integration_response.options_close_200,
   ]
 }
 
