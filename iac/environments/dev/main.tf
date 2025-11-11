@@ -38,6 +38,8 @@ module "compute" {
   s3_assets_bucket_arn             = module.storage.s3_assets_bucket_arn
   s3_assets_bucket_name            = module.storage.s3_assets_bucket_id
   cloudfront_url                   = module.cdn.cloudfront_distribution_url
+  cognito_user_pool_id             = module.cognito.user_pool_id
+  cognito_client_id                = module.cognito.user_pool_client_id
 
   tags = {
     Environment = var.environment

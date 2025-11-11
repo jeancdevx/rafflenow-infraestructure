@@ -269,7 +269,10 @@ resource "aws_lambda_function" "get_raffle" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE = var.dynamodb_table_name
+      DYNAMODB_TABLE              = var.dynamodb_table_name
+      DYNAMODB_PARTICIPANTS_TABLE = var.dynamodb_participants_table_name
+      COGNITO_USER_POOL_ID        = var.cognito_user_pool_id
+      COGNITO_CLIENT_ID           = var.cognito_client_id
     }
   }
 
