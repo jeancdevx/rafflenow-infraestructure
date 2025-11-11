@@ -12,7 +12,7 @@ resource "aws_lambda_function" "list_raffles" {
   handler          = "index.handler"
   source_code_hash = data.archive_file.list_raffles_zip.output_base64sha256
   runtime          = "nodejs22.x"
-  timeout          = 2
+  timeout          = 5
   memory_size      = 256
 
   environment {
@@ -41,7 +41,7 @@ resource "aws_lambda_function" "create_raffle" {
   handler          = "index.handler"
   source_code_hash = data.archive_file.create_raffle_zip.output_base64sha256
   runtime          = "nodejs22.x"
-  timeout          = 2
+  timeout          = 5
   memory_size      = 256
 
   environment {
@@ -70,7 +70,7 @@ resource "aws_lambda_function" "get_raffle" {
   handler          = "index.handler"
   source_code_hash = data.archive_file.get_raffle_zip.output_base64sha256
   runtime          = "nodejs22.x"
-  timeout          = 2
+  timeout          = 5
   memory_size      = 512
 
   environment {
@@ -102,7 +102,7 @@ resource "aws_lambda_function" "ingest_participation" {
   handler          = "index.handler"
   source_code_hash = data.archive_file.ingest_participation_zip.output_base64sha256
   runtime          = "nodejs22.x"
-  timeout          = 3
+  timeout          = 5
   memory_size      = 512
 
   environment {
@@ -222,7 +222,7 @@ resource "aws_lambda_function" "upload_image" {
   handler          = "index.handler"
   source_code_hash = data.archive_file.upload_image_zip.output_base64sha256
   runtime          = "nodejs22.x"
-  timeout          = 3
+  timeout          = 10
   memory_size      = 512
 
   environment {
