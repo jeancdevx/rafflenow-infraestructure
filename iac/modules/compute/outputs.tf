@@ -102,3 +102,13 @@ output "lambda_upload_image_invoke_arn" {
   description = "Invoke ARN of the upload image Lambda function"
   value       = aws_lambda_function.upload_image.invoke_arn
 }
+
+output "lambda_participation_process_arn" {
+  description = "ARN of the participation process Lambda function"
+  value       = aws_lambda_function.participation_process.arn
+}
+
+output "lambda_participation_process_name" {
+  description = "Name of the participation process Lambda function"
+  value       = aws_lambda_function.participation_process.function_name
+}
