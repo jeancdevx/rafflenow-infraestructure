@@ -1,11 +1,11 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { DynamoDBDocumentClient, GetCommand } = require("@aws-sdk/lib-dynamodb");
 const { CognitoJwtVerifier } = require("aws-jwt-verify");
+const Logger = require("./logger");
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
-// Verificador de JWT de Cognito (solo se inicializa si hay variables de entorno)
 let verifier = null;
 if (process.env.COGNITO_USER_POOL_ID && process.env.COGNITO_CLIENT_ID) {
   verifier = CognitoJwtVerifier.create({
@@ -15,13 +15,18 @@ if (process.env.COGNITO_USER_POOL_ID && process.env.COGNITO_CLIENT_ID) {
   });
 }
 
-exports.handler = async (event) => {
-  console.log("Event received:", JSON.stringify(event));
+exports.handler = async (event, context) => {
+  const logger = new Logger(context);
+  logger.logRequest(event);
 
   try {
     const raffleId = event.pathParameters?.id;
 
     if (!raffleId) {
+      logger.warn("Missing raffle_id in path parameters", {
+        pathParameters: event.pathParameters,
+      });
+
       return {
         statusCode: 400,
         headers: {
@@ -34,6 +39,10 @@ exports.handler = async (event) => {
       };
     }
 
+    logger.info("Fetching raffle", {
+      operation: "get-raffle",
+    });
+
     const command = new GetCommand({
       TableName: process.env.DYNAMODB_TABLE,
       Key: {
@@ -41,9 +50,18 @@ exports.handler = async (event) => {
       },
     });
 
+    logger.logDbOperation("GetItem", process.env.DYNAMODB_TABLE, {
+      operation: "fetch-raffle",
+    });
+
     const response = await docClient.send(command);
 
     if (!response.Item) {
+      logger.warn("Raffle not found", {
+        operation: "get-raffle",
+        found: false,
+      });
+
       return {
         statusCode: 404,
         headers: {
@@ -57,28 +75,47 @@ exports.handler = async (event) => {
       };
     }
 
+    logger.info("Raffle retrieved successfully", {
+      operation: "get-raffle",
+      found: true,
+    });
+
     const raffle = response.Item;
 
-    // Intentar verificar el token del header Authorization (opcional)
     let userEmail = null;
     const authHeader =
       event.headers?.Authorization || event.headers?.authorization;
 
     if (authHeader && verifier) {
       try {
+        logger.info("Verifying JWT token", {
+          operation: "token-verification",
+        });
+
         const token = authHeader.replace("Bearer ", "").trim();
         const payload = await verifier.verify(token);
         userEmail = payload.email?.toLowerCase();
+
+        logger.info("Token verified successfully", {
+          operation: "token-verification",
+          authenticated: true,
+        });
       } catch (error) {
-        console.log("Token verification failed (optional):", error.message);
-        // No hacer nada, el token es opcional
+        logger.warn("Token verification failed (optional)", {
+          operation: "token-verification",
+          authenticated: false,
+          reason: error.message,
+        });
       }
     }
 
-    // Si tenemos email del usuario, verificar si ya participó
     let hasParticipated = false;
     if (userEmail && process.env.DYNAMODB_PARTICIPANTS_TABLE) {
       try {
+        logger.info("Checking user participation", {
+          operation: "check-participation",
+        });
+
         const checkParticipationCommand = new GetCommand({
           TableName: process.env.DYNAMODB_PARTICIPANTS_TABLE,
           Key: {
@@ -87,14 +124,31 @@ exports.handler = async (event) => {
           },
         });
 
+        logger.logDbOperation(
+          "GetItem",
+          process.env.DYNAMODB_PARTICIPANTS_TABLE,
+          {
+            operation: "check-participation",
+          }
+        );
+
         const participationResponse = await docClient.send(
           checkParticipationCommand
         );
         hasParticipated = !!participationResponse.Item;
+
+        logger.info("Participation check completed", {
+          operation: "check-participation",
+          has_participated: hasParticipated,
+        });
       } catch (error) {
-        console.error("Error checking participation:", error);
+        logger.error("Error checking participation", error, {
+          operation: "check-participation",
+        });
       }
     }
+
+    logger.logResponse(200, "Raffle retrieved successfully");
 
     return {
       statusCode: 200,
@@ -109,7 +163,10 @@ exports.handler = async (event) => {
       }),
     };
   } catch (error) {
-    console.error("Error:", error);
+    logger.error("Unexpected error retrieving raffle", error, {
+      operation: "get-raffle",
+      fatal: true,
+    });
 
     return {
       statusCode: 500,
