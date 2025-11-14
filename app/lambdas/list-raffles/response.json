@@ -1,8 +1,0 @@
-{
-  "statusCode": 200,
-  "headers": {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*"
-  },
-  "body": "{\"message\":\"Raffles retrieved successfully\",\"count\":0,\"raffles\":[]}"
-}
