@@ -1,15 +1,18 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb");
 const { randomUUID } = require("crypto");
+const Logger = require("./logger");
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
-exports.handler = async (event) => {
-  console.log("Event received:", JSON.stringify(event));
+exports.handler = async (event, context) => {
+  const logger = new Logger(context);
+  logger.logRequest(event);
 
   const claims = event.requestContext?.authorizer?.claims;
   if (!claims) {
+    logger.warn("Unauthorized access attempt", { operation: "create-raffle" });
     return {
       statusCode: 401,
       headers: {
@@ -29,6 +32,9 @@ exports.handler = async (event) => {
     (Array.isArray(groups) ? groups.includes("Admin") : groups === "Admin");
 
   if (!isAdmin) {
+    logger.warn("Forbidden: non-admin user attempted to create raffle", {
+      operation: "create-raffle",
+    });
     return {
       statusCode: 403,
       headers: {
@@ -45,6 +51,8 @@ exports.handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
 
+    logger.info("Creating new raffle", { operation: "create-raffle" });
+
     const requiredFields = [
       "title",
       "description",
@@ -53,6 +61,10 @@ exports.handler = async (event) => {
     ];
     for (const field of requiredFields) {
       if (!body[field]) {
+        logger.warn("Validation error: missing required field", {
+          operation: "create-raffle",
+          missing_field: field,
+        });
         return {
           statusCode: 400,
           headers: {
@@ -226,9 +238,11 @@ exports.handler = async (event) => {
       }),
     };
   } catch (error) {
-    console.error("Error:", error);
-
     if (error.name === "ConditionalCheckFailedException") {
+      logger.warn("Raffle already exists", {
+        operation: "create-raffle",
+        error_type: "ConditionalCheckFailed",
+      });
       return {
         statusCode: 409,
         headers: {
@@ -239,6 +253,11 @@ exports.handler = async (event) => {
         }),
       };
     }
+
+    logger.error("Error creating raffle", error, {
+      operation: "create-raffle",
+      fatal: true,
+    });
 
     return {
       statusCode: 500,
