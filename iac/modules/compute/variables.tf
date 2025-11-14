@@ -33,6 +33,11 @@ variable "sqs_queue_arn" {
   type        = string
 }
 
+variable "sqs_participations_queue_arn" {
+  description = "ARN of the SQS queue for participations processing"
+  type        = string
+}
+
 variable "s3_assets_bucket_arn" {
   description = "ARN of the S3 bucket for assets"
   type        = string
