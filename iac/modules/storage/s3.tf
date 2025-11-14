@@ -7,3 +7,9 @@ resource "aws_s3_bucket" "assets" {
     Type = "S3"
   })
 }
+
+# S3 Event Notifications to EventBridge
+resource "aws_s3_bucket_notification" "assets_eventbridge" {
+  bucket      = aws_s3_bucket.assets.id
+  eventbridge = true
+}

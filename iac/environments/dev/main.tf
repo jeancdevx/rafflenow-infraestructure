@@ -111,3 +111,22 @@ module "scheduler" {
     Project     = "RaffleNow"
   }
 }
+
+module "eventbridge" {
+  source = "../../modules/eventbridge"
+
+  name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+
+  sqs_winners_queue_arn         = module.storage.sqs_raffle_winner_queue_arn
+  sqs_winners_queue_url         = module.storage.sqs_raffle_winner_queue_url
+  sqs_participations_queue_arn  = module.storage.sqs_participations_queue_arn
+  sqs_participations_queue_url  = module.storage.sqs_participations_queue_url
+  sqs_image_optimizer_queue_arn = module.storage.sqs_image_optimizer_queue_arn
+  sqs_image_optimizer_queue_url = module.storage.sqs_image_optimizer_queue_url
+  s3_assets_bucket_name         = module.storage.s3_assets_bucket_name
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
