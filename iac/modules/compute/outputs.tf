@@ -112,3 +112,13 @@ output "lambda_participation_process_name" {
   description = "Name of the participation process Lambda function"
   value       = aws_lambda_function.participation_process.function_name
 }
+
+output "lambda_image_optimizer_arn" {
+  description = "ARN of the image optimizer Lambda function"
+  value       = aws_lambda_function.image_optimizer.arn
+}
+
+output "lambda_image_optimizer_name" {
+  description = "Name of the image optimizer Lambda function"
+  value       = aws_lambda_function.image_optimizer.function_name
+}
