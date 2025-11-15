@@ -5,11 +5,16 @@ const {
   UpdateCommand,
 } = require("@aws-sdk/lib-dynamodb");
 const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
+const {
+  EventBridgeClient,
+  PutEventsCommand,
+} = require("@aws-sdk/client-eventbridge");
 const Logger = require("./logger");
 
 const dynamoClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const sqsClient = new SQSClient({});
+const eventBridgeClient = new EventBridgeClient({});
 
 exports.handler = async (event, context) => {
   const logger = new Logger(context);
@@ -173,6 +178,46 @@ exports.handler = async (event, context) => {
       operation: "close-raffle",
       message_id: sqsResponse.MessageId,
     });
+
+    // Emitir evento a EventBridge
+    try {
+      const eventDetail = {
+        raffle_id: raffleId,
+        title: raffle.title,
+        status: "processing",
+        previous_status: "active",
+        closed_at: closedTimestamp,
+        current_participants: raffle.current_participants,
+        max_participants: raffle.max_participants,
+        closed_by: claims.sub,
+        sqs_message_id: sqsResponse.MessageId,
+      };
+
+      const putEventsCommand = new PutEventsCommand({
+        Entries: [
+          {
+            EventBusName: process.env.EVENT_BUS_NAME,
+            Source: "rafflenow.raffles",
+            DetailType: "raffle.closed",
+            Detail: JSON.stringify(eventDetail),
+          },
+        ],
+      });
+
+      await eventBridgeClient.send(putEventsCommand);
+
+      logger.logExternalCall("EventBridge", "PutEvents", {
+        operation: "close-raffle",
+        event_type: "raffle.closed",
+        raffle_id: raffleId,
+      });
+    } catch (eventError) {
+      // No es fatal si falla la emisión del evento
+      logger.error("Error emitting raffle.closed event", eventError, {
+        operation: "close-raffle",
+        fatal: false,
+      });
+    }
 
     return {
       statusCode: 200,
