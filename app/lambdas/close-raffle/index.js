@@ -74,7 +74,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Obtener el sorteo
     const getRaffleCommand = new GetCommand({
       TableName: process.env.DYNAMODB_RAFFLES_TABLE,
       Key: { raffle_id: raffleId },
@@ -97,7 +96,6 @@ exports.handler = async (event, context) => {
 
     const raffle = raffleResponse.Item;
 
-    // Verificar que el sorteo está activo
     if (raffle.status !== "active") {
       return {
         statusCode: 400,
@@ -112,7 +110,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Verificar que hay participantes
     if (raffle.current_participants === 0) {
       return {
         statusCode: 400,
@@ -128,8 +125,6 @@ exports.handler = async (event, context) => {
 
     const closedTimestamp = new Date().toISOString();
 
-    // Actualizar el estado del sorteo a "processing"
-    // ConditionExpression evita race conditions si dos admins intentan cerrar al mismo tiempo
     const updateRaffleCommand = new UpdateCommand({
       TableName: process.env.DYNAMODB_RAFFLES_TABLE,
       Key: { raffle_id: raffleId },
@@ -150,7 +145,6 @@ exports.handler = async (event, context) => {
 
     const updatedRaffle = await docClient.send(updateRaffleCommand);
 
-    // Enviar mensaje a SQS para procesar el ganador
     const sqsMessage = {
       raffle_id: raffleId,
       action: "select_winner",
@@ -179,7 +173,6 @@ exports.handler = async (event, context) => {
       message_id: sqsResponse.MessageId,
     });
 
-    // Emitir evento a EventBridge
     try {
       const eventDetail = {
         raffle_id: raffleId,
@@ -212,7 +205,6 @@ exports.handler = async (event, context) => {
         raffle_id: raffleId,
       });
     } catch (eventError) {
-      // No es fatal si falla la emisión del evento
       logger.error("Error emitting raffle.closed event", eventError, {
         operation: "close-raffle",
         fatal: false,
