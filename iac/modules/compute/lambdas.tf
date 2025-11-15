@@ -267,3 +267,32 @@ resource "aws_lambda_function" "participation_process" {
     Type = "Lambda"
   })
 }
+
+# Lambda: image-optimizer
+data "archive_file" "image_optimizer_zip" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../../app/lambdas/image-optimizer"
+  output_path = "${path.module}/../../../app/lambdas/image-optimizer.zip"
+}
+
+resource "aws_lambda_function" "image_optimizer" {
+  filename         = data.archive_file.image_optimizer_zip.output_path
+  function_name    = "${var.name_prefix}-image-optimizer"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "index.handler"
+  source_code_hash = data.archive_file.image_optimizer_zip.output_base64sha256
+  runtime          = "nodejs22.x"
+  timeout          = 60
+  memory_size      = 2048
+
+  environment {
+    variables = {
+      S3_BUCKET_NAME = var.s3_assets_bucket_name
+    }
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-image-optimizer"
+    Type = "Lambda"
+  })
+}

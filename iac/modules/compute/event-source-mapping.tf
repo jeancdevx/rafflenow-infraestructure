@@ -27,3 +27,18 @@ resource "aws_lambda_event_source_mapping" "sqs_to_participation_process" {
 
   function_response_types = ["ReportBatchItemFailures"]
 }
+
+resource "aws_lambda_event_source_mapping" "sqs_to_image_optimizer" {
+  event_source_arn = var.sqs_image_optimizer_queue_arn
+  function_name    = aws_lambda_function.image_optimizer.arn
+  batch_size       = 1
+  enabled          = true
+
+  maximum_batching_window_in_seconds = 5
+
+  scaling_config {
+    maximum_concurrency = 5
+  }
+
+  function_response_types = ["ReportBatchItemFailures"]
+}
