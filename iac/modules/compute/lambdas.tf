@@ -110,6 +110,7 @@ resource "aws_lambda_function" "ingest_participation" {
     variables = {
       DYNAMODB_RAFFLES_TABLE      = var.dynamodb_table_name
       DYNAMODB_PARTICIPANTS_TABLE = var.dynamodb_participants_table_name
+      EVENT_BUS_NAME              = var.event_bus_name
     }
   }
 
