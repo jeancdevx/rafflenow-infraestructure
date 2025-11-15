@@ -1,0 +1,10 @@
+{
+  "name": "image-optimizer",
+  "version": "1.0.0",
+  "description": "Lambda function to optimize prize images from S3",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.914.0",
+    "sharp": "0.33.5"
+  }
+}
