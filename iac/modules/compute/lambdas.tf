@@ -47,6 +47,7 @@ resource "aws_lambda_function" "create_raffle" {
   environment {
     variables = {
       DYNAMODB_TABLE = var.dynamodb_table_name
+      EVENT_BUS_NAME = var.event_bus_name
     }
   }
 
