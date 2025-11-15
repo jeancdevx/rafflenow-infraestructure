@@ -5,11 +5,16 @@ const {
   UpdateCommand,
 } = require("@aws-sdk/lib-dynamodb");
 const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
+const {
+  EventBridgeClient,
+  PutEventsCommand,
+} = require("@aws-sdk/client-eventbridge");
 const Logger = require("./logger");
 
 const dynamoClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const sqsClient = new SQSClient({});
+const eventBridgeClient = new EventBridgeClient({});
 
 exports.handler = async (event, context) => {
   const logger = new Logger(context);
@@ -69,7 +74,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Obtener el sorteo
     const getRaffleCommand = new GetCommand({
       TableName: process.env.DYNAMODB_RAFFLES_TABLE,
       Key: { raffle_id: raffleId },
@@ -92,7 +96,6 @@ exports.handler = async (event, context) => {
 
     const raffle = raffleResponse.Item;
 
-    // Verificar que el sorteo está activo
     if (raffle.status !== "active") {
       return {
         statusCode: 400,
@@ -107,7 +110,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Verificar que hay participantes
     if (raffle.current_participants === 0) {
       return {
         statusCode: 400,
@@ -123,8 +125,6 @@ exports.handler = async (event, context) => {
 
     const closedTimestamp = new Date().toISOString();
 
-    // Actualizar el estado del sorteo a "processing"
-    // ConditionExpression evita race conditions si dos admins intentan cerrar al mismo tiempo
     const updateRaffleCommand = new UpdateCommand({
       TableName: process.env.DYNAMODB_RAFFLES_TABLE,
       Key: { raffle_id: raffleId },
@@ -145,7 +145,6 @@ exports.handler = async (event, context) => {
 
     const updatedRaffle = await docClient.send(updateRaffleCommand);
 
-    // Enviar mensaje a SQS para procesar el ganador
     const sqsMessage = {
       raffle_id: raffleId,
       action: "select_winner",
@@ -173,6 +172,44 @@ exports.handler = async (event, context) => {
       operation: "close-raffle",
       message_id: sqsResponse.MessageId,
     });
+
+    try {
+      const eventDetail = {
+        raffle_id: raffleId,
+        title: raffle.title,
+        status: "processing",
+        previous_status: "active",
+        closed_at: closedTimestamp,
+        current_participants: raffle.current_participants,
+        max_participants: raffle.max_participants,
+        closed_by: claims.sub,
+        sqs_message_id: sqsResponse.MessageId,
+      };
+
+      const putEventsCommand = new PutEventsCommand({
+        Entries: [
+          {
+            EventBusName: process.env.EVENT_BUS_NAME,
+            Source: "rafflenow.raffles",
+            DetailType: "raffle.closed",
+            Detail: JSON.stringify(eventDetail),
+          },
+        ],
+      });
+
+      await eventBridgeClient.send(putEventsCommand);
+
+      logger.logExternalCall("EventBridge", "PutEvents", {
+        operation: "close-raffle",
+        event_type: "raffle.closed",
+        raffle_id: raffleId,
+      });
+    } catch (eventError) {
+      logger.error("Error emitting raffle.closed event", eventError, {
+        operation: "close-raffle",
+        fatal: false,
+      });
+    }
 
     return {
       statusCode: 200,
