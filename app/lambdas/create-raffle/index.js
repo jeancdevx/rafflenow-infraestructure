@@ -1,10 +1,15 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb");
+const {
+  EventBridgeClient,
+  PutEventsCommand,
+} = require("@aws-sdk/client-eventbridge");
 const { randomUUID } = require("crypto");
 const Logger = require("./logger");
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+const eventBridgeClient = new EventBridgeClient({});
 
 exports.handler = async (event, context) => {
   const logger = new Logger(context);
@@ -225,6 +230,49 @@ exports.handler = async (event, context) => {
     });
 
     await docClient.send(command);
+
+    logger.info("Raffle created in DynamoDB, emitting event to EventBridge", {
+      operation: "create-raffle",
+      raffle_id: raffleId,
+    });
+
+    try {
+      const eventCommand = new PutEventsCommand({
+        Entries: [
+          {
+            Source: "rafflenow.raffles",
+            DetailType: "raffle.created",
+            Detail: JSON.stringify({
+              raffle_id: raffleId,
+              title: body.title,
+              description: body.description,
+              status: "active",
+              start_date: startDate.toISOString(),
+              end_date: endDate.toISOString(),
+              max_participants: parseInt(body.max_participants),
+              prize_images: body.prize_images,
+              created_by: createdByEmail,
+              created_at: nowISO,
+            }),
+            EventBusName: process.env.EVENT_BUS_NAME,
+          },
+        ],
+      });
+
+      await eventBridgeClient.send(eventCommand);
+
+      logger.info("Event emitted to EventBridge successfully", {
+        operation: "create-raffle",
+        raffle_id: raffleId,
+        event_type: "raffle.created",
+      });
+    } catch (eventError) {
+      logger.error("Failed to emit event to EventBridge", eventError, {
+        operation: "create-raffle",
+        raffle_id: raffleId,
+        non_fatal: true,
+      });
+    }
 
     return {
       statusCode: 201,

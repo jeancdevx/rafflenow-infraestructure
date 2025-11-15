@@ -67,3 +67,8 @@ variable "cognito_client_id" {
   description = "ID of the Cognito User Pool Client"
   type        = string
 }
+
+variable "event_bus_name" {
+  description = "Name of the EventBridge custom event bus"
+  type        = string
+}

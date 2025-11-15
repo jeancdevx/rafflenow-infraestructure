@@ -42,6 +42,7 @@ module "compute" {
   cloudfront_url                   = module.cdn.cloudfront_distribution_url
   cognito_user_pool_id             = module.cognito.user_pool_id
   cognito_client_id                = module.cognito.user_pool_client_id
+  event_bus_name                   = module.eventbridge.event_bus_name
 
   tags = {
     Environment = var.environment
