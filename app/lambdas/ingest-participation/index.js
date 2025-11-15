@@ -5,10 +5,15 @@ const {
   GetCommand,
   UpdateCommand,
 } = require("@aws-sdk/lib-dynamodb");
+const {
+  EventBridgeClient,
+  PutEventsCommand,
+} = require("@aws-sdk/client-eventbridge");
 const Logger = require("./logger");
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+const eventBridgeClient = new EventBridgeClient({});
 
 exports.handler = async (event, context) => {
   const logger = new Logger(context);
@@ -169,6 +174,44 @@ exports.handler = async (event, context) => {
     });
 
     const updatedRaffle = await docClient.send(updateRaffleCommand);
+
+    try {
+      const eventDetail = {
+        raffle_id: raffleId,
+        raffle_title: raffle.title,
+        participant_email: participant.participant_email,
+        participant_name: participant.participant_name,
+        participant_phone: participant.participant_phone,
+        participated_at: participationTimestamp,
+        current_participants: updatedRaffle.Attributes.current_participants,
+        max_participants: updatedRaffle.Attributes.max_participants,
+        raffle_status: raffle.status,
+      };
+
+      const putEventsCommand = new PutEventsCommand({
+        Entries: [
+          {
+            EventBusName: process.env.EVENT_BUS_NAME,
+            Source: "rafflenow.participations",
+            DetailType: "participation.received",
+            Detail: JSON.stringify(eventDetail),
+          },
+        ],
+      });
+
+      await eventBridgeClient.send(putEventsCommand);
+
+      logger.logExternalCall("EventBridge", "PutEvents", {
+        operation: "ingest-participation",
+        event_type: "participation.received",
+        raffle_id: raffleId,
+      });
+    } catch (eventError) {
+      logger.error("Error emitting participation.received event", eventError, {
+        operation: "ingest-participation",
+        fatal: false,
+      });
+    }
 
     return {
       statusCode: 201,
