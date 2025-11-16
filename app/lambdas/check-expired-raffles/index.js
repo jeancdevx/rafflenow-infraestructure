@@ -4,7 +4,6 @@ const {
   QueryCommand,
   UpdateCommand,
 } = require("@aws-sdk/lib-dynamodb");
-const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 const {
   EventBridgeClient,
   PutEventsCommand,
@@ -13,7 +12,6 @@ const Logger = require("./logger");
 
 const dynamoClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
-const sqsClient = new SQSClient({});
 const eventBridgeClient = new EventBridgeClient({});
 
 exports.handler = async (event, context) => {
@@ -112,21 +110,7 @@ exports.handler = async (event, context) => {
 
         await docClient.send(new UpdateCommand(updateParams));
 
-        const sqsMessage = {
-          QueueUrl: process.env.SQS_QUEUE_URL,
-          MessageBody: JSON.stringify({
-            raffle_id: raffle.raffle_id,
-            action: "select_winner",
-            triggered_by: "automated_check",
-            closed_at: closedTimestamp,
-          }),
-        };
-
-        const sqsResponse = await sqsClient.send(
-          new SendMessageCommand(sqsMessage)
-        );
-
-        logger.info("Raffle closed and queued for winner selection", {
+        logger.info("Raffle closed, emitting event", {
           operation: "check-expired-raffles",
           raffle_id: raffle.raffle_id,
         });
@@ -141,7 +125,6 @@ exports.handler = async (event, context) => {
             current_participants: raffle.current_participants,
             max_participants: raffle.max_participants,
             triggered_by: "automated_expiration",
-            sqs_message_id: sqsResponse.MessageId,
           };
 
           const putEventsCommand = new PutEventsCommand({
