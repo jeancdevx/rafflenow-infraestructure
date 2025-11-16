@@ -5,11 +5,16 @@ const {
   UpdateCommand,
 } = require("@aws-sdk/lib-dynamodb");
 const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
+const {
+  EventBridgeClient,
+  PutEventsCommand,
+} = require("@aws-sdk/client-eventbridge");
 const Logger = require("./logger");
 
 const dynamoClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const sqsClient = new SQSClient({});
+const eventBridgeClient = new EventBridgeClient({});
 
 exports.handler = async (event, context) => {
   const logger = new Logger(context);
@@ -117,12 +122,52 @@ exports.handler = async (event, context) => {
           }),
         };
 
-        await sqsClient.send(new SendMessageCommand(sqsMessage));
+        const sqsResponse = await sqsClient.send(
+          new SendMessageCommand(sqsMessage)
+        );
 
         logger.info("Raffle closed and queued for winner selection", {
           operation: "check-expired-raffles",
           raffle_id: raffle.raffle_id,
         });
+
+        try {
+          const eventDetail = {
+            raffle_id: raffle.raffle_id,
+            title: raffle.title,
+            status: "processing",
+            previous_status: "active",
+            closed_at: closedTimestamp,
+            current_participants: raffle.current_participants,
+            max_participants: raffle.max_participants,
+            triggered_by: "automated_expiration",
+            sqs_message_id: sqsResponse.MessageId,
+          };
+
+          const putEventsCommand = new PutEventsCommand({
+            Entries: [
+              {
+                EventBusName: process.env.EVENT_BUS_NAME,
+                Source: "rafflenow.raffles",
+                DetailType: "raffle.closed",
+                Detail: JSON.stringify(eventDetail),
+              },
+            ],
+          });
+
+          await eventBridgeClient.send(putEventsCommand);
+
+          logger.logExternalCall("EventBridge", "PutEvents", {
+            operation: "check-expired-raffles",
+            event_type: "raffle.closed",
+            raffle_id: raffle.raffle_id,
+          });
+        } catch (eventError) {
+          logger.error("Error emitting raffle.closed event", eventError, {
+            operation: "check-expired-raffles",
+            fatal: false,
+          });
+        }
 
         results.push({
           raffle_id: raffle.raffle_id,
