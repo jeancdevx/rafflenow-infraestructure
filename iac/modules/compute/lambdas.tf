@@ -202,6 +202,7 @@ resource "aws_lambda_function" "check_expired_raffles" {
     variables = {
       DYNAMODB_RAFFLES_TABLE = var.dynamodb_table_name
       SQS_QUEUE_URL          = var.sqs_queue_url
+      EVENT_BUS_NAME         = var.event_bus_name
     }
   }
 
