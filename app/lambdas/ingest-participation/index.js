@@ -1,10 +1,5 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const {
-  DynamoDBDocumentClient,
-  PutCommand,
-  GetCommand,
-  UpdateCommand,
-} = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBDocumentClient, GetCommand } = require("@aws-sdk/lib-dynamodb");
 const {
   EventBridgeClient,
   PutEventsCommand,
@@ -144,102 +139,51 @@ exports.handler = async (event, context) => {
 
     const participationTimestamp = new Date().toISOString();
 
-    const participant = {
+    const eventDetail = {
       raffle_id: raffleId,
+      raffle_title: raffle.title,
       participant_email: body.participant_email.toLowerCase(),
       participant_name: body.participant_name,
-      participated_at: participationTimestamp,
       participant_phone: body.participant_phone || null,
+      participated_at: participationTimestamp,
+      current_participants: raffle.current_participants,
+      max_participants: raffle.max_participants,
+      raffle_status: raffle.status,
     };
 
-    const putParticipantCommand = new PutCommand({
-      TableName: process.env.DYNAMODB_PARTICIPANTS_TABLE,
-      Item: participant,
-      ConditionExpression:
-        "attribute_not_exists(raffle_id) AND attribute_not_exists(participant_email)",
+    const putEventsCommand = new PutEventsCommand({
+      Entries: [
+        {
+          EventBusName: process.env.EVENT_BUS_NAME,
+          Source: "rafflenow.participations",
+          DetailType: "participation.received",
+          Detail: JSON.stringify(eventDetail),
+        },
+      ],
     });
 
-    await docClient.send(putParticipantCommand);
+    await eventBridgeClient.send(putEventsCommand);
 
-    const updateRaffleCommand = new UpdateCommand({
-      TableName: process.env.DYNAMODB_RAFFLES_TABLE,
-      Key: { raffle_id: raffleId },
-      UpdateExpression:
-        "SET current_participants = current_participants + :inc, updated_at = :updated_at",
-      ExpressionAttributeValues: {
-        ":inc": 1,
-        ":updated_at": participationTimestamp,
-      },
-      ReturnValues: "ALL_NEW",
+    logger.logExternalCall("EventBridge", "PutEvents", {
+      operation: "ingest-participation",
+      event_type: "participation.received",
+      raffle_id: raffleId,
     });
-
-    const updatedRaffle = await docClient.send(updateRaffleCommand);
-
-    try {
-      const eventDetail = {
-        raffle_id: raffleId,
-        raffle_title: raffle.title,
-        participant_email: participant.participant_email,
-        participant_name: participant.participant_name,
-        participant_phone: participant.participant_phone,
-        participated_at: participationTimestamp,
-        current_participants: updatedRaffle.Attributes.current_participants,
-        max_participants: updatedRaffle.Attributes.max_participants,
-        raffle_status: raffle.status,
-      };
-
-      const putEventsCommand = new PutEventsCommand({
-        Entries: [
-          {
-            EventBusName: process.env.EVENT_BUS_NAME,
-            Source: "rafflenow.participations",
-            DetailType: "participation.received",
-            Detail: JSON.stringify(eventDetail),
-          },
-        ],
-      });
-
-      await eventBridgeClient.send(putEventsCommand);
-
-      logger.logExternalCall("EventBridge", "PutEvents", {
-        operation: "ingest-participation",
-        event_type: "participation.received",
-        raffle_id: raffleId,
-      });
-    } catch (eventError) {
-      logger.error("Error emitting participation.received event", eventError, {
-        operation: "ingest-participation",
-        fatal: false,
-      });
-    }
 
     return {
-      statusCode: 201,
+      statusCode: 202,
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
       body: JSON.stringify({
-        message: "Participation registered successfully",
-        participant: participant,
-        raffle: updatedRaffle.Attributes,
+        message: "Participation request accepted",
+        raffle_id: raffleId,
+        participant_email: eventDetail.participant_email,
       }),
     };
   } catch (error) {
-    if (error.name === "ConditionalCheckFailedException") {
-      return {
-        statusCode: 409,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "User already participating in this raffle",
-        }),
-      };
-    }
-
-    logger.error("Error registering participation", error, {
+    logger.error("Error processing participation request", error, {
       operation: "ingest-participation",
       fatal: true,
     });
@@ -251,7 +195,7 @@ exports.handler = async (event, context) => {
         "Access-Control-Allow-Origin": "*",
       },
       body: JSON.stringify({
-        message: "Error registering participation",
+        message: "Error processing participation request",
         error: error.message,
       }),
     };
