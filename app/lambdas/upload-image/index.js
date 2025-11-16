@@ -131,7 +131,9 @@ exports.handler = async (event, context) => {
       expiresIn: 300,
     });
 
-    const cloudFrontUrl = `${process.env.CLOUDFRONT_URL}/${key}`;
+    const fileNameWithoutExt = sanitizedFileName.replace(/\.[^/.]+$/, "");
+    const optimizedKey = `optimized/${uniqueId}-${fileNameWithoutExt}.webp`;
+    const cloudFrontUrl = `${process.env.CLOUDFRONT_URL}/${optimizedKey}`;
 
     return {
       statusCode: 200,
@@ -152,13 +154,15 @@ exports.handler = async (event, context) => {
         file: {
           key: key,
           cloudFrontUrl: cloudFrontUrl,
+          originalUrl: `${process.env.CLOUDFRONT_URL}/${key}`,
           fileName: sanitizedFileName,
         },
         instructions: [
           "1. Use PUT method to upload the file to the presigned URL",
           "2. Set Content-Type header to match the file type",
-          "3. Once uploaded, use the cloudFrontUrl in your raffle",
+          "3. Once uploaded, use the cloudFrontUrl (optimized) in your raffle",
           "4. The URL expires in 5 minutes",
+          "5. Image will be automatically optimized to WebP format",
         ],
       }),
     };

@@ -4,7 +4,6 @@ const {
   GetCommand,
   UpdateCommand,
 } = require("@aws-sdk/lib-dynamodb");
-const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 const {
   EventBridgeClient,
   PutEventsCommand,
@@ -13,7 +12,6 @@ const Logger = require("./logger");
 
 const dynamoClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
-const sqsClient = new SQSClient({});
 const eventBridgeClient = new EventBridgeClient({});
 
 exports.handler = async (event, context) => {
@@ -145,34 +143,7 @@ exports.handler = async (event, context) => {
 
     const updatedRaffle = await docClient.send(updateRaffleCommand);
 
-    const sqsMessage = {
-      raffle_id: raffleId,
-      action: "select_winner",
-      timestamp: closedTimestamp,
-    };
-
-    const sendMessageCommand = new SendMessageCommand({
-      QueueUrl: process.env.SQS_QUEUE_URL,
-      MessageBody: JSON.stringify(sqsMessage),
-      MessageAttributes: {
-        raffle_id: {
-          DataType: "String",
-          StringValue: raffleId,
-        },
-        action: {
-          DataType: "String",
-          StringValue: "select_winner",
-        },
-      },
-    });
-
-    const sqsResponse = await sqsClient.send(sendMessageCommand);
-
-    logger.logExternalCall("SQS", "SendMessage", {
-      operation: "close-raffle",
-      message_id: sqsResponse.MessageId,
-    });
-
+    let eventResponse = null;
     try {
       const eventDetail = {
         raffle_id: raffleId,
@@ -183,7 +154,6 @@ exports.handler = async (event, context) => {
         current_participants: raffle.current_participants,
         max_participants: raffle.max_participants,
         closed_by: claims.sub,
-        sqs_message_id: sqsResponse.MessageId,
       };
 
       const putEventsCommand = new PutEventsCommand({
@@ -197,7 +167,7 @@ exports.handler = async (event, context) => {
         ],
       });
 
-      await eventBridgeClient.send(putEventsCommand);
+      eventResponse = await eventBridgeClient.send(putEventsCommand);
 
       logger.logExternalCall("EventBridge", "PutEvents", {
         operation: "close-raffle",
@@ -211,17 +181,22 @@ exports.handler = async (event, context) => {
       });
     }
 
+    const response = {
+      message: "Raffle closed successfully and winner selection initiated",
+      raffle: updatedRaffle.Attributes,
+    };
+
+    if (eventResponse?.Entries?.[0]?.EventId) {
+      response.event_id = eventResponse.Entries[0].EventId;
+    }
+
     return {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify({
-        message: "Raffle closed successfully and winner selection initiated",
-        raffle: updatedRaffle.Attributes,
-        sqs_message_id: sqsResponse.MessageId,
-      }),
+      body: JSON.stringify(response),
     };
   } catch (error) {
     if (error.name === "ConditionalCheckFailedException") {

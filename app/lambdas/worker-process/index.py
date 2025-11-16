@@ -17,14 +17,19 @@ def handler(event, context):
     for record in event['Records']:
         try:
             message_body = json.loads(record['body'])
-            raffle_id = message_body.get('raffle_id')
-            action = message_body.get('action')
             
-            print(f"Processing raffle_id: {raffle_id}, action: {action}")
-            
-            if not raffle_id or action != 'select_winner':
-                print(f"Invalid message format or action: {message_body}")
+            if 'detail-type' not in message_body or message_body.get('detail-type') != 'raffle.closed':
+                print(f"Invalid event type: {message_body.get('detail-type')}")
                 continue
+            
+            detail = message_body.get('detail', {})
+            raffle_id = detail.get('raffle_id')
+            
+            if not raffle_id:
+                print(f"Invalid message format - no raffle_id: {message_body}")
+                continue
+            
+            print(f"Processing raffle_id: {raffle_id}")
             
             raffle_response = raffles_table.get_item(Key={'raffle_id': raffle_id})
             

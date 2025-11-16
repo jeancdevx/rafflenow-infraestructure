@@ -3,7 +3,6 @@ const {
   DynamoDBDocumentClient,
   PutCommand,
   UpdateCommand,
-  GetCommand,
 } = require("@aws-sdk/lib-dynamodb");
 const Logger = require("./logger");
 
@@ -43,53 +42,6 @@ exports.handler = async (event, context) => {
       const participantName = eventDetail.participant_name;
       const participatedAt =
         eventDetail.participated_at || new Date().toISOString();
-
-      const getRaffleCommand = new GetCommand({
-        TableName: process.env.DYNAMODB_RAFFLES_TABLE,
-        Key: { raffle_id: raffleId },
-      });
-
-      const raffleResponse = await docClient.send(getRaffleCommand);
-
-      if (!raffleResponse.Item) {
-        logger.warn("Raffle not found", {
-          operation: "process-participation",
-          raffle_id: raffleId,
-        });
-        throw new Error(`Raffle not found: ${raffleId}`);
-      }
-
-      const raffle = raffleResponse.Item;
-
-      if (raffle.status !== "active") {
-        logger.warn("Raffle is not active", {
-          operation: "process-participation",
-          raffle_id: raffleId,
-          status: raffle.status,
-        });
-        throw new Error(`Raffle ${raffleId} is not active`);
-      }
-
-      if (raffle.current_participants >= raffle.max_participants) {
-        logger.warn("Raffle is full", {
-          operation: "process-participation",
-          raffle_id: raffleId,
-          current: raffle.current_participants,
-          max: raffle.max_participants,
-        });
-        throw new Error(`Raffle ${raffleId} is full`);
-      }
-
-      const now = new Date();
-      const endDate = new Date(raffle.end_date);
-      if (now > endDate) {
-        logger.warn("Raffle has ended", {
-          operation: "process-participation",
-          raffle_id: raffleId,
-          end_date: raffle.end_date,
-        });
-        throw new Error(`Raffle ${raffleId} has ended`);
-      }
 
       const participant = {
         raffle_id: raffleId,

@@ -291,7 +291,9 @@ resource "aws_lambda_function" "image_optimizer" {
 
   environment {
     variables = {
-      S3_BUCKET_NAME = var.s3_assets_bucket_name
+      S3_BUCKET_NAME         = var.s3_assets_bucket_name
+      CLOUDFRONT_URL         = var.cloudfront_url
+      DYNAMODB_RAFFLES_TABLE = var.dynamodb_table_name
     }
   }
 
