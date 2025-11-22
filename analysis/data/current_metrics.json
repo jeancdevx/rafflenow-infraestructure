@@ -1,0 +1,170 @@
+{
+  "company_info": {
+    "name": "RaffleNow Perú SAC",
+    "founded": "2020",
+    "location": "Lima, Perú",
+    "business_model": "Plataforma de sorteos online con pago por ticket",
+    "ticket_price_pen": 2.00,
+    "commission_model": "100% del valor del ticket (empresa asume costo del premio)"
+  },
+  "traffic_scenarios": {
+    "normal_day": {
+      "frequency_per_month": 25,
+      "unique_visitors": 20000,
+      "conversion_rate": 0.15,
+      "expected_participants": 3000,
+      "successful_participants": 2700,
+      "lost_due_to_failures": 300,
+      "failure_rate": 0.10,
+      "peak_rps": 2,
+      "peak_hours": ["22:00-23:59"]
+    },
+    "promotion_day": {
+      "frequency_per_month": 4,
+      "unique_visitors": 250000,
+      "conversion_rate": 0.25,
+      "expected_participants": 62500,
+      "successful_participants": 25000,
+      "lost_due_to_failures": 37500,
+      "failure_rate": 0.60,
+      "peak_rps": 50,
+      "peak_hours": ["12:00-13:00", "22:00-23:59"]
+    },
+    "viral_day": {
+      "frequency_per_month": 1,
+      "unique_visitors": 1500000,
+      "conversion_rate": 0.30,
+      "expected_participants": 450000,
+      "successful_participants": 135000,
+      "lost_due_to_failures": 315000,
+      "failure_rate": 0.70,
+      "peak_rps": 500,
+      "peak_hours": ["10:00-14:00", "20:00-23:59"],
+      "bot_traffic_percentage": 0.70,
+      "legitimate_traffic": 0.30
+    }
+  },
+  "revenue_analysis": {
+    "normal_day": {
+      "successful_revenue_pen": 5400,
+      "potential_revenue_pen": 6000,
+      "lost_revenue_pen": 600
+    },
+    "promotion_day": {
+      "successful_revenue_pen": 50000,
+      "potential_revenue_pen": 125000,
+      "lost_revenue_pen": 75000
+    },
+    "viral_day": {
+      "successful_revenue_pen": 270000,
+      "potential_revenue_pen": 900000,
+      "lost_revenue_pen": 630000,
+      "fraud_revenue_lost_pen": 630000
+    },
+    "monthly_totals": {
+      "actual_revenue_pen": 455000,
+      "potential_revenue_pen": 1125000,
+      "lost_revenue_pen": 670000,
+      "lost_revenue_percentage": 0.60
+    }
+  },
+  "infrastructure_costs_current": {
+    "compute": {
+      "ec2_c5_4xlarge": {
+        "description": "Servidor Web (16 vCPU, 32GB RAM, 24/7)",
+        "monthly_cost_pen": 4500
+      },
+      "rds_r5_2xlarge": {
+        "description": "PostgreSQL Multi-AZ (8 vCPU, 64GB RAM)",
+        "monthly_cost_pen": 6200
+      },
+      "elasticache_redis": {
+        "description": "Cache Redis (4 nodos, 13GB RAM c/u)",
+        "monthly_cost_pen": 2800
+      }
+    },
+    "networking": {
+      "alb": {
+        "description": "Application Load Balancer (3M requests/mes)",
+        "monthly_cost_pen": 900
+      },
+      "data_transfer": {
+        "description": "Ancho de banda (8TB/mes)",
+        "monthly_cost_pen": 1200
+      }
+    },
+    "storage": {
+      "ebs_backups": {
+        "description": "Storage EBS + snapshots diarios (1TB SSD)",
+        "monthly_cost_pen": 800
+      }
+    },
+    "observability": {
+      "cloudwatch_basic": {
+        "description": "Logs y métricas limitadas",
+        "monthly_cost_pen": 400
+      }
+    },
+    "operations": {
+      "devops_team": {
+        "description": "2 personas tiempo completo",
+        "monthly_cost_pen": 18000
+      },
+      "overtime": {
+        "description": "Horas extra picos (40h/mes @ S/150/h)",
+        "monthly_cost_pen": 6000
+      },
+      "tools_licenses": {
+        "description": "Monitoring, APM, gestión",
+        "monthly_cost_pen": 2200
+      }
+    },
+    "totals": {
+      "infrastructure_monthly_pen": 16800,
+      "operations_monthly_pen": 26200,
+      "total_monthly_pen": 43000
+    }
+  },
+  "performance_metrics_current": {
+    "availability": {
+      "uptime_percentage": 95.0,
+      "downtime_hours_per_year": 438
+    },
+    "performance": {
+      "normal_day": {
+        "p50_latency_ms": 800,
+        "p95_latency_ms": 2000,
+        "p99_latency_ms": 3500
+      },
+      "peak_day": {
+        "p50_latency_ms": 3000,
+        "p95_latency_ms": 8000,
+        "p99_latency_ms": 15000
+      }
+    },
+    "reliability": {
+      "normal_error_rate": 0.02,
+      "peak_error_rate": 0.15
+    },
+    "scalability": {
+      "max_supported_rps": 50,
+      "breaking_point_rps": 60,
+      "auto_scaling": false,
+      "manual_scaling_time_minutes": 20
+    }
+  },
+  "fraud_analysis": {
+    "bot_detection": {
+      "current_capability": "Basic rate limiting",
+      "bot_percentage_viral_day": 0.70,
+      "estimated_bot_participations": 315000,
+      "fraud_cost_per_viral_day_pen": 630000
+    },
+    "authentication": {
+      "current_method": "Basic username/password",
+      "mfa_enabled": false,
+      "compromised_accounts_monthly": 150,
+      "account_recovery_cost_pen": 50
+    }
+  }
+}

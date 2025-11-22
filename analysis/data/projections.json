@@ -1,0 +1,110 @@
+{
+  "projections": {
+    "year_1": {
+      "year": 2026,
+      "assumptions": {
+        "organic_growth_rate": 0.15,
+        "viral_days_per_month": 2,
+        "infrastructure": "Current legacy system"
+      },
+      "metrics": {
+        "avg_daily_visitors": 23000,
+        "monthly_successful_participants": 520000,
+        "monthly_lost_participants": 780000,
+        "monthly_revenue_pen": 520000,
+        "monthly_lost_revenue_pen": 780000,
+        "annual_revenue_pen": 6240000,
+        "annual_lost_revenue_pen": 9360000
+      }
+    },
+    "year_2": {
+      "year": 2027,
+      "assumptions": {
+        "organic_growth_rate": 0.15,
+        "viral_days_per_month": 3,
+        "infrastructure": "Current legacy system (breaking down)"
+      },
+      "metrics": {
+        "avg_daily_visitors": 26450,
+        "monthly_successful_participants": 598000,
+        "monthly_lost_participants": 1197000,
+        "monthly_revenue_pen": 598000,
+        "monthly_lost_revenue_pen": 1197000,
+        "annual_revenue_pen": 7176000,
+        "annual_lost_revenue_pen": 14364000
+      }
+    },
+    "cumulative_2_years": {
+      "total_revenue_captured_pen": 13416000,
+      "total_revenue_lost_pen": 23724000,
+      "total_potential_revenue_pen": 37140000,
+      "capture_rate": 0.36
+    }
+  },
+  "aws_projections": {
+    "year_1": {
+      "year": 2026,
+      "assumptions": {
+        "organic_growth_rate": 0.15,
+        "viral_days_per_month": 2,
+        "infrastructure": "AWS Serverless",
+        "capture_rate": 0.98
+      },
+      "metrics": {
+        "avg_daily_visitors": 23000,
+        "monthly_successful_participants": 1274000,
+        "monthly_lost_participants": 26000,
+        "monthly_revenue_pen": 1274000,
+        "monthly_lost_revenue_pen": 26000,
+        "annual_revenue_pen": 15288000,
+        "annual_lost_revenue_pen": 312000,
+        "infrastructure_cost_annual_pen": 157440
+      }
+    },
+    "year_2": {
+      "year": 2027,
+      "assumptions": {
+        "organic_growth_rate": 0.15,
+        "viral_days_per_month": 3,
+        "infrastructure": "AWS Serverless",
+        "capture_rate": 0.98
+      },
+      "metrics": {
+        "avg_daily_visitors": 26450,
+        "monthly_successful_participants": 1755000,
+        "monthly_lost_participants": 40000,
+        "monthly_revenue_pen": 1755000,
+        "monthly_lost_revenue_pen": 40000,
+        "annual_revenue_pen": 21060000,
+        "annual_lost_revenue_pen": 480000,
+        "infrastructure_cost_annual_pen": 182000
+      }
+    },
+    "cumulative_2_years": {
+      "total_revenue_captured_pen": 36348000,
+      "total_revenue_lost_pen": 792000,
+      "total_potential_revenue_pen": 37140000,
+      "capture_rate": 0.98,
+      "total_infrastructure_cost_pen": 339440,
+      "net_profit_pen": 36008560
+    }
+  },
+  "comparison_2_years": {
+    "current_system": {
+      "revenue_pen": 13416000,
+      "costs_pen": 1032000,
+      "net_profit_pen": 12384000
+    },
+    "aws_system": {
+      "revenue_pen": 36348000,
+      "costs_pen": 339440,
+      "net_profit_pen": 36008560
+    },
+    "benefit": {
+      "additional_revenue_pen": 22932000,
+      "cost_savings_pen": 692560,
+      "total_benefit_pen": 23624560,
+      "improvement_percentage": 1.91
+    }
+  }
+}

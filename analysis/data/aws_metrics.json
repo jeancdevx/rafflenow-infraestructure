@@ -1,0 +1,188 @@
+{
+  "aws_architecture": {
+    "compute": {
+      "lambda": {
+        "invocations_per_month": 15000000,
+        "avg_duration_ms": 200,
+        "memory_mb": 512,
+        "monthly_cost_usd": 225,
+        "sla_uptime": 0.9995
+      },
+      "api_gateway": {
+        "requests_per_month": 3000000,
+        "monthly_cost_usd": 10.50,
+        "sla_uptime": 0.9995
+      },
+      "eventbridge": {
+        "events_per_month": 2000000,
+        "monthly_cost_usd": 2,
+        "sla_uptime": 0.999
+      },
+      "sqs": {
+        "messages_per_month": 5000000,
+        "queues": 3,
+        "monthly_cost_usd": 2,
+        "sla_uptime": 0.999
+      }
+    },
+    "storage": {
+      "dynamodb": {
+        "storage_gb": 20,
+        "read_requests_per_month": 50000000,
+        "write_requests_per_month": 15000000,
+        "pricing_model": "on-demand",
+        "monthly_cost_usd": 280,
+        "sla_uptime": 0.9999,
+        "durability_nines": 11
+      },
+      "s3": {
+        "storage_gb": 500,
+        "put_requests_per_month": 1000000,
+        "get_requests_per_month": 10000000,
+        "monthly_cost_usd": 20,
+        "sla_uptime": 0.999,
+        "durability_nines": 11
+      },
+      "cloudfront": {
+        "data_transfer_out_gb": 2000,
+        "requests_per_month": 5000000,
+        "monthly_cost_usd": 180,
+        "sla_uptime": 0.999,
+        "edge_locations": 450
+      }
+    },
+    "security": {
+      "cognito": {
+        "tier": "Essentials",
+        "mau": 80000,
+        "free_tier_mau": 10000,
+        "billable_mau": 70000,
+        "cost_per_mau_usd": 0.015,
+        "monthly_cost_usd": 1050,
+        "sla_uptime": 0.999,
+        "features": ["MFA", "Social Login", "Password Policies", "Passwordless"]
+      },
+      "waf": {
+        "web_acls": 3,
+        "rules_per_acl": 10,
+        "requests_per_month": 3000000,
+        "monthly_cost_usd": 60
+      },
+      "secrets_manager": {
+        "secrets": 10,
+        "monthly_cost_usd": 4
+      }
+    },
+    "communications": {
+      "ses": {
+        "emails_per_month": 150000,
+        "cost_per_1000_emails_usd": 0.10,
+        "monthly_cost_usd": 15
+      },
+      "route53": {
+        "hosted_zones": 3,
+        "queries_per_month": 1000000,
+        "monthly_cost_usd": 3
+      }
+    },
+    "observability": {
+      "cloudwatch_logs": {
+        "ingestion_gb": 50,
+        "storage_gb": 100,
+        "monthly_cost_usd": 30
+      },
+      "cloudwatch_dashboards": {
+        "dashboards": 4,
+        "cost_per_dashboard_usd": 3,
+        "monthly_cost_usd": 12
+      },
+      "xray": {
+        "traces_per_month": 1000000,
+        "monthly_cost_usd": 5
+      }
+    },
+    "totals": {
+      "compute_and_logic_usd": 239.50,
+      "storage_and_db_usd": 480,
+      "security_usd": 1114,
+      "communications_usd": 18,
+      "observability_usd": 47,
+      "total_monthly_usd": 1898.50,
+      "total_monthly_pen": 7120,
+      "exchange_rate_usd_to_pen": 3.75
+    }
+  },
+  "aws_performance_targets": {
+    "availability": {
+      "composite_sla": 0.9989,
+      "downtime_hours_per_year": 9.6
+    },
+    "performance": {
+      "read_operations": {
+        "p50_latency_ms": 100,
+        "p95_latency_ms": 300,
+        "p99_latency_ms": 500
+      },
+      "write_operations": {
+        "p50_latency_ms": 200,
+        "p95_latency_ms": 800,
+        "p99_latency_ms": 1200
+      }
+    },
+    "reliability": {
+      "error_rate": 0.001,
+      "retry_policy": "Exponential backoff up to 24 hours"
+    },
+    "scalability": {
+      "max_supported_rps": 1000,
+      "auto_scaling": true,
+      "scaling_time_seconds": 10,
+      "lambda_concurrent_executions": 1000
+    }
+  },
+  "aws_operations": {
+    "devops_team": {
+      "size": "1 person part-time",
+      "monthly_cost_pen": 6000,
+      "automation_level": "High",
+      "deployment_method": "Automated via Terraform",
+      "monitoring": "Proactive with CloudWatch Alarms"
+    }
+  },
+  "security_improvements": {
+    "cognito_benefits": {
+      "mfa_enabled": true,
+      "bot_detection": "WAF + Cognito Advanced Security",
+      "estimated_bot_reduction": 0.95,
+      "fraud_prevention_per_viral_day_pen": 598500
+    },
+    "waf_rules": {
+      "rate_limiting_per_ip": "2000 requests per 5 minutes",
+      "geo_blocking": false,
+      "managed_rule_sets": ["AWSManagedRulesCommonRuleSet", "AWSManagedRulesKnownBadInputsRuleSet"]
+    }
+  },
+  "comparison": {
+    "infrastructure_costs": {
+      "current_pen": 43000,
+      "aws_pen": 13120,
+      "savings_pen": 29880,
+      "savings_percentage": 0.70
+    },
+    "revenue": {
+      "current_monthly_pen": 455000,
+      "aws_monthly_pen": 1095000,
+      "increase_pen": 640000,
+      "increase_percentage": 1.41
+    },
+    "lost_revenue": {
+      "current_monthly_pen": 670000,
+      "aws_monthly_pen": 30000,
+      "savings_pen": 640000,
+      "reduction_percentage": 0.96
+    },
+    "net_benefit_monthly_pen": 669880,
+    "roi_percentage": 32.26,
+    "break_even_days": 3
+  }
+}
