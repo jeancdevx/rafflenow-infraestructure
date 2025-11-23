@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "description": "Lambda function to optimize prize images from S3",
   "main": "index.js",
+  "type": "module",
   "dependencies": {
+    "@aws-lambda-powertools/logger": "2.29.0",
+    "@aws-lambda-powertools/metrics": "2.29.0",
+    "@aws-lambda-powertools/tracer": "2.29.0",
     "@aws-sdk/client-s3": "3.914.0",
     "sharp": "0.33.5"
   }
