@@ -5,8 +5,8 @@ Write-Host "=== Creando usuarios de prueba en Cognito ===" -ForegroundColor Gree
 Write-Host "Obteniendo configuración desde Terraform..." -ForegroundColor Cyan
 
 Push-Location $TerraformDir
-$UserPoolId = terraform output -raw cognito_user_pool_id
-$ClientId = terraform output -raw cognito_client_id
+$UserPoolId = terraform output -json infrastructure | ConvertFrom-Json | Select-Object -ExpandProperty cognito | Select-Object -ExpandProperty user_pool_id
+$ClientId = terraform output -json infrastructure | ConvertFrom-Json | Select-Object -ExpandProperty cognito | Select-Object -ExpandProperty client_id
 Pop-Location
 
 if (-not $UserPoolId -or -not $ClientId) {
