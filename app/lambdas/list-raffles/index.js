@@ -32,7 +32,6 @@ export const handler = async (event, context) => {
 
     const queryParams = event.queryStringParameters || {};
     const status = queryParams.status;
-    const category = queryParams.category;
     const limit = Math.min(
       parseInt(queryParams.limit || DEFAULT_LIMIT),
       MAX_LIMIT
@@ -43,7 +42,6 @@ export const handler = async (event, context) => {
 
     logger.info("Processing list raffles request", {
       status,
-      category,
       limit,
       hasCursor: !!lastEvaluatedKey,
     });
@@ -65,11 +63,6 @@ export const handler = async (event, context) => {
         ScanIndexForward: true,
       };
 
-      if (category) {
-        queryParams.FilterExpression = "category = :category";
-        queryParams.ExpressionAttributeValues[":category"] = category;
-      }
-
       if (lastEvaluatedKey) {
         queryParams.ExclusiveStartKey = lastEvaluatedKey;
       }
@@ -86,11 +79,6 @@ export const handler = async (event, context) => {
         TableName: TABLE_NAME,
         Limit: limit,
       };
-
-      if (category) {
-        scanParams.FilterExpression = "category = :category";
-        scanParams.ExpressionAttributeValues = { ":category": category };
-      }
 
       if (lastEvaluatedKey) {
         scanParams.ExclusiveStartKey = lastEvaluatedKey;

@@ -449,14 +449,14 @@ collection:
                 send: true
                 store: true
               rebuildPath: true
-          - url: "{{ _.public_api_url }}/api/v1/raffles?status=active&category=tech&limit=20"
-            name: mostrar raffles (filtros combinados)
+          - url: "{{ _.public_api_url }}/api/v1/raffles?status=active&limit=20"
+            name: mostrar raffles activos con paginación
             meta:
               id: req_list_raffles_filtered
               created: 1762537517118
               modified: 1762537517118
               isPrivate: false
-              description: "Combina filtro por status (GSI) y categoría (FilterExpression) con límite de 20"
+              description: "Combina filtro por status (GSI) con límite de 20 items"
               sortKey: -1762537517112
             method: GET
             settings:
