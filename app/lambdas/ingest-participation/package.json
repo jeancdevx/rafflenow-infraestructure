@@ -2,10 +2,14 @@
   "name": "ingest-participation",
   "version": "1.0.0",
   "description": "Lambda function to register raffle participation",
+  "type": "module",
   "main": "index.js",
   "dependencies": {
+    "@aws-lambda-powertools/logger": "2.29.0",
+    "@aws-lambda-powertools/metrics": "2.29.0",
+    "@aws-lambda-powertools/tracer": "2.29.0",
     "@aws-sdk/client-dynamodb": "3.914.0",
-    "@aws-sdk/lib-dynamodb": "3.914.0",
-    "@aws-sdk/client-eventbridge": "3.914.0"
+    "@aws-sdk/client-eventbridge": "3.914.0",
+    "@aws-sdk/lib-dynamodb": "3.914.0"
   }
 }

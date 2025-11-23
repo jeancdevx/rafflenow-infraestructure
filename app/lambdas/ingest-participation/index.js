@@ -1,203 +1,159 @@
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, GetCommand } = require("@aws-sdk/lib-dynamodb");
-const {
-  EventBridgeClient,
-  PutEventsCommand,
-} = require("@aws-sdk/client-eventbridge");
-const Logger = require("./logger");
+import { logger, tracer, metrics } from "./lib/powertools.js";
+import { MetricUnit } from "@aws-lambda-powertools/metrics";
+import { extractClaims, getUserEmail, isAdmin } from "./lib/auth-validator.js";
+import {
+  validateRaffleId,
+  validateParticipationData,
+  validateRaffleStatus,
+  validateRaffleCapacity,
+  validateRaffleEndDate,
+} from "./lib/participation-validator.js";
+import { getRaffle } from "./lib/raffle-repository.js";
+import { emitParticipationReceivedEvent } from "./lib/event-emitter.js";
 
-const client = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(client);
-const eventBridgeClient = new EventBridgeClient({});
+const buildResponse = (statusCode, body) => ({
+  statusCode,
+  headers: {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+  },
+  body: JSON.stringify(body),
+});
 
-exports.handler = async (event, context) => {
-  const logger = new Logger(context);
-  logger.logRequest(event);
-
-  const claims = event.requestContext?.authorizer?.claims;
-  if (!claims) {
-    logger.warn("Unauthorized participation attempt", {
-      operation: "ingest-participation",
-    });
-    return {
-      statusCode: 401,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({
-        message: "Unauthorized",
-        error: "Authentication required to participate",
-      }),
-    };
-  }
-
-  const authenticatedEmail = claims.email;
-  logger.info("Processing participation request", {
-    operation: "ingest-participation",
-  });
+export const handler = async (event) => {
+  logger.info("Processing participation request", { path: event.path });
 
   try {
-    const raffleId = event.pathParameters?.id;
-    if (!raffleId) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Missing raffle_id in path",
-        }),
-      };
+    const claims = extractClaims(event);
+    if (!claims) {
+      logger.warn("Unauthorized participation attempt");
+      metrics.addMetric("UnauthorizedAttempt", MetricUnit.Count, 1);
+      return buildResponse(401, {
+        message: "Unauthorized",
+        error: "Authentication required to participate",
+      });
     }
 
-    const body = JSON.parse(event.body);
-    const requiredFields = ["participant_name", "participant_email"];
+    const userEmail = getUserEmail(claims);
+    logger.appendKeys({ user_email: userEmail });
 
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return {
-          statusCode: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-          body: JSON.stringify({
-            message: "Validation error",
-            error: `Missing required field: ${field}`,
-          }),
-        };
-      }
+    if (isAdmin(claims)) {
+      logger.warn("Admin attempted to participate in raffle", {
+        user_email: userEmail,
+      });
+      metrics.addMetric("AdminParticipationAttempt", MetricUnit.Count, 1);
+      return buildResponse(403, {
+        message: "Forbidden",
+        error: "Administrators cannot participate in raffles",
+      });
     }
 
-    const getRaffleCommand = new GetCommand({
-      TableName: process.env.DYNAMODB_RAFFLES_TABLE,
-      Key: { raffle_id: raffleId },
+    const raffleIdValidation = validateRaffleId(event);
+    if (!raffleIdValidation.valid) {
+      logger.warn("Invalid raffle_id", { error: raffleIdValidation.error });
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildResponse(400, { message: raffleIdValidation.error });
+    }
+
+    const raffleId = raffleIdValidation.raffleId;
+    logger.appendKeys({ raffle_id: raffleId });
+
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body);
+    } catch (error) {
+      logger.warn("Invalid JSON body", { error: error.message });
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildResponse(400, { message: "Invalid JSON body" });
+    }
+
+    const bodyValidation = validateParticipationData(parsedBody);
+    if (!bodyValidation.valid) {
+      logger.warn("Invalid participation data", {
+        error: bodyValidation.error,
+      });
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildResponse(400, {
+        message: "Validation error",
+        error: bodyValidation.error,
+      });
+    }
+
+    const participantData = bodyValidation.data;
+    logger.info("Participation data validated", {
+      participant_email: participantData.participant_email,
     });
 
-    const raffleResponse = await docClient.send(getRaffleCommand);
-
-    if (!raffleResponse.Item) {
-      return {
-        statusCode: 404,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Raffle not found",
-        }),
-      };
+    const raffle = await getRaffle(raffleId);
+    if (!raffle) {
+      logger.warn("Raffle not found", { raffle_id: raffleId });
+      metrics.addMetric("RaffleNotFound", MetricUnit.Count, 1);
+      return buildResponse(404, { message: "Raffle not found" });
     }
 
-    const raffle = raffleResponse.Item;
-
-    if (raffle.status !== "active") {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Raffle is not active",
-          status: raffle.status,
-        }),
-      };
+    const statusValidation = validateRaffleStatus(raffle);
+    if (!statusValidation.valid) {
+      logger.warn("Invalid raffle status", {
+        status: raffle.status,
+        error: statusValidation.error,
+      });
+      metrics.addMetric("RaffleInactive", MetricUnit.Count, 1);
+      return buildResponse(400, {
+        message: statusValidation.error,
+        status: raffle.status,
+      });
     }
 
-    if (raffle.current_participants >= raffle.max_participants) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Raffle is full",
-          current_participants: raffle.current_participants,
-          max_participants: raffle.max_participants,
-        }),
-      };
+    const capacityValidation = validateRaffleCapacity(raffle);
+    if (!capacityValidation.valid) {
+      logger.warn("Raffle at full capacity", {
+        current: raffle.current_participants,
+        max: raffle.max_participants,
+      });
+      metrics.addMetric("RaffleFull", MetricUnit.Count, 1);
+      return buildResponse(400, {
+        message: capacityValidation.error,
+        current_participants: raffle.current_participants,
+        max_participants: raffle.max_participants,
+      });
     }
 
-    const now = new Date();
-    const endDate = new Date(raffle.end_date);
-    if (now > endDate) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Raffle has ended",
-        }),
-      };
+    const dateValidation = validateRaffleEndDate(raffle);
+    if (!dateValidation.valid) {
+      logger.warn("Raffle has ended", { end_date: raffle.end_date });
+      metrics.addMetric("RaffleExpired", MetricUnit.Count, 1);
+      return buildResponse(400, { message: dateValidation.error });
     }
 
-    const participationTimestamp = new Date().toISOString();
+    await emitParticipationReceivedEvent({
+      raffleId,
+      raffle,
+      participantData,
+    });
 
-    const eventDetail = {
+    logger.info("Participation request accepted", {
       raffle_id: raffleId,
-      raffle_title: raffle.title,
-      participant_email: body.participant_email.toLowerCase(),
-      participant_name: body.participant_name,
-      participant_phone: body.participant_phone || null,
-      participated_at: participationTimestamp,
-      current_participants: raffle.current_participants,
-      max_participants: raffle.max_participants,
-      raffle_status: raffle.status,
-    };
-
-    const putEventsCommand = new PutEventsCommand({
-      Entries: [
-        {
-          EventBusName: process.env.EVENT_BUS_NAME,
-          Source: "rafflenow.participations",
-          DetailType: "participation.received",
-          Detail: JSON.stringify(eventDetail),
-        },
-      ],
+      participant_email: participantData.participant_email,
     });
 
-    await eventBridgeClient.send(putEventsCommand);
+    metrics.addMetric("ParticipationReceived", MetricUnit.Count, 1);
+    tracer.putAnnotation("raffleId", raffleId);
+    tracer.putAnnotation("participantEmail", participantData.participant_email);
 
-    logger.logExternalCall("EventBridge", "PutEvents", {
-      operation: "ingest-participation",
-      event_type: "participation.received",
+    return buildResponse(202, {
+      message: "Participation request accepted",
       raffle_id: raffleId,
+      participant_email: participantData.participant_email,
     });
-
-    return {
-      statusCode: 202,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({
-        message: "Participation request accepted",
-        raffle_id: raffleId,
-        participant_email: eventDetail.participant_email,
-      }),
-    };
   } catch (error) {
-    logger.error("Error processing participation request", error, {
-      operation: "ingest-participation",
-      fatal: true,
-    });
+    logger.error("Error processing participation request", { error });
+    metrics.addMetric("ParticipationError", MetricUnit.Count, 1);
 
-    return {
-      statusCode: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({
-        message: "Error processing participation request",
-        error: error.message,
-      }),
-    };
+    return buildResponse(500, {
+      message: "Error processing participation request",
+      error: error.message,
+    });
+  } finally {
+    metrics.publishStoredMetrics();
   }
 };
