@@ -1,0 +1,119 @@
+{
+  "projections_without_improvements": {
+    "year_1": {
+      "year": 2026,
+      "assumptions": {
+        "organic_growth_rate": 0.10,
+        "premium_raffles_per_month": 1.5,
+        "large_raffles_per_month": 4,
+        "medium_raffles_per_month": 10,
+        "small_raffles_per_month": 15,
+        "infrastructure": "Current legacy system"
+      },
+      "metrics": {
+        "monthly_successful_revenue_pen": 1670280,
+        "monthly_lost_revenue_pen": 4018920,
+        "monthly_potential_revenue_pen": 5689200,
+        "annual_revenue_pen": 20043360,
+        "annual_lost_revenue_pen": 48227040
+      }
+    },
+    "year_2": {
+      "year": 2027,
+      "assumptions": {
+        "organic_growth_rate": 0.10,
+        "premium_raffles_per_month": 2,
+        "large_raffles_per_month": 5,
+        "medium_raffles_per_month": 12,
+        "small_raffles_per_month": 18,
+        "infrastructure": "Current legacy system (degrading)"
+      },
+      "metrics": {
+        "monthly_successful_revenue_pen": 2019540,
+        "monthly_lost_revenue_pen": 5550460,
+        "monthly_potential_revenue_pen": 7570000,
+        "annual_revenue_pen": 24234480,
+        "annual_lost_revenue_pen": 66605520
+      }
+    },
+    "cumulative_2_years": {
+      "total_revenue_captured_pen": 44277840,
+      "total_revenue_lost_pen": 114832560,
+      "total_potential_revenue_pen": 159110400,
+      "capture_rate": 0.28,
+      "infrastructure_cost_pen": 1180800
+    }
+  },
+  "projections_with_aws": {
+    "year_1": {
+      "year": 2026,
+      "assumptions": {
+        "organic_growth_rate": 0.10,
+        "premium_raffles_per_month": 1.5,
+        "large_raffles_per_month": 4,
+        "medium_raffles_per_month": 10,
+        "small_raffles_per_month": 15,
+        "infrastructure": "AWS Serverless",
+        "capture_rate": 0.98,
+        "bot_blocking_rate": 0.95
+      },
+      "metrics": {
+        "monthly_successful_revenue_pen": 5575056,
+        "monthly_lost_revenue_pen": 114144,
+        "monthly_potential_revenue_pen": 5689200,
+        "annual_revenue_pen": 66900672,
+        "annual_lost_revenue_pen": 1369728,
+        "infrastructure_cost_annual_pen": 1520940
+      }
+    },
+    "year_2": {
+      "year": 2027,
+      "assumptions": {
+        "organic_growth_rate": 0.10,
+        "premium_raffles_per_month": 2,
+        "large_raffles_per_month": 5,
+        "medium_raffles_per_month": 12,
+        "small_raffles_per_month": 18,
+        "infrastructure": "AWS Serverless",
+        "capture_rate": 0.98,
+        "bot_blocking_rate": 0.95
+      },
+      "metrics": {
+        "monthly_successful_revenue_pen": 7418460,
+        "monthly_lost_revenue_pen": 151540,
+        "monthly_potential_revenue_pen": 7570000,
+        "annual_revenue_pen": 89021520,
+        "annual_lost_revenue_pen": 1818480,
+        "infrastructure_cost_annual_pen": 1672332
+      }
+    },
+    "cumulative_2_years": {
+      "total_revenue_captured_pen": 155922192,
+      "total_revenue_lost_pen": 3188208,
+      "total_potential_revenue_pen": 159110400,
+      "capture_rate": 0.98,
+      "total_infrastructure_cost_pen": 3193272,
+      "net_profit_pen": 152728920
+    }
+  },
+  "comparison_2_years": {
+    "legacy_system": {
+      "revenue_pen": 44277840,
+      "infrastructure_costs_pen": 1180800,
+      "net_profit_pen": 43097040
+    },
+    "aws_system": {
+      "revenue_pen": 155922192,
+      "infrastructure_costs_pen": 3193272,
+      "net_profit_pen": 152728920
+    },
+    "benefit": {
+      "additional_revenue_pen": 111644352,
+      "infrastructure_cost_difference_pen": -2012472,
+      "total_benefit_pen": 109631880,
+      "roi_percentage": 146.2,
+      "payback_period_months": 0.022,
+      "note": "Cognito cuesta más pero ROI sigue siendo enorme debido a captura masiva de participaciones"
+    }
+  }
+}

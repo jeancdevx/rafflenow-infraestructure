@@ -1,0 +1,503 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: rafflenow
+meta:
+  id: wrk_8af41df28711465592de50b8a57ba552
+  created: 1762465041206
+  modified: 1762465041206
+  description: ""
+collection:
+  - name: auth
+    meta:
+      id: fld_4f663595274d45428fa3406053a5342b
+      created: 1762452558268
+      modified: 1762452717195
+      sortKey: -1762452626778
+      description: ""
+    children:
+      - url: https://cognito-idp.{{ _.region }}.amazonaws.com/
+        name: get admin token
+        meta:
+          id: req_b993e86b384743b0a4430157feac69cc
+          created: 1762452268359
+          modified: 1762867889787
+          isPrivate: false
+          description: ""
+          sortKey: -1762452560901
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "AuthFlow": "USER_PASSWORD_AUTH",
+              "ClientId": "{{ _.client_id }}",
+              "AuthParameters": {
+                "USERNAME": "{{ _.admin_email }}",
+                "PASSWORD": "{{ _.admin_password }}"
+              }
+            }
+        headers:
+          - name: Content-Type
+            value: application/x-amz-json-1.1
+          - name: X-Amz-Target
+            value: AWSCognitoIdentityProviderService.InitiateAuth
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: https://cognito-idp.{{ _.region }}.amazonaws.com/
+        name: get user token
+        meta:
+          id: req_f9cc0e5a097f484687c389ea49877b27
+          created: 1762452268360
+          modified: 1762471189195
+          isPrivate: false
+          description: ""
+          sortKey: -1762452560801
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "AuthFlow": "USER_PASSWORD_AUTH",
+              "ClientId": "{{ _.client_id }}",
+              "AuthParameters": {
+                "USERNAME": "{{ _.user_email }}",
+                "PASSWORD": "{{ _.user_password }}"
+              }
+            }
+        headers:
+          - name: Content-Type
+            value: application/x-amz-json-1.1
+          - name: X-Amz-Target
+            value: AWSCognitoIdentityProviderService.InitiateAuth
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: admin
+    meta:
+      id: fld_24250dccadf047e28fc786bbaf0f0469
+      created: 1762452626478
+      modified: 1762452718491
+      sortKey: -1762452626728
+      description: ""
+    children:
+      - name: raffles
+        meta:
+          id: fld_5645fed8bbfb4941a305b51222355250
+          created: 1762452637975
+          modified: 1762471674125
+          sortKey: -1762452638076
+          description: ""
+        children:
+          - url: "{{ _.base_url }}/api/v1/raffles"
+            name: crear raffles
+            meta:
+              id: req_f30c22a56ea943599cf621c887375374
+              created: 1762452268363
+              modified: 1763823802661
+              isPrivate: false
+              description: ""
+              sortKey: -1762452665571
+            method: POST
+            body:
+              mimeType: application/json
+              text: >-
+                {
+                  "title": "MacBook Pro M3",
+                  "description": "Sorteo de una MacBook Pro M3 Pro 14 pulgadas con 18GB RAM y 512GB SSD",
+                  "end_date": "2025-11-31",
+                  "max_participants": 500,
+                	"prize_images": [
+                			"https://d1006dxjpy74r9.cloudfront.net/optimized/5d655bd5-c204-4893-a3c3-e0d34efa67e2-prize-macbook.webp"
+                	]
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: Authorization
+                value: "{{ _.admin_token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - name: id
+            meta:
+              id: fld_213cc0461df94832839733c55b72bbb5
+              created: 1762452665471
+              modified: 1762452674100
+              sortKey: -1762452665471
+              description: ""
+            children:
+              - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close"
+                name: cerrar raffle
+                meta:
+                  id: req_b02d7de144af49b99186d6ef06f37650
+                  created: 1762452268366
+                  modified: 1762453542919
+                  isPrivate: false
+                  description: ""
+                  sortKey: -1762452676043
+                method: POST
+                body:
+                  mimeType: application/json
+                  text: ""
+                headers:
+                  - name: Content-Type
+                    value: application/json
+                  - name: Authorization
+                    value: "{{ _.admin_token }}"
+                settings:
+                  renderRequestBody: true
+                  encodeUrl: true
+                  followRedirects: global
+                  cookies:
+                    send: true
+                    store: true
+                  rebuildPath: true
+      - name: assets
+        meta:
+          id: fld_dbe20fa2372844d596f9867ce76fe133
+          created: 1762462400000
+          modified: 1762472386219
+          sortKey: -1762452638176
+          description: ""
+        children:
+          - url: "{{ _.base_url }}/api/v1/assets/upload"
+            name: upload image - get presigned URL
+            meta:
+              id: req_a362a05833f9492ebecbf5dbeb99035e
+              created: 1762462400000
+              modified: 1763330905626
+              isPrivate: false
+              description: Genera URL presignada para subir imagen (solo Admin)
+              sortKey: -1762452665572
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "fileName": "prize-macbook.jpg",
+                  "fileType": "image/jpeg"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: Authorization
+                value: "{{ _.admin_token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.presigned_url }}"
+            name: upload file to S3
+            meta:
+              id: req_7d9b379e09b647bbb2e99a1672df7900
+              created: 1762462400002
+              modified: 1763823625479
+              isPrivate: false
+              description: "Paso 2: Sube el archivo usando la URL presignada del paso
+                anterior"
+              sortKey: -1762452665571
+            method: PUT
+            body:
+              mimeType: application/octet-stream
+              fileName: C:\Users\jcode\OneDrive\Imágenes\IMG-20230915-WA0001.jpg
+            headers:
+              - name: Content-Type
+                value: image/jpeg
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: user
+    meta:
+      id: fld_0a8e3d86e32f45569c72af23c7ee395c
+      created: 1762452703858
+      modified: 1762537654684
+      sortKey: -1762452626678
+      description: ""
+    children:
+      - name: raffles
+        meta:
+          id: fld_a69e6981483a44be817b16391b814188
+          created: 1762452766205
+          modified: 1762452771457
+          sortKey: -1762452771433
+          description: ""
+        children:
+          - url: "{{ _.base_url }}/api/v1/raffles"
+            name: crear raffle user
+            meta:
+              id: req_46e1b109096a44e591c74f8553d113ce
+              created: 1762452268364
+              modified: 1762453575277
+              isPrivate: false
+              description: ""
+              sortKey: -1762452778077
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "title": "Test Raffle",
+                  "description": "Este request debe fallar con 403 Forbidden",
+                  "end_date": "2025-11-25",
+                  "max_participants": 100,
+                  "prize_image_url": "https://example.com/image.jpg"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: Authorization
+                value: "{{ _.user_token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate"
+            name: agregar participacion
+            meta:
+              id: req_4339d0571e054d1c9063c50c550a675e
+              created: 1762452268365
+              modified: 1762891084347
+              isPrivate: false
+              description: ""
+              sortKey: -1762452778177
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "participant_name": "Axel Leon",
+                  "participant_email": "axel.erico.leon.garcia@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: Authorization
+                value: "{{ _.user_token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close"
+            name: cerrar raffle user
+            meta:
+              id: req_6574ec5aa41749c2b6c3664b9903d819
+              created: 1762452268367
+              modified: 1762453582256
+              isPrivate: false
+              description: ""
+              sortKey: -1762452777677
+            method: POST
+            body:
+              mimeType: application/json
+              text: ""
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: Authorization
+                value: "{{ _.user_token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.base_url }}/api/v1/assets/upload"
+            name: upload image user
+            meta:
+              id: req_59882d80ac8748e78988cfa3cab74cfd
+              created: 1762462400001
+              modified: 1762866449073
+              isPrivate: false
+              description: Intento de usuario normal - debe retornar 403 Forbidden
+              sortKey: -1762452778078
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "fileName": "unauthorized.jpg",
+                  "fileType": "image/jpeg"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: Authorization
+                value: "{{ _.user_token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: public
+    meta:
+      id: fld_ffe7202244504d428a4ac2626950216c
+      created: 1762452728066
+      modified: 1762452875749
+      sortKey: -1762452626753
+      description: ""
+    children:
+      - name: raffles
+        meta:
+          id: fld_077e69c5e6ed46dd8da9934c35a34a38
+          created: 1762537513046
+          modified: 1762537513046
+          sortKey: -1762537513046
+          description: ""
+        children:
+          - url: "{{ _.base_url }}/api/v1/raffles"
+            name: mostrar raffles
+            meta:
+              id: req_feab0087b0854dba919a8dd9dc787b68
+              created: 1762452268361
+              modified: 1762537517150
+              isPrivate: false
+              description: ""
+              sortKey: -1762537517115
+            method: GET
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - name: id
+            meta:
+              id: fld_8e5e34b19b2f47f98b1c02137aaa250b
+              created: 1762537522884
+              modified: 1762537525831
+              sortKey: -1762537517015
+              description: ""
+            children:
+              - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}"
+                name: mostrar raffle por id
+                meta:
+                  id: req_336b08e2f6e9454f9e8212ce1ebcf1bd
+                  created: 1762452268362
+                  modified: 1762537530766
+                  isPrivate: false
+                  description: ""
+                  sortKey: -1762537530731
+                method: GET
+                settings:
+                  renderRequestBody: true
+                  encodeUrl: true
+                  followRedirects: global
+                  cookies:
+                    send: true
+                    store: true
+                  rebuildPath: true
+              - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate"
+                name: agregar participacion sin auth
+                meta:
+                  id: req_9ca6717572b846cfa98793d756a18028
+                  created: 1762452268366
+                  modified: 1762537534972
+                  isPrivate: false
+                  description: ""
+                  sortKey: -1762537530631
+                method: POST
+                body:
+                  mimeType: application/json
+                  text: |-
+                    {
+                      "participant_name": "Sin Autenticación",
+                      "participant_email": "test@test.com"
+                    }
+                headers:
+                  - name: Content-Type
+                    value: application/json
+                settings:
+                  renderRequestBody: true
+                  encodeUrl: true
+                  followRedirects: global
+                  cookies:
+                    send: true
+                    store: true
+                  rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_71dff622b009430aaf23ad37fa6f7bfc
+    created: 1762281947288
+    modified: 1762281947288
+environments:
+  name: Base Environment
+  meta:
+    id: env_96d52974377a48aab9091964e360304a
+    created: 1761082893779
+    modified: 1762452524118
+    isPrivate: false
+  data:
+    base_url: https://qnbxxcb2ni.execute-api.us-east-2.amazonaws.com/dev
+    user_pool_id: us-east-2_0pco0yiVE
+    client_id: 8puupsr2sodm3befja1p1g99p
+    region: us-east-2
+    admin_email: admin@rafflenow.com
+    admin_password: AdminPass123!
+    user_email: user@rafflenow.com
+    user_password: UserPass123!
+    admin_token: ""
+    user_token: ""
+    presigned_url: ""
+    cloudfront_image_url: ""
+  subEnvironments:
+    - name: RaffleNow Dev
+      meta:
+        id: env_26871c7dbff1432ea1b1514d50e131a5
+        created: 1762452268357
+        modified: 1763823858148
+        isPrivate: false
+        sortKey: 1762452268357
+      data:
+        base_url: https://f30yteecb3.execute-api.us-east-2.amazonaws.com/dev
+        user_pool_id: us-east-2_2gkfKBcCw
+        client_id: n747s4vqrp0kil6lsph1972us
+        region: us-east-2
+        admin_email: admin@rafflenow.com
+        admin_password: AdminPass123!
+        user_email: user@rafflenow.com
+        user_password: UserPass123!
+        admin_token: eyJraWQiOiJmdThcL0k1QW83QUNpb3o0OVlZRmtxU1ZQN3RWTHJkdzJHZzRocnVScWw3bz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIyMTliNjUyMC1iMGUxLTcwZTYtZjYxZS1jNDcyZTM3NGMwNWEiLCJjb2duaXRvOmdyb3VwcyI6WyJBZG1pbiJdLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMi5hbWF6b25hd3MuY29tXC91cy1lYXN0LTJfMmdrZktCY0N3IiwiY29nbml0bzp1c2VybmFtZSI6IjIxOWI2NTIwLWIwZTEtNzBlNi1mNjFlLWM0NzJlMzc0YzA1YSIsIm9yaWdpbl9qdGkiOiI4ZTE1ZmFhZC1mYWU4LTQ0ZGItYjkxOS04YWUxMWI0NmIyM2MiLCJhdWQiOiJuNzQ3czR2cXJwMGtpbDZsc3BoMTk3MnVzIiwiZXZlbnRfaWQiOiI3NDlkNDEyOC01MzA5LTQxYmItOTUwNi05YjgzM2YzM2FjNTQiLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTc2MzgyMzA2MiwiZXhwIjoxNzYzODI2NjYyLCJpYXQiOjE3NjM4MjMwNjIsImp0aSI6ImY5MzRhNjk1LTlhOTgtNDkzMi04MGIxLTg4NTRhN2Y2YzRiOSIsImVtYWlsIjoiYWRtaW5AcmFmZmxlbm93LmNvbSJ9.qwQt_GRSx4-e87qiDZ72GjcJoH90M-ismazfFPY_swKiUQgQFNJ_hDYN0pgKlup2hql--LCVv5dekXDGKJJyon47SYF5G3vc9X1nZJgMT8uFLFVdklUXcuJUaWDXi5h--qgwVzAywcxY3sgS0ZQMPYtrsTazqyqmX5QKhz4eyGI2eMjsvsIfNH7UkwVqRoXNi8aRHFyTo94bQzbek_fUwgwtwejIAwypLV5SooLAEmtQ9B_eF7WWTYD9-Jbme81lNdGE5Nl5U-6p1Q4DKrM1C7p7U_U1mFNjway-fJmKY4oSIBdazw84RDMDXtb3LLCwA46-kiW6Bw-ff8zJC0R4Wg
+        user_token: eyJraWQiOiJmdThcL0k1QW83QUNpb3o0OVlZRmtxU1ZQN3RWTHJkdzJHZzRocnVScWw3bz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhMTZiYTU2MC1kMDIxLTcwNWEtZTJmZS05NzQ0ZDE4NjdlN2IiLCJjb2duaXRvOmdyb3VwcyI6WyJVc2VyIl0sImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0yLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMl8yZ2tmS0JjQ3ciLCJjb2duaXRvOnVzZXJuYW1lIjoiYTE2YmE1NjAtZDAyMS03MDVhLWUyZmUtOTc0NGQxODY3ZTdiIiwib3JpZ2luX2p0aSI6ImRhZjhlYzU5LTUyZGMtNDk3Zi1hMmM2LWQzMjMyMjExYzg2ZiIsImF1ZCI6Im43NDdzNHZxcnAwa2lsNmxzcGgxOTcydXMiLCJldmVudF9pZCI6Ijk3MGYxZWVmLTc5NDMtNDM1NS1hNDI2LTRkZmFkMzA2OTYwOCIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNzYzODIzNTMxLCJleHAiOjE3NjM4MjcxMzEsImlhdCI6MTc2MzgyMzUzMSwianRpIjoiZWZjMjU0MWMtODE5Mi00N2Y1LTk5MGQtMDIyZTAwM2VjZTdjIiwiZW1haWwiOiJ1c2VyQHJhZmZsZW5vdy5jb20ifQ.Q-mec0idSeadEqFn9mLIg4XMq5J2t930oDwWo7-GeuV8kEkX0tphjaymRJJezkAQHcadS_NOUD4MMH-Qp8cL7IfdTPXs77byBfZvNbk2-YwDg5rAuV4N_ns3Ni2gjHoKraJiRYZfYI8SW5aP3WoVFhqRbOb6qpcdeAAgeChHXc9X0sDiM-MHHQ1CxrUs3dAIT_MhmcZMYVCeZu3jJTJ2Z51yKO_UfqGFQdgoc89WxPvOJMN15Vxpq59lsoosPH5nLfAi3NJ8oVYS1kfXQCITb9KMJxYMo0c7MMfkZY1joA2ooyRZF6XkXmq3dutvc_1zVIDZ5iR9GXeyWNr-AK0kHA
+        presigned_url: https://rafflenow-dev-422228629090-assets.s3.us-east-2.amazonaws.com/prizes/5d655bd5-c204-4893-a3c3-e0d34efa67e2-prize-macbook.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAWETWJSZRI4PPKOUH%2F20251122%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20251122T145928Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEF8aCXVzLWVhc3QtMiJHMEUCIBTYmwvHFprz5U%2FAKVNn9OAxJ4k9igzv7QJaRko2anrpAiEAmO2DE1qc%2BJHBSq7iSn%2FvubYnh8wIj4U7wUKnv54OanIqowMIKBAAGgw0MjIyMjg2MjkwOTAiDG4QtyM7DcbfjZtE6yqAA%2FA11sUyN2KGisppQZpuDy8DQXSgTQ7UZWtrWuoOVltUZ1u%2BkE6sJIFRg59ZgiP73UJL44Nm%2FlIuWLNbBZL87nkCme%2F2ZzEiiQN%2Fhirb3ut0dWS3a721fsmbFuZ0x3Vp%2Bfd%2BBkrKJGI8JFdLjayeAanXCqCAqfD6atEfOxGDZEpxeI3rq7uzujEZ2O%2Bth33WfRL4GVOri4wr%2FMi7TwE9isjMrC1J137K5P0HP%2Bkou9JMVZOx7RLE3BbvJVJOkxZ2z1N28lTSg27khaH80%2FDih7jVyHJY65vzWExj8MSnuipPlloeuBkxaEz6zj2VhKLc7Wwyn1SDggrEkYn9dWW4%2FAZ4i9R4e2FOkwijaoZZF00tcuLlCSV5fGeC9uL12ema4msw%2FWyyitQJUhPUKQyqZvJavF6epzmbFVRKZ3HHPE50AzoYCOmye77ed%2FDSf2o5dc6OWBlqEVwgxJ3JQtREYPxSw50Mo0phr55z50NQV70mzF4Q8QV7YSIlRBk%2BjfaAYzDPn4fJBjqdASSnXiVUEoz5NRPb72NiuHj7xupxob2i5ed8Sm1uLjHyF%2B3PxUcD7gEOXfT3zs0EqNswPLvNkwmiAXUFH79myTb58MWyrk1il4R4eB9UEdHhdcvyDmjgXmNLt0KRkSetiHvqDbIwc%2BKummry4Z8LRGPuVBj1%2FxXrsxg7Z6s4C8zIs0ZBJ5fMu%2Bd2hZk4QsWYkDChjm9JL3l058N9u3o%3D&X-Amz-Signature=5636d3f6b69a05d5d23adedd8f756410ea565a3fc28fe6c6e69bd264a30caead&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-uploadedat=2025-11-22T14%3A59%3A28.376Z&x-amz-meta-uploadedby=admin%40rafflenow.com&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
+        test_raffle_id: raffle-68fbdf08-dfd8-4d0f-8f92-f392b24b02ee

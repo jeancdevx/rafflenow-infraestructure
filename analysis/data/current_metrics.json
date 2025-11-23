@@ -1,0 +1,256 @@
+{
+  "company_info": {
+    "name": "RaffleNow Perú SAC",
+    "founded": "2020",
+    "location": "Lima, Perú",
+    "business_model": "Plataforma de sorteos online con pago por ticket",
+    "ticket_price_pen": 2.00,
+    "commission_model": "100% del valor del ticket (empresa asume costo del premio)"
+  },
+  "raffle_duration_rules": {
+    "min_duration_days": 7,
+    "max_duration_days": 60,
+    "closing_time": "23:59:00",
+    "creation_time": "Cualquier hora del día",
+    "simultaneous_active_raffles": "Múltiples sorteos pueden estar activos simultáneamente"
+  },
+  "raffle_categories": {
+    "small": {
+      "prize_value_range_pen": "100-500",
+      "examples": ["Tostadora", "Lámpara LED", "Auriculares", "Mochila"],
+      "duration_days_typical": 7,
+      "expected_participants": 3000,
+      "peak_rps_at_closing": 5,
+      "failure_rate_current_infra": 0.05,
+      "frequency_per_month": 12
+    },
+    "medium": {
+      "prize_value_range_pen": "500-5000",
+      "examples": ["iPhone", "PlayStation 5", "Tablet", "Smartwatch", "Bicicleta eléctrica"],
+      "duration_days_typical": 14,
+      "expected_participants": 50000,
+      "peak_rps_at_closing": 100,
+      "failure_rate_current_infra": 0.50,
+      "frequency_per_month": 8
+    },
+    "large": {
+      "prize_value_range_pen": "5000-50000",
+      "examples": ["Moto", "Viaje internacional", "TV 85 pulgadas", "Set de muebles"],
+      "duration_days_typical": 30,
+      "expected_participants": 250000,
+      "peak_rps_at_closing": 600,
+      "failure_rate_current_infra": 0.70,
+      "frequency_per_month": 3
+    },
+    "premium": {
+      "prize_value_range_pen": "50000+",
+      "examples": ["Auto", "Departamento", "Terreno"],
+      "duration_days_typical": 60,
+      "expected_participants": 1500000,
+      "peak_rps_at_closing": 2500,
+      "failure_rate_current_infra": 0.80,
+      "frequency_per_month": 1,
+      "bot_traffic_percentage": 0.70
+    }
+  },
+  "traffic_patterns": {
+    "during_raffle_lifetime": {
+      "days_1_to_5": {
+        "participation_percentage": 0.20,
+        "rps_average": 0.5,
+        "description": "Participación inicial curiosa"
+      },
+      "days_6_to_middle": {
+        "participation_percentage": 0.35,
+        "rps_average": 1,
+        "description": "Participación constante durante vida del sorteo"
+      },
+      "last_3_days": {
+        "participation_percentage": 0.30,
+        "rps_average": 5,
+        "description": "Aumento gradual conforme se acerca el cierre"
+      },
+      "last_30_minutes": {
+        "participation_percentage": 0.15,
+        "rps_peak": "Variable según categoría (3-500 RPS)",
+        "description": "Rush masivo antes de las 23:59:00"
+      }
+    }
+  },
+  "worst_case_scenarios": {
+    "single_premium_closing": {
+      "peak_rps": 2500,
+      "participants_in_last_30min": 75000,
+      "current_failure_rate": 0.80,
+      "description": "Un solo sorteo premium cerrando (ej: departamento)"
+    },
+    "premium_plus_large_same_day": {
+      "peak_rps": 3100,
+      "participants_in_last_30min": 93000,
+      "current_failure_rate": 0.85,
+      "description": "Sorteo premium (departamento) + sorteo grande (moto) cerrando el mismo día"
+    },
+    "multiple_medium_closing": {
+      "peak_rps": 300,
+      "participants_in_last_30min": 30000,
+      "current_failure_rate": 0.60,
+      "description": "3 sorteos medianos (iPhones, PS5, Tablet) cerrando el mismo día"
+    }
+  },
+  "revenue_analysis": {
+    "small_raffle": {
+      "successful_participants": 2850,
+      "lost_due_to_failures": 150,
+      "successful_revenue_pen": 5700,
+      "potential_revenue_pen": 6000,
+      "lost_revenue_pen": 300
+    },
+    "medium_raffle": {
+      "successful_participants": 25000,
+      "lost_due_to_failures": 25000,
+      "successful_revenue_pen": 50000,
+      "potential_revenue_pen": 100000,
+      "lost_revenue_pen": 50000
+    },
+    "large_raffle": {
+      "successful_participants": 75000,
+      "lost_due_to_failures": 175000,
+      "successful_revenue_pen": 150000,
+      "potential_revenue_pen": 500000,
+      "lost_revenue_pen": 350000
+    },
+    "premium_raffle": {
+      "successful_participants": 300000,
+      "lost_due_to_failures": 1200000,
+      "successful_revenue_pen": 600000,
+      "potential_revenue_pen": 3000000,
+      "lost_revenue_pen": 2400000,
+      "bot_revenue_blocked_future": 2100000
+    },
+    "monthly_totals": {
+      "small_raffles_revenue": 68400,
+      "medium_raffles_revenue": 400000,
+      "large_raffles_revenue": 450000,
+      "premium_raffles_revenue": 600000,
+      "actual_revenue_pen": 1518400,
+      "potential_revenue_pen": 5172000,
+      "lost_revenue_pen": 3653600,
+      "lost_revenue_percentage": 0.71
+    }
+  },
+  "infrastructure_costs_current": {
+    "infrastructure": {
+      "description": "Infraestructura on-premise o proveedores locales (configuración desconocida)",
+      "servers": {
+        "description": "Servidores monolíticos, siempre encendidos, sin auto-scaling",
+        "monthly_cost_pen": 10700
+      },
+      "database": {
+        "description": "Base de datos relacional, sin replicación automática",
+        "monthly_cost_pen": 6200
+      },
+      "cache_storage": {
+        "description": "Sistema de caché y almacenamiento",
+        "monthly_cost_pen": 3600
+      },
+      "networking": {
+        "description": "Ancho de banda y balanceo básico",
+        "monthly_cost_pen": 2100
+      },
+      "monitoring": {
+        "description": "Monitoreo básico, logs limitados",
+        "monthly_cost_pen": 400
+      }
+    },
+    "operations": {
+      "devops_team": {
+        "description": "2 personas tiempo completo (despliegues manuales, guardias)",
+        "monthly_cost_pen": 18000
+      },
+      "overtime": {
+        "description": "Horas extra picos y emergencias (40h/mes @ S/150/h)",
+        "monthly_cost_pen": 6000
+      },
+      "tools_licenses": {
+        "description": "Herramientas de monitoring, APM, gestión",
+        "monthly_cost_pen": 2200
+      }
+    },
+    "totals": {
+      "infrastructure_monthly_pen": 23000,
+      "operations_monthly_pen": 26200,
+      "total_monthly_pen": 49200
+    },
+    "problems": {
+      "manual_deployments": "Despliegues manuales vía SSH/FTP → errores, timeouts, regresiones",
+      "monolith_architecture": "Monolito en VM única → incapaz de absorber picos, SPOF",
+      "no_environments": "Sin separación dev/staging/prod → cambios inseguros en producción",
+      "misaligned_costs": "Sobredimensionamiento para 'peor caso' o capacidad insuficiente en picos",
+      "low_observability": "Difícil detectar y aislar cuellos de botella, logs dispersos"
+    }
+  },
+  "performance_metrics_current": {
+    "availability": {
+      "uptime_percentage": 95.0,
+      "downtime_hours_per_year": 438,
+      "incidents_per_month": 8,
+      "mttr_hours": 2.5
+    },
+    "performance": {
+      "low_traffic": {
+        "description": "Primeros días del sorteo, tráfico < 5 RPS",
+        "p50_latency_ms": 400,
+        "p95_latency_ms": 800,
+        "p99_latency_ms": 1200
+      },
+      "peak_medium_raffle": {
+        "description": "Últimos 30 min sorteo mediano, ~30 RPS",
+        "p50_latency_ms": 1500,
+        "p95_latency_ms": 4000,
+        "p99_latency_ms": 8000
+      },
+      "peak_large_raffle": {
+        "description": "Últimos 30 min sorteo grande, ~150 RPS",
+        "p50_latency_ms": 5000,
+        "p95_latency_ms": 12000,
+        "p99_latency_ms": 20000
+      },
+      "peak_premium_raffle": {
+        "description": "Últimos 30 min sorteo premium, ~500 RPS",
+        "p50_latency_ms": 15000,
+        "p95_latency_ms": 30000,
+        "p99_latency_ms": "timeout"
+      }
+    },
+    "reliability": {
+      "small_raffle_error_rate": 0.05,
+      "medium_raffle_error_rate": 0.40,
+      "large_raffle_error_rate": 0.65,
+      "premium_raffle_error_rate": 0.75
+    },
+    "scalability": {
+      "comfortable_max_rps": 30,
+      "degraded_performance_rps": 50,
+      "breaking_point_rps": 150,
+      "complete_failure_rps": 500,
+      "auto_scaling": false,
+      "manual_scaling_time_minutes": 20
+    }
+  },
+  "fraud_analysis": {
+    "bot_detection": {
+      "current_capability": "Basic rate limiting por IP",
+      "effectiveness": "Baja (bots usan proxies)",
+      "bot_percentage_premium_raffle": 0.70,
+      "estimated_bot_participations_premium": 210000,
+      "fraud_cost_per_premium_raffle_pen": 420000
+    },
+    "authentication": {
+      "current_method": "Basic username/password",
+      "mfa_enabled": false,
+      "password_policies": "Débiles",
+      "account_takeover_monthly": 50,
+      "duplicate_accounts": "No detectados"
+    }
+  }
+}
