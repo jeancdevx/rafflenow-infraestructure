@@ -5,7 +5,20 @@ meta:
   id: wrk_8af41df28711465592de50b8a57ba552
   created: 1762465041206
   modified: 1762465041206
-  description: ""
+  description: |
+    RaffleNow API Collection - Arquitectura Dual API Gateway
+    
+    API Pública (Sin autenticación):
+    - GET /api/v1/raffles - Listar sorteos (con paginación y filtros)
+    - GET /api/v1/raffles/{id} - Obtener sorteo por ID
+    
+    API Autenticada (Requiere token Cognito):
+    - POST /api/v1/raffles - Crear sorteo (Solo Admin)
+    - POST /api/v1/raffles/{id}/participate - Participar en sorteo (Usuario o Admin)
+    - POST /api/v1/raffles/{id}/close - Cerrar sorteo (Solo Admin)
+    - POST /api/v1/assets/upload - Obtener URL presignada (Solo Admin)
+    
+    Actualizado: 2025-11-22 - FASE 1 y FASE 2 (list-raffles con Powertools)
 collection:
   - name: auth
     meta:
@@ -99,7 +112,7 @@ collection:
           sortKey: -1762452638076
           description: ""
         children:
-          - url: "{{ _.base_url }}/api/v1/raffles"
+          - url: "{{ _.authenticated_api_url }}/api/v1/raffles"
             name: crear raffles
             meta:
               id: req_f30c22a56ea943599cf621c887375374
@@ -118,7 +131,7 @@ collection:
                   "end_date": "2025-11-31",
                   "max_participants": 500,
                 	"prize_images": [
-                			"https://d1006dxjpy74r9.cloudfront.net/optimized/5d655bd5-c204-4893-a3c3-e0d34efa67e2-prize-macbook.webp"
+                			"{{ _.cloudfront_url }}/optimized/your-image-id.webp"
                 	]
                 }
             headers:
@@ -142,7 +155,7 @@ collection:
               sortKey: -1762452665471
               description: ""
             children:
-              - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close"
+              - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close"
                 name: cerrar raffle
                 meta:
                   id: req_b02d7de144af49b99186d6ef06f37650
@@ -176,7 +189,7 @@ collection:
           sortKey: -1762452638176
           description: ""
         children:
-          - url: "{{ _.base_url }}/api/v1/assets/upload"
+          - url: "{{ _.authenticated_api_url }}/api/v1/assets/upload"
             name: upload image - get presigned URL
             meta:
               id: req_a362a05833f9492ebecbf5dbeb99035e
@@ -247,7 +260,7 @@ collection:
           sortKey: -1762452771433
           description: ""
         children:
-          - url: "{{ _.base_url }}/api/v1/raffles"
+          - url: "{{ _.authenticated_api_url }}/api/v1/raffles"
             name: crear raffle user
             meta:
               id: req_46e1b109096a44e591c74f8553d113ce
@@ -280,7 +293,7 @@ collection:
                 send: true
                 store: true
               rebuildPath: true
-          - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate"
+          - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate"
             name: agregar participacion
             meta:
               id: req_4339d0571e054d1c9063c50c550a675e
@@ -310,7 +323,7 @@ collection:
                 send: true
                 store: true
               rebuildPath: true
-          - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close"
+          - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close"
             name: cerrar raffle user
             meta:
               id: req_6574ec5aa41749c2b6c3664b9903d819
@@ -336,7 +349,7 @@ collection:
                 send: true
                 store: true
               rebuildPath: true
-          - url: "{{ _.base_url }}/api/v1/assets/upload"
+          - url: "{{ _.authenticated_api_url }}/api/v1/assets/upload"
             name: upload image user
             meta:
               id: req_59882d80ac8748e78988cfa3cab74cfd
@@ -382,7 +395,7 @@ collection:
           sortKey: -1762537513046
           description: ""
         children:
-          - url: "{{ _.base_url }}/api/v1/raffles"
+          - url: "{{ _.public_api_url }}/api/v1/raffles"
             name: mostrar raffles
             meta:
               id: req_feab0087b0854dba919a8dd9dc787b68
@@ -400,6 +413,60 @@ collection:
                 send: true
                 store: true
               rebuildPath: true
+          - url: "{{ _.public_api_url }}/api/v1/raffles?limit=10"
+            name: mostrar raffles (paginado - 10 items)
+            meta:
+              id: req_list_raffles_paginated
+              created: 1762537517116
+              modified: 1762537517116
+              isPrivate: false
+              description: "Obtiene 10 sorteos. Usa next_cursor de la respuesta para siguientes páginas"
+              sortKey: -1762537517114
+            method: GET
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.public_api_url }}/api/v1/raffles?status=active"
+            name: mostrar raffles activos (filtro por status)
+            meta:
+              id: req_list_raffles_active
+              created: 1762537517117
+              modified: 1762537517117
+              isPrivate: false
+              description: "Filtra sorteos usando GSI StatusEndDateIndex. Valores: active, closed, expired"
+              sortKey: -1762537517113
+            method: GET
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.public_api_url }}/api/v1/raffles?status=active&category=tech&limit=20"
+            name: mostrar raffles (filtros combinados)
+            meta:
+              id: req_list_raffles_filtered
+              created: 1762537517118
+              modified: 1762537517118
+              isPrivate: false
+              description: "Combina filtro por status (GSI) y categoría (FilterExpression) con límite de 20"
+              sortKey: -1762537517112
+            method: GET
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
           - name: id
             meta:
               id: fld_8e5e34b19b2f47f98b1c02137aaa250b
@@ -408,7 +475,7 @@ collection:
               sortKey: -1762537517015
               description: ""
             children:
-              - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}"
+              - url: "{{ _.public_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}"
                 name: mostrar raffle por id
                 meta:
                   id: req_336b08e2f6e9454f9e8212ce1ebcf1bd
@@ -426,7 +493,7 @@ collection:
                     send: true
                     store: true
                   rebuildPath: true
-              - url: "{{ _.base_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate"
+              - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate"
                 name: agregar participacion sin auth
                 meta:
                   id: req_9ca6717572b846cfa98793d756a18028
@@ -468,9 +535,10 @@ environments:
     modified: 1762452524118
     isPrivate: false
   data:
-    base_url: https://qnbxxcb2ni.execute-api.us-east-2.amazonaws.com/dev
-    user_pool_id: us-east-2_0pco0yiVE
-    client_id: 8puupsr2sodm3befja1p1g99p
+    public_api_url: https://eyabp37mde.execute-api.us-east-2.amazonaws.com/dev
+    authenticated_api_url: https://ihi6yv18pj.execute-api.us-east-2.amazonaws.com/dev
+    user_pool_id: us-east-2_2gkfKBcCw
+    client_id: n747s4vqrp0kil6lsph1972us
     region: us-east-2
     admin_email: admin@rafflenow.com
     admin_password: AdminPass123!
@@ -479,7 +547,8 @@ environments:
     admin_token: ""
     user_token: ""
     presigned_url: ""
-    cloudfront_image_url: ""
+    cloudfront_url: https://d1006dxjpy74r9.cloudfront.net
+    test_raffle_id: ""
   subEnvironments:
     - name: RaffleNow Dev
       meta:
@@ -489,7 +558,8 @@ environments:
         isPrivate: false
         sortKey: 1762452268357
       data:
-        base_url: https://f30yteecb3.execute-api.us-east-2.amazonaws.com/dev
+        public_api_url: https://eyabp37mde.execute-api.us-east-2.amazonaws.com/dev
+        authenticated_api_url: https://ihi6yv18pj.execute-api.us-east-2.amazonaws.com/dev
         user_pool_id: us-east-2_2gkfKBcCw
         client_id: n747s4vqrp0kil6lsph1972us
         region: us-east-2
@@ -497,7 +567,8 @@ environments:
         admin_password: AdminPass123!
         user_email: user@rafflenow.com
         user_password: UserPass123!
-        admin_token: eyJraWQiOiJmdThcL0k1QW83QUNpb3o0OVlZRmtxU1ZQN3RWTHJkdzJHZzRocnVScWw3bz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIyMTliNjUyMC1iMGUxLTcwZTYtZjYxZS1jNDcyZTM3NGMwNWEiLCJjb2duaXRvOmdyb3VwcyI6WyJBZG1pbiJdLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMi5hbWF6b25hd3MuY29tXC91cy1lYXN0LTJfMmdrZktCY0N3IiwiY29nbml0bzp1c2VybmFtZSI6IjIxOWI2NTIwLWIwZTEtNzBlNi1mNjFlLWM0NzJlMzc0YzA1YSIsIm9yaWdpbl9qdGkiOiI4ZTE1ZmFhZC1mYWU4LTQ0ZGItYjkxOS04YWUxMWI0NmIyM2MiLCJhdWQiOiJuNzQ3czR2cXJwMGtpbDZsc3BoMTk3MnVzIiwiZXZlbnRfaWQiOiI3NDlkNDEyOC01MzA5LTQxYmItOTUwNi05YjgzM2YzM2FjNTQiLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTc2MzgyMzA2MiwiZXhwIjoxNzYzODI2NjYyLCJpYXQiOjE3NjM4MjMwNjIsImp0aSI6ImY5MzRhNjk1LTlhOTgtNDkzMi04MGIxLTg4NTRhN2Y2YzRiOSIsImVtYWlsIjoiYWRtaW5AcmFmZmxlbm93LmNvbSJ9.qwQt_GRSx4-e87qiDZ72GjcJoH90M-ismazfFPY_swKiUQgQFNJ_hDYN0pgKlup2hql--LCVv5dekXDGKJJyon47SYF5G3vc9X1nZJgMT8uFLFVdklUXcuJUaWDXi5h--qgwVzAywcxY3sgS0ZQMPYtrsTazqyqmX5QKhz4eyGI2eMjsvsIfNH7UkwVqRoXNi8aRHFyTo94bQzbek_fUwgwtwejIAwypLV5SooLAEmtQ9B_eF7WWTYD9-Jbme81lNdGE5Nl5U-6p1Q4DKrM1C7p7U_U1mFNjway-fJmKY4oSIBdazw84RDMDXtb3LLCwA46-kiW6Bw-ff8zJC0R4Wg
-        user_token: eyJraWQiOiJmdThcL0k1QW83QUNpb3o0OVlZRmtxU1ZQN3RWTHJkdzJHZzRocnVScWw3bz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhMTZiYTU2MC1kMDIxLTcwNWEtZTJmZS05NzQ0ZDE4NjdlN2IiLCJjb2duaXRvOmdyb3VwcyI6WyJVc2VyIl0sImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0yLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMl8yZ2tmS0JjQ3ciLCJjb2duaXRvOnVzZXJuYW1lIjoiYTE2YmE1NjAtZDAyMS03MDVhLWUyZmUtOTc0NGQxODY3ZTdiIiwib3JpZ2luX2p0aSI6ImRhZjhlYzU5LTUyZGMtNDk3Zi1hMmM2LWQzMjMyMjExYzg2ZiIsImF1ZCI6Im43NDdzNHZxcnAwa2lsNmxzcGgxOTcydXMiLCJldmVudF9pZCI6Ijk3MGYxZWVmLTc5NDMtNDM1NS1hNDI2LTRkZmFkMzA2OTYwOCIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNzYzODIzNTMxLCJleHAiOjE3NjM4MjcxMzEsImlhdCI6MTc2MzgyMzUzMSwianRpIjoiZWZjMjU0MWMtODE5Mi00N2Y1LTk5MGQtMDIyZTAwM2VjZTdjIiwiZW1haWwiOiJ1c2VyQHJhZmZsZW5vdy5jb20ifQ.Q-mec0idSeadEqFn9mLIg4XMq5J2t930oDwWo7-GeuV8kEkX0tphjaymRJJezkAQHcadS_NOUD4MMH-Qp8cL7IfdTPXs77byBfZvNbk2-YwDg5rAuV4N_ns3Ni2gjHoKraJiRYZfYI8SW5aP3WoVFhqRbOb6qpcdeAAgeChHXc9X0sDiM-MHHQ1CxrUs3dAIT_MhmcZMYVCeZu3jJTJ2Z51yKO_UfqGFQdgoc89WxPvOJMN15Vxpq59lsoosPH5nLfAi3NJ8oVYS1kfXQCITb9KMJxYMo0c7MMfkZY1joA2ooyRZF6XkXmq3dutvc_1zVIDZ5iR9GXeyWNr-AK0kHA
-        presigned_url: https://rafflenow-dev-422228629090-assets.s3.us-east-2.amazonaws.com/prizes/5d655bd5-c204-4893-a3c3-e0d34efa67e2-prize-macbook.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAWETWJSZRI4PPKOUH%2F20251122%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20251122T145928Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEF8aCXVzLWVhc3QtMiJHMEUCIBTYmwvHFprz5U%2FAKVNn9OAxJ4k9igzv7QJaRko2anrpAiEAmO2DE1qc%2BJHBSq7iSn%2FvubYnh8wIj4U7wUKnv54OanIqowMIKBAAGgw0MjIyMjg2MjkwOTAiDG4QtyM7DcbfjZtE6yqAA%2FA11sUyN2KGisppQZpuDy8DQXSgTQ7UZWtrWuoOVltUZ1u%2BkE6sJIFRg59ZgiP73UJL44Nm%2FlIuWLNbBZL87nkCme%2F2ZzEiiQN%2Fhirb3ut0dWS3a721fsmbFuZ0x3Vp%2Bfd%2BBkrKJGI8JFdLjayeAanXCqCAqfD6atEfOxGDZEpxeI3rq7uzujEZ2O%2Bth33WfRL4GVOri4wr%2FMi7TwE9isjMrC1J137K5P0HP%2Bkou9JMVZOx7RLE3BbvJVJOkxZ2z1N28lTSg27khaH80%2FDih7jVyHJY65vzWExj8MSnuipPlloeuBkxaEz6zj2VhKLc7Wwyn1SDggrEkYn9dWW4%2FAZ4i9R4e2FOkwijaoZZF00tcuLlCSV5fGeC9uL12ema4msw%2FWyyitQJUhPUKQyqZvJavF6epzmbFVRKZ3HHPE50AzoYCOmye77ed%2FDSf2o5dc6OWBlqEVwgxJ3JQtREYPxSw50Mo0phr55z50NQV70mzF4Q8QV7YSIlRBk%2BjfaAYzDPn4fJBjqdASSnXiVUEoz5NRPb72NiuHj7xupxob2i5ed8Sm1uLjHyF%2B3PxUcD7gEOXfT3zs0EqNswPLvNkwmiAXUFH79myTb58MWyrk1il4R4eB9UEdHhdcvyDmjgXmNLt0KRkSetiHvqDbIwc%2BKummry4Z8LRGPuVBj1%2FxXrsxg7Z6s4C8zIs0ZBJ5fMu%2Bd2hZk4QsWYkDChjm9JL3l058N9u3o%3D&X-Amz-Signature=5636d3f6b69a05d5d23adedd8f756410ea565a3fc28fe6c6e69bd264a30caead&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-uploadedat=2025-11-22T14%3A59%3A28.376Z&x-amz-meta-uploadedby=admin%40rafflenow.com&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
-        test_raffle_id: raffle-68fbdf08-dfd8-4d0f-8f92-f392b24b02ee
+        admin_token: ""
+        user_token: ""
+        presigned_url: ""
+        cloudfront_url: https://d1006dxjpy74r9.cloudfront.net
+        test_raffle_id: ""
