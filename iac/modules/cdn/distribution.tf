@@ -2,13 +2,15 @@
 resource "aws_cloudfront_distribution" "assets_cdn" {
   enabled             = true
   is_ipv6_enabled     = true
+  http_version        = "http2and3"
   comment             = "CDN for ${var.name_prefix} assets"
   default_root_object = "index.html"
-  price_class         = "PriceClass_100" # USA, Canada, Europe
+  price_class         = "PriceClass_200"
 
   origin {
     domain_name = var.assets_bucket_regional_domain_name
     origin_id   = "S3-${var.assets_bucket_id}"
+    origin_path = "/website"
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.assets_oai.cloudfront_access_identity_path
