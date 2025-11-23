@@ -1,278 +1,164 @@
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb");
-const {
-  EventBridgeClient,
-  PutEventsCommand,
-} = require("@aws-sdk/client-eventbridge");
-const { randomUUID } = require("crypto");
-const Logger = require("./logger");
+import { MetricUnit } from "@aws-lambda-powertools/metrics";
+import { logger, tracer, metrics } from "./lib/powertools.js";
+import { extractClaims, isAdmin, getUserEmail } from "./lib/auth-validator.js";
+import {
+  validateRequiredFields,
+  validateTitle,
+  validateDescription,
+  validateEndDate,
+  validateDuration,
+  validatePrizeImages,
+  validateMaxParticipants,
+} from "./lib/raffle-validator.js";
+import { createRaffle } from "./lib/raffle-creator.js";
+import { emitRaffleCreatedEvent } from "./lib/event-emitter.js";
 
-const client = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(client);
-const eventBridgeClient = new EventBridgeClient({});
-
-exports.handler = async (event, context) => {
-  const logger = new Logger(context);
-  logger.logRequest(event);
-
-  const claims = event.requestContext?.authorizer?.claims;
-  if (!claims) {
-    logger.warn("Unauthorized access attempt", { operation: "create-raffle" });
-    return {
-      statusCode: 401,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({
-        message: "Unauthorized",
-        error: "Authentication required",
-      }),
-    };
-  }
-
-  const groups = claims["cognito:groups"];
-  const isAdmin =
-    groups &&
-    (Array.isArray(groups) ? groups.includes("Admin") : groups === "Admin");
-
-  if (!isAdmin) {
-    logger.warn("Forbidden: non-admin user attempted to create raffle", {
-      operation: "create-raffle",
-    });
-    return {
-      statusCode: 403,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({
-        message: "Forbidden",
-        error: "Admin role required to create raffles",
-      }),
-    };
-  }
-
+export const handler = async (event, context) => {
   try {
+    logger.addContext(context);
+
+    const claims = extractClaims(event);
+    if (!claims) {
+      metrics.addMetric("UnauthorizedAttempt", MetricUnit.Count, 1);
+      return {
+        statusCode: 401,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({
+          message: "Unauthorized",
+          error: "Authentication required",
+        }),
+      };
+    }
+
+    if (!isAdmin(claims)) {
+      metrics.addMetric("ForbiddenAttempt", MetricUnit.Count, 1);
+      return {
+        statusCode: 403,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({
+          message: "Forbidden",
+          error: "Admin role required to create raffles",
+        }),
+      };
+    }
+
     const body = JSON.parse(event.body);
 
-    logger.info("Creating new raffle", { operation: "create-raffle" });
+    logger.info("Creating new raffle", {
+      admin_email: getUserEmail(claims),
+    });
 
-    const requiredFields = [
-      "title",
-      "description",
-      "end_date",
-      "max_participants",
-    ];
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        logger.warn("Validation error: missing required field", {
-          operation: "create-raffle",
-          missing_field: field,
-        });
-        return {
-          statusCode: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-          body: JSON.stringify({
-            message: "Validation error",
-            error: `Missing required field: ${field}`,
-          }),
-        };
-      }
+    const requiredValidation = validateRequiredFields(body);
+    if (!requiredValidation.valid) {
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildErrorResponse(
+        400,
+        "Validation error",
+        requiredValidation.error
+      );
+    }
+
+    const titleValidation = validateTitle(body.title);
+    if (!titleValidation.valid) {
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildErrorResponse(
+        400,
+        "Validation error",
+        titleValidation.error,
+        titleValidation
+      );
+    }
+
+    const descriptionValidation = validateDescription(body.description);
+    if (!descriptionValidation.valid) {
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildErrorResponse(
+        400,
+        "Validation error",
+        descriptionValidation.error,
+        descriptionValidation
+      );
+    }
+
+    const imagesValidation = validatePrizeImages(body.prize_images);
+    if (!imagesValidation.valid) {
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildErrorResponse(
+        400,
+        "Validation error",
+        imagesValidation.error,
+        imagesValidation
+      );
+    }
+
+    const maxParticipantsValidation = validateMaxParticipants(
+      body.max_participants
+    );
+    if (!maxParticipantsValidation.valid) {
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildErrorResponse(
+        400,
+        "Validation error",
+        maxParticipantsValidation.error
+      );
     }
 
     const now = new Date();
     const startDate = body.start_date ? new Date(body.start_date) : now;
 
-    let endDate;
-    if (body.end_date.includes("T")) {
-      endDate = new Date(body.end_date);
-      if (endDate.getUTCHours() !== 23 || endDate.getUTCMinutes() !== 59) {
-        return {
-          statusCode: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-          body: JSON.stringify({
-            message: "Validation error",
-            error:
-              "end_date must be set to 23:59 UTC. Use format: YYYY-MM-DD or YYYY-MM-DDT23:59:00Z",
-          }),
-        };
-      }
-    } else {
-      endDate = new Date(`${body.end_date}T23:59:00Z`);
+    const endDateValidation = validateEndDate(body.end_date, startDate);
+    if (!endDateValidation.valid) {
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildErrorResponse(
+        400,
+        "Validation error",
+        endDateValidation.error
+      );
     }
 
-    const diffMs = endDate - startDate;
-    const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
-    if (diffDays < 7) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Validation error",
-          error: "Raffle must last at least 7 days",
-          duration_days: Math.floor(diffDays),
-        }),
-      };
+    const durationValidation = validateDuration(
+      startDate,
+      endDateValidation.endDate
+    );
+    if (!durationValidation.valid) {
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      return buildErrorResponse(
+        400,
+        "Validation error",
+        durationValidation.error,
+        durationValidation
+      );
     }
 
-    if (diffDays > 60) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Validation error",
-          error: "Raffle cannot last more than 60 days",
-          duration_days: Math.floor(diffDays),
-        }),
-      };
-    }
+    tracer.putAnnotation("raffleCreator", getUserEmail(claims));
+    tracer.putAnnotation("raffleDuration", durationValidation.durationDays);
 
-    if (!body.prize_images || !Array.isArray(body.prize_images)) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Validation error",
-          error: "prize_images is required and must be an array",
-        }),
-      };
-    }
-
-    if (body.prize_images.length < 1) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Validation error",
-          error: "At least 1 prize image is required",
-          images_count: body.prize_images.length,
-        }),
-      };
-    }
-
-    if (body.prize_images.length > 5) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Validation error",
-          error: "Maximum 5 prize images allowed",
-          images_count: body.prize_images.length,
-        }),
-      };
-    }
-
-    for (let i = 0; i < body.prize_images.length; i++) {
-      if (
-        typeof body.prize_images[i] !== "string" ||
-        body.prize_images[i].trim() === ""
-      ) {
-        return {
-          statusCode: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-          body: JSON.stringify({
-            message: "Validation error",
-            error: `prize_images[${i}] must be a non-empty string URL`,
-          }),
-        };
-      }
-    }
-
-    const raffleId = `raffle-${randomUUID()}`;
-    const nowISO = new Date().toISOString();
-    const createdByEmail = claims.email;
-
-    const raffle = {
-      raffle_id: raffleId,
+    const raffleData = {
       title: body.title,
       description: body.description,
-      status: "active",
-      start_date: startDate.toISOString(),
-      end_date: endDate.toISOString(),
-      max_participants: parseInt(body.max_participants),
-      current_participants: 0,
-      prize_images: body.prize_images,
-      created_by: createdByEmail,
-      created_at: nowISO,
-      updated_at: nowISO,
+      startDate: startDate,
+      endDate: endDateValidation.endDate,
+      maxParticipants: maxParticipantsValidation.value,
+      prizeImages: body.prize_images,
     };
 
-    const command = new PutCommand({
-      TableName: process.env.DYNAMODB_TABLE,
-      Item: raffle,
-      ConditionExpression: "attribute_not_exists(raffle_id)",
-    });
+    const raffle = await createRaffle(raffleData, getUserEmail(claims));
 
-    await docClient.send(command);
+    await emitRaffleCreatedEvent(raffle);
 
-    logger.info("Raffle created in DynamoDB, emitting event to EventBridge", {
-      operation: "create-raffle",
-      raffle_id: raffleId,
-    });
-
-    try {
-      const eventCommand = new PutEventsCommand({
-        Entries: [
-          {
-            Source: "rafflenow.raffles",
-            DetailType: "raffle.created",
-            Detail: JSON.stringify({
-              raffle_id: raffleId,
-              title: body.title,
-              description: body.description,
-              status: "active",
-              start_date: startDate.toISOString(),
-              end_date: endDate.toISOString(),
-              max_participants: parseInt(body.max_participants),
-              prize_images: body.prize_images,
-              created_by: createdByEmail,
-              created_at: nowISO,
-            }),
-            EventBusName: process.env.EVENT_BUS_NAME,
-          },
-        ],
-      });
-
-      await eventBridgeClient.send(eventCommand);
-
-      logger.info("Event emitted to EventBridge successfully", {
-        operation: "create-raffle",
-        raffle_id: raffleId,
-        event_type: "raffle.created",
-      });
-    } catch (eventError) {
-      logger.error("Failed to emit event to EventBridge", eventError, {
-        operation: "create-raffle",
-        raffle_id: raffleId,
-        non_fatal: true,
-      });
-    }
+    metrics.addMetric("RaffleCreated", MetricUnit.Count, 1);
+    metrics.addMetric(
+      "RaffleDuration",
+      MetricUnit.Count,
+      durationValidation.durationDays
+    );
+    metrics.publishStoredMetrics();
 
     return {
       statusCode: 201,
@@ -286,36 +172,44 @@ exports.handler = async (event, context) => {
       }),
     };
   } catch (error) {
-    if (error.name === "ConditionalCheckFailedException") {
-      logger.warn("Raffle already exists", {
-        operation: "create-raffle",
-        error_type: "ConditionalCheckFailed",
-      });
-      return {
-        statusCode: 409,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: "Raffle already exists",
-        }),
-      };
+    if (error.message === "RAFFLE_ALREADY_EXISTS") {
+      logger.warn("Raffle ID collision", { error: error.message });
+      return buildErrorResponse(409, "Raffle already exists");
     }
 
-    logger.error("Error creating raffle", error, {
-      operation: "create-raffle",
-      fatal: true,
+    logger.error("Error creating raffle", {
+      error: error.message,
+      stack: error.stack,
     });
 
-    return {
-      statusCode: 500,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: "Error creating raffle",
-        error: error.message,
-      }),
-    };
+    metrics.addMetric("CreateRaffleError", MetricUnit.Count, 1);
+    metrics.publishStoredMetrics();
+
+    return buildErrorResponse(500, "Error creating raffle", error.message);
   }
 };
+
+function buildErrorResponse(
+  statusCode,
+  message,
+  error = null,
+  additionalData = {}
+) {
+  const body = {
+    message,
+    ...additionalData,
+  };
+
+  if (error) {
+    body.error = error;
+  }
+
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+    body: JSON.stringify(body),
+  };
+}
