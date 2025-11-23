@@ -1,17 +1,20 @@
 output "api_endpoints" {
   description = "Endpoints de la API"
   value = {
-    base_url = module.api_gateway.api_gateway_url
-    endpoints = {
-      # Raffles
-      list_raffles  = "${module.api_gateway.api_gateway_url}/api/v1/raffles"
-      get_raffle    = "${module.api_gateway.api_gateway_url}/api/v1/raffles/{id}"
-      create_raffle = "${module.api_gateway.api_gateway_url}/api/v1/raffles"
-      close_raffle  = "${module.api_gateway.api_gateway_url}/api/v1/raffles/{id}/close"
-      # Participations
-      participate = "${module.api_gateway.api_gateway_url}/api/v1/raffles/{id}/participate"
-      # Assets
-      upload_image = "${module.api_gateway.api_gateway_url}/api/v1/assets/upload"
+    # Public API (no authentication)
+    public = {
+      base_url     = module.api_gateway.public_api_url
+      list_raffles = "${module.api_gateway.public_api_url}/api/v1/raffles"
+      get_raffle   = "${module.api_gateway.public_api_url}/api/v1/raffles/{id}"
+    }
+
+    # Authenticated API (requires Cognito token)
+    authenticated = {
+      base_url      = module.api_gateway.authenticated_api_url
+      create_raffle = "${module.api_gateway.authenticated_api_url}/api/v1/raffles"
+      participate   = "${module.api_gateway.authenticated_api_url}/api/v1/raffles/{id}/participate"
+      close_raffle  = "${module.api_gateway.authenticated_api_url}/api/v1/raffles/{id}/close"
+      upload_image  = "${module.api_gateway.authenticated_api_url}/api/v1/assets/upload"
     }
   }
 }

@@ -70,30 +70,23 @@ module "api_gateway" {
   name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
   environment = var.environment
 
-  lambda_list_raffles_arn  = module.compute.lambda_list_raffles_arn
-  lambda_list_raffles_name = module.compute.lambda_list_raffles_name
+  list_raffles_invoke_arn         = module.compute.lambda_list_raffles_invoke_arn
+  get_raffle_invoke_arn           = module.compute.lambda_get_raffle_invoke_arn
+  create_raffle_invoke_arn        = module.compute.lambda_create_raffle_invoke_arn
+  ingest_participation_invoke_arn = module.compute.lambda_ingest_participation_invoke_arn
+  close_raffle_invoke_arn         = module.compute.lambda_close_raffle_invoke_arn
+  upload_image_invoke_arn         = module.compute.lambda_upload_image_invoke_arn
 
-  lambda_create_raffle_arn        = module.compute.lambda_create_raffle_arn
-  lambda_create_raffle_name       = module.compute.lambda_create_raffle_name
-  lambda_create_raffle_invoke_arn = module.compute.lambda_create_raffle_invoke_arn
-
-  lambda_ingest_participation_arn        = module.compute.lambda_ingest_participation_arn
-  lambda_ingest_participation_name       = module.compute.lambda_ingest_participation_name
-  lambda_ingest_participation_invoke_arn = module.compute.lambda_ingest_participation_invoke_arn
-
-  lambda_close_raffle_arn        = module.compute.lambda_close_raffle_arn
-  lambda_close_raffle_name       = module.compute.lambda_close_raffle_name
-  lambda_close_raffle_invoke_arn = module.compute.lambda_close_raffle_invoke_arn
-
-  lambda_get_raffle_arn        = module.compute.lambda_get_raffle_arn
-  lambda_get_raffle_name       = module.compute.lambda_get_raffle_name
-  lambda_get_raffle_invoke_arn = module.compute.lambda_get_raffle_invoke_arn
-
-  lambda_upload_image_arn        = module.compute.lambda_upload_image_arn
-  lambda_upload_image_name       = module.compute.lambda_upload_image_name
-  lambda_upload_image_invoke_arn = module.compute.lambda_upload_image_invoke_arn
+  list_raffles_function_name         = module.compute.lambda_list_raffles_name
+  get_raffle_function_name           = module.compute.lambda_get_raffle_name
+  create_raffle_function_name        = module.compute.lambda_create_raffle_name
+  ingest_participation_function_name = module.compute.lambda_ingest_participation_name
+  close_raffle_function_name         = module.compute.lambda_close_raffle_name
+  upload_image_function_name         = module.compute.lambda_upload_image_name
 
   cognito_user_pool_arn = module.cognito.user_pool_arn
+
+  cloudfront_url = module.cdn.cloudfront_distribution_url
 
   tags = {
     Environment = var.environment

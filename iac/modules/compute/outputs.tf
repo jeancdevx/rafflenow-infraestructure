@@ -8,6 +8,11 @@ output "lambda_list_raffles_name" {
   value       = aws_lambda_function.list_raffles.function_name
 }
 
+output "lambda_list_raffles_invoke_arn" {
+  description = "Invoke ARN of the list raffles Lambda function"
+  value       = aws_lambda_function.list_raffles.invoke_arn
+}
+
 output "lambda_create_raffle_arn" {
   description = "ARN of the create raffle Lambda function"
   value       = aws_lambda_function.create_raffle.arn

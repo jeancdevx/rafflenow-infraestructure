@@ -1,48 +1,53 @@
-output "api_gateway_id" {
-  description = "ID of the API Gateway REST API"
-  value       = aws_api_gateway_rest_api.rafflenow_api.id
+output "public_api_id" {
+  description = "ID of the Public API Gateway"
+  value       = aws_api_gateway_rest_api.public_api.id
 }
 
-output "api_gateway_arn" {
-  description = "ARN of the API Gateway REST API"
-  value       = aws_api_gateway_rest_api.rafflenow_api.arn
+output "public_api_url" {
+  description = "Base URL of the Public API Gateway"
+  value       = aws_api_gateway_stage.public_api_stage.invoke_url
 }
 
-output "api_gateway_url" {
-  description = "Base URL of the API Gateway"
-  value       = aws_api_gateway_stage.api_stage.invoke_url
+output "public_api_endpoints" {
+  description = "Public API endpoints"
+  value = {
+    list_raffles = "${aws_api_gateway_stage.public_api_stage.invoke_url}/api/v1/raffles"
+    get_raffle   = "${aws_api_gateway_stage.public_api_stage.invoke_url}/api/v1/raffles/{id}"
+  }
 }
 
-output "api_gateway_stage_name" {
-  description = "Name of the API Gateway stage"
-  value       = aws_api_gateway_stage.api_stage.stage_name
+output "authenticated_api_id" {
+  description = "ID of the Authenticated API Gateway"
+  value       = aws_api_gateway_rest_api.authenticated_api.id
 }
 
-output "api_endpoint_get_raffles" {
-  description = "Full URL endpoint for GET /raffles"
-  value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles"
+output "authenticated_api_url" {
+  description = "Base URL of the Authenticated API Gateway"
+  value       = aws_api_gateway_stage.authenticated_api_stage.invoke_url
 }
 
-output "api_endpoint_get_raffle_by_id" {
-  description = "Full URL endpoint for GET /api/v1/raffles/{id}"
-  value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles/{id}"
+output "authenticated_api_endpoints" {
+  description = "Authenticated API endpoints"
+  value = {
+    create_raffle = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles"
+    participate   = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles/{id}/participate"
+    close_raffle  = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles/{id}/close"
+    upload_image  = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/assets/upload"
+  }
 }
 
-output "api_endpoint_post_raffles" {
-  description = "Full URL endpoint for POST /api/v1/raffles"
-  value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles"
-}
-
-output "api_endpoint_post_participate" {
-  description = "Full URL endpoint for POST /api/v1/raffles/{id}/participate"
-  value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles/{id}/participate"
-}
-
-output "api_endpoint_post_close" {
-  description = "Full URL endpoint for POST /api/v1/raffles/{id}/close"
-  value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/raffles/{id}/close"
-}
-output "api_endpoint_post_upload" {
-  description = "Full URL endpoint for POST /api/v1/assets/upload"
-  value       = "${aws_api_gateway_stage.api_stage.invoke_url}/api/v1/assets/upload"
+output "api_endpoints" {
+  description = "All API endpoints (public and authenticated)"
+  value = {
+    public = {
+      list_raffles = "${aws_api_gateway_stage.public_api_stage.invoke_url}/api/v1/raffles"
+      get_raffle   = "${aws_api_gateway_stage.public_api_stage.invoke_url}/api/v1/raffles/{id}"
+    }
+    authenticated = {
+      create_raffle = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles"
+      participate   = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles/{id}/participate"
+      close_raffle  = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles/{id}/close"
+      upload_image  = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/assets/upload"
+    }
+  }
 }

@@ -14,29 +14,10 @@ variable "tags" {
   default     = {}
 }
 
-variable "lambda_list_raffles_arn" {
-  description = "ARN of the list raffles Lambda function"
+variable "cloudfront_url" {
+  description = "CloudFront distribution URL for CORS configuration"
   type        = string
-}
-
-variable "lambda_list_raffles_name" {
-  description = "Name of the list raffles Lambda function"
-  type        = string
-}
-
-variable "lambda_create_raffle_arn" {
-  description = "ARN of the create raffle Lambda function"
-  type        = string
-}
-
-variable "lambda_create_raffle_name" {
-  description = "Name of the create raffle Lambda function"
-  type        = string
-}
-
-variable "lambda_create_raffle_invoke_arn" {
-  description = "Invoke ARN of the create raffle Lambda function"
-  type        = string
+  default     = ""
 }
 
 variable "cognito_user_pool_arn" {
@@ -44,62 +25,62 @@ variable "cognito_user_pool_arn" {
   type        = string
 }
 
-variable "lambda_ingest_participation_arn" {
-  description = "ARN of the ingest participation Lambda function"
+variable "list_raffles_invoke_arn" {
+  description = "Invoke ARN of the list raffles Lambda function"
   type        = string
 }
 
-variable "lambda_ingest_participation_name" {
-  description = "Name of the ingest participation Lambda function"
-  type        = string
-}
-
-variable "lambda_ingest_participation_invoke_arn" {
-  description = "Invoke ARN of the ingest participation Lambda function"
-  type        = string
-}
-
-variable "lambda_close_raffle_arn" {
-  description = "ARN of the close raffle Lambda function"
-  type        = string
-}
-
-variable "lambda_close_raffle_name" {
-  description = "Name of the close raffle Lambda function"
-  type        = string
-}
-
-variable "lambda_close_raffle_invoke_arn" {
-  description = "Invoke ARN of the close raffle Lambda function"
-  type        = string
-}
-
-variable "lambda_get_raffle_arn" {
-  description = "ARN of the get raffle Lambda function"
-  type        = string
-}
-
-variable "lambda_get_raffle_name" {
-  description = "Name of the get raffle Lambda function"
-  type        = string
-}
-
-variable "lambda_get_raffle_invoke_arn" {
+variable "get_raffle_invoke_arn" {
   description = "Invoke ARN of the get raffle Lambda function"
   type        = string
 }
 
-variable "lambda_upload_image_arn" {
-  description = "ARN of the upload image Lambda function"
+variable "create_raffle_invoke_arn" {
+  description = "Invoke ARN of the create raffle Lambda function"
   type        = string
 }
 
-variable "lambda_upload_image_name" {
-  description = "Name of the upload image Lambda function"
+variable "ingest_participation_invoke_arn" {
+  description = "Invoke ARN of the ingest participation Lambda function"
   type        = string
 }
 
-variable "lambda_upload_image_invoke_arn" {
+variable "close_raffle_invoke_arn" {
+  description = "Invoke ARN of the close raffle Lambda function"
+  type        = string
+}
+
+variable "upload_image_invoke_arn" {
   description = "Invoke ARN of the upload image Lambda function"
+  type        = string
+}
+
+variable "list_raffles_function_name" {
+  description = "Name of the list raffles Lambda function"
+  type        = string
+}
+
+variable "get_raffle_function_name" {
+  description = "Name of the get raffle Lambda function"
+  type        = string
+}
+
+variable "create_raffle_function_name" {
+  description = "Name of the create raffle Lambda function"
+  type        = string
+}
+
+variable "ingest_participation_function_name" {
+  description = "Name of the ingest participation Lambda function"
+  type        = string
+}
+
+variable "close_raffle_function_name" {
+  description = "Name of the close raffle Lambda function"
+  type        = string
+}
+
+variable "upload_image_function_name" {
+  description = "Name of the upload image Lambda function"
   type        = string
 }
