@@ -1,147 +1,111 @@
-const {
-  S3Client,
-  GetObjectCommand,
-  PutObjectCommand,
-} = require("@aws-sdk/client-s3");
-const sharp = require("sharp");
-const Logger = require("./logger");
+import { MetricUnit } from "@aws-lambda-powertools/metrics";
+import { logger, tracer, metrics } from "./lib/powertools.js";
+import {
+  validateSqsRecord,
+  isPrizeImage,
+  generateOptimizedKey,
+} from "./lib/event-validator.js";
+import { downloadImage } from "./lib/s3-downloader.js";
+import { optimizeImage } from "./lib/image-processor.js";
+import { uploadOptimizedImage } from "./lib/s3-uploader.js";
 
-const s3Client = new S3Client({});
+export const handler = async (event, context) => {
+  logger.addContext(context);
 
-exports.handler = async (event, context) => {
-  const logger = new Logger(context);
-  logger.logBatchProcessing(event.Records.length);
+  const recordCount = event.Records?.length || 0;
+  logger.info("Starting batch processing", {
+    record_count: recordCount,
+  });
 
   const batchItemFailures = [];
+  let successCount = 0;
+  let skippedCount = 0;
 
   for (const record of event.Records) {
-    try {
-      const messageBody = JSON.parse(record.body);
-      const s3Event = messageBody.detail || messageBody;
+    const messageId = record.messageId;
 
-      logger.info("Processing S3 image event", {
-        operation: "optimize-image",
-        record_id: record.messageId,
-        bucket: s3Event.bucket?.name,
-        key: s3Event.object?.key,
+    try {
+      logger.info("Processing SQS record", {
+        message_id: messageId,
       });
 
-      const bucketName = s3Event.bucket?.name || process.env.S3_BUCKET_NAME;
-      const objectKey = s3Event.object?.key;
-
-      if (!bucketName || !objectKey) {
-        throw new Error("Missing bucket name or object key in event");
+      const validation = validateSqsRecord(record);
+      if (!validation.valid) {
+        throw new Error(validation.error);
       }
 
-      if (!objectKey.startsWith("prizes/")) {
+      const { bucketName, objectKey } = validation.s3Event;
+
+      if (!isPrizeImage(objectKey)) {
         logger.warn("Skipping non-prize image", {
-          operation: "optimize-image",
           key: objectKey,
         });
+        skippedCount++;
         continue;
       }
 
-      logger.info("Downloading original image from S3", {
-        operation: "optimize-image",
-        bucket: bucketName,
-        key: objectKey,
+      const imageBuffer = await downloadImage(bucketName, objectKey);
+
+      const { optimizedBuffer, metadata, compressionRatio } =
+        await optimizeImage(imageBuffer);
+
+      const optimizedKey = generateOptimizedKey(objectKey);
+
+      await uploadOptimizedImage({
+        bucketName: bucketName,
+        optimizedKey: optimizedKey,
+        optimizedBuffer: optimizedBuffer,
+        originalKey: objectKey,
+        metadata: metadata,
+        compressionRatio: compressionRatio,
       });
 
-      const getObjectCommand = new GetObjectCommand({
-        Bucket: bucketName,
-        Key: objectKey,
-      });
+      tracer.putAnnotation("optimizedKey", optimizedKey);
+      tracer.putAnnotation("compressionRatio", compressionRatio);
 
-      const s3Response = await s3Client.send(getObjectCommand);
-      const imageBuffer = await streamToBuffer(s3Response.Body);
-
-      logger.info("Original image downloaded", {
-        operation: "optimize-image",
-        size_bytes: imageBuffer.length,
-      });
-
-      const metadata = await sharp(imageBuffer).metadata();
-      logger.info("Image metadata extracted", {
-        operation: "optimize-image",
-        format: metadata.format,
-        width: metadata.width,
-        height: metadata.height,
-      });
-
-      const optimizedBuffer = await sharp(imageBuffer)
-        .resize(1200, 1200, {
-          fit: "inside",
-          withoutEnlargement: true,
-        })
-        .webp({
-          quality: 82,
-          effort: 4,
-        })
-        .toBuffer();
-
-      const compressionRatio = (
-        (1 - optimizedBuffer.length / imageBuffer.length) *
-        100
-      ).toFixed(2);
-
-      logger.info("Image optimized", {
-        operation: "optimize-image",
-        original_size: imageBuffer.length,
-        optimized_size: optimizedBuffer.length,
-        compression_ratio: `${compressionRatio}%`,
-      });
-
-      const fileName = objectKey.split("/").pop();
-      const fileNameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-      const optimizedKey = `optimized/${fileNameWithoutExt}.webp`;
-
-      const putObjectCommand = new PutObjectCommand({
-        Bucket: bucketName,
-        Key: optimizedKey,
-        Body: optimizedBuffer,
-        ContentType: "image/webp",
-        Metadata: {
-          originalKey: objectKey,
-          optimizedAt: new Date().toISOString(),
-          originalSize: imageBuffer.length.toString(),
-          optimizedSize: optimizedBuffer.length.toString(),
-          compressionRatio: compressionRatio,
-        },
-      });
-
-      await s3Client.send(putObjectCommand);
-
-      logger.logBatchItemSuccess(record.messageId, {
+      logger.info("Image optimization completed successfully", {
+        message_id: messageId,
         original_key: objectKey,
         optimized_key: optimizedKey,
         compression_ratio: `${compressionRatio}%`,
       });
+
+      metrics.addMetric("ImageOptimized", MetricUnit.Count, 1);
+      metrics.addMetric(
+        "CompressionRatio",
+        MetricUnit.Percent,
+        parseFloat(compressionRatio)
+      );
+      successCount++;
     } catch (error) {
-      logger.logBatchItemFailure(record.messageId, error, {
-        message_body: record.body,
+      logger.error("Error processing image", {
+        message_id: messageId,
+        error: error.message,
+        stack: error.stack,
       });
 
+      metrics.addMetric("ImageOptimizationError", MetricUnit.Count, 1);
+
       batchItemFailures.push({
-        itemIdentifier: record.messageId,
+        itemIdentifier: messageId,
       });
     }
   }
 
+  metrics.addMetric("ImagesProcessed", MetricUnit.Count, recordCount);
+  metrics.addMetric("ImagesSucceeded", MetricUnit.Count, successCount);
+  metrics.addMetric("ImagesFailed", MetricUnit.Count, batchItemFailures.length);
+  metrics.addMetric("ImagesSkipped", MetricUnit.Count, skippedCount);
+  metrics.publishStoredMetrics();
+
   logger.info("Batch processing completed", {
-    operation: "batch-processing",
-    total_processed: event.Records.length,
-    failures: batchItemFailures.length,
+    total_processed: recordCount,
+    successful: successCount,
+    failed: batchItemFailures.length,
+    skipped: skippedCount,
   });
 
   return {
     batchItemFailures,
   };
 };
-
-async function streamToBuffer(stream) {
-  const chunks = [];
-  for await (const chunk of stream) {
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks);
-}
