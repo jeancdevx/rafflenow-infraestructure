@@ -1,139 +1,73 @@
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const { randomUUID } = require("crypto");
-const Logger = require("./logger");
+import { MetricUnit } from "@aws-lambda-powertools/metrics";
+import { logger, tracer, metrics } from "./lib/powertools.js";
+import { extractClaims, isAdmin, getUserEmail } from "./lib/auth-validator.js";
+import { validateUploadRequest } from "./lib/upload-validator.js";
+import {
+  generatePresignedUrl,
+  buildUploadResponse,
+} from "./lib/s3-presigner.js";
 
-const s3Client = new S3Client({});
-
-exports.handler = async (event, context) => {
-  const logger = new Logger(context);
-  logger.logRequest(event);
-
-  const claims = event.requestContext?.authorizer?.claims;
-  if (!claims) {
-    logger.warn("Unauthorized upload attempt", { operation: "upload-image" });
-    return {
-      statusCode: 401,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({
-        message: "Unauthorized",
-        error: "Authentication required",
-      }),
-    };
-  }
-
-  const groups = claims["cognito:groups"];
-  const isAdmin =
-    groups &&
-    (Array.isArray(groups) ? groups.includes("Admin") : groups === "Admin");
-
-  if (!isAdmin) {
-    logger.warn("Forbidden: non-admin user attempted to upload image", {
-      operation: "upload-image",
-    });
-    return {
-      statusCode: 403,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({
-        message: "Forbidden",
-        error: "Admin role required to upload images",
-      }),
-    };
-  }
-
+export const handler = async (event, context) => {
   try {
-    const body = JSON.parse(event.body);
+    logger.addContext(context);
 
-    logger.info("Processing image upload request", {
-      operation: "upload-image",
-    });
+    const claims = extractClaims(event);
 
-    const { fileName, fileType } = body;
+    if (!claims) {
+      logger.warn("Unauthorized upload attempt");
+      metrics.addMetric("UnauthorizedAttempt", MetricUnit.Count, 1);
+      metrics.publishStoredMetrics();
+      return buildErrorResponse(401, "Unauthorized", "Authentication required");
+    }
 
-    if (!fileName || !fileType) {
-      logger.warn("Validation error: missing fileName or fileType", {
-        operation: "upload-image",
+    if (!isAdmin(claims)) {
+      logger.warn("Forbidden: non-admin user attempted to upload image", {
+        user_email: getUserEmail(claims),
       });
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Validation error",
-          error: "fileName and fileType are required",
-        }),
-      };
+      metrics.addMetric("ForbiddenAttempt", MetricUnit.Count, 1);
+      metrics.publishStoredMetrics();
+      return buildErrorResponse(
+        403,
+        "Forbidden",
+        "Admin role required to upload images"
+      );
     }
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-    ];
-    if (!allowedTypes.includes(fileType)) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Validation error",
-          error: `Invalid file type. Allowed types: ${allowedTypes.join(", ")}`,
-          allowedTypes: allowedTypes,
-        }),
-      };
+    const userEmail = getUserEmail(claims);
+    logger.appendKeys({ admin_email: userEmail });
+
+    logger.info("Processing image upload request");
+
+    const body = JSON.parse(event.body);
+    const { fileName, fileType, fileSize } = body;
+
+    const validation = validateUploadRequest({ fileName, fileType, fileSize });
+    if (!validation.valid) {
+      logger.warn("Validation error", { error: validation.error });
+      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      metrics.publishStoredMetrics();
+      return buildErrorResponse(400, "Validation error", validation.error, {
+        allowedTypes: validation.allowedTypes,
+      });
     }
 
-    const extension = fileName.split(".").pop().toLowerCase();
-    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "gif"];
-    if (!allowedExtensions.includes(extension)) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Validation error",
-          error: `Invalid file extension. Allowed: ${allowedExtensions.join(
-            ", "
-          )}`,
-        }),
-      };
-    }
-
-    const uniqueId = randomUUID();
-    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const key = `prizes/${uniqueId}-${sanitizedFileName}`;
-
-    const command = new PutObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: key,
-      ContentType: fileType,
-      Metadata: {
-        uploadedBy: claims.email,
-        uploadedAt: new Date().toISOString(),
-      },
+    const uploadData = await generatePresignedUrl({
+      sanitizedFileName: validation.sanitizedName,
+      fileType: fileType,
+      userEmail: userEmail,
     });
 
-    const presignedUrl = await getSignedUrl(s3Client, command, {
-      expiresIn: 300,
+    const response = buildUploadResponse({
+      ...uploadData,
+      sanitizedFileName: validation.sanitizedName,
+      fileType: fileType,
     });
 
-    const fileNameWithoutExt = sanitizedFileName.replace(/\.[^/.]+$/, "");
-    const optimizedKey = `optimized/${uniqueId}-${fileNameWithoutExt}.webp`;
-    const cloudFrontUrl = `${process.env.CLOUDFRONT_URL}/${optimizedKey}`;
+    tracer.putAnnotation("fileKey", uploadData.fileKey);
+    tracer.putAnnotation("adminEmail", userEmail);
+
+    metrics.addMetric("PresignedUrlGenerated", MetricUnit.Count, 1);
+    metrics.publishStoredMetrics();
 
     return {
       statusCode: 200,
@@ -141,47 +75,46 @@ exports.handler = async (event, context) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify({
-        message: "Presigned URL generated successfully",
-        upload: {
-          url: presignedUrl,
-          method: "PUT",
-          headers: {
-            "Content-Type": fileType,
-          },
-          expiresIn: 300,
-        },
-        file: {
-          key: key,
-          cloudFrontUrl: cloudFrontUrl,
-          originalUrl: `${process.env.CLOUDFRONT_URL}/${key}`,
-          fileName: sanitizedFileName,
-        },
-        instructions: [
-          "1. Use PUT method to upload the file to the presigned URL",
-          "2. Set Content-Type header to match the file type",
-          "3. Once uploaded, use the cloudFrontUrl (optimized) in your raffle",
-          "4. The URL expires in 5 minutes",
-          "5. Image will be automatically optimized to WebP format",
-        ],
-      }),
+      body: JSON.stringify(response),
     };
   } catch (error) {
-    logger.error("Error generating upload URL", error, {
-      operation: "upload-image",
-      fatal: true,
+    logger.error("Error generating presigned URL", {
+      error: error.message,
+      stack: error.stack,
     });
 
-    return {
-      statusCode: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify({
-        message: "Error generating presigned URL",
-        error: error.message,
-      }),
-    };
+    metrics.addMetric("PresignedUrlError", MetricUnit.Count, 1);
+    metrics.publishStoredMetrics();
+
+    return buildErrorResponse(
+      500,
+      "Error generating presigned URL",
+      error.message
+    );
   }
 };
+
+function buildErrorResponse(
+  statusCode,
+  message,
+  error = null,
+  additionalData = {}
+) {
+  const body = {
+    message,
+    ...additionalData,
+  };
+
+  if (error) {
+    body.error = error;
+  }
+
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+    body: JSON.stringify(body),
+  };
+}
