@@ -1,26 +1,25 @@
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const {
-  DynamoDBDocumentClient,
-  GetCommand,
-  UpdateCommand,
-} = require("@aws-sdk/lib-dynamodb");
-const {
-  EventBridgeClient,
-  PutEventsCommand,
-} = require("@aws-sdk/client-eventbridge");
-const Logger = require("./logger");
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { logger, tracer, metrics } from "./lib/powertools.js";
+import { extractClaims, isAdmin, getUserId } from "./lib/auth-validator.js";
+import {
+  validateRaffleId,
+  validateRaffleForClosure,
+} from "./lib/raffle-validator.js";
+import { updateRaffleStatus } from "./lib/raffle-updater.js";
+import { emitRaffleClosedEvent } from "./lib/event-emitter.js";
 
-const dynamoClient = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(dynamoClient);
-const eventBridgeClient = new EventBridgeClient({});
+const client = tracer.captureAWSv3Client(new DynamoDBClient({}));
+const docClient = DynamoDBDocumentClient.from(client);
 
-exports.handler = async (event, context) => {
-  const logger = new Logger(context);
-  logger.logRequest(event);
+const RAFFLES_TABLE = process.env.DYNAMODB_RAFFLES_TABLE;
 
-  const claims = event.requestContext?.authorizer?.claims;
+export const handler = async (event, context) => {
+  logger.info("Processing raffle close request", { event });
+
+  const claims = extractClaims(event);
   if (!claims) {
-    logger.warn("Unauthorized access attempt", { operation: "close-raffle" });
+    metrics.addMetric("UnauthorizedAttempt", "Count", 1);
     return {
       statusCode: 401,
       headers: {
@@ -34,15 +33,9 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const groups = claims["cognito:groups"];
-  const isAdmin =
-    groups &&
-    (Array.isArray(groups) ? groups.includes("Admin") : groups === "Admin");
-
-  if (!isAdmin) {
-    logger.warn("Forbidden: non-admin user attempted to close raffle", {
-      operation: "close-raffle",
-    });
+  if (!isAdmin(claims)) {
+    logger.warn("Forbidden: non-admin user attempted to close raffle");
+    metrics.addMetric("ForbiddenNonAdmin", "Count", 1);
     return {
       statusCode: 403,
       headers: {
@@ -56,30 +49,42 @@ exports.handler = async (event, context) => {
     };
   }
 
-  try {
-    const raffleId = event.pathParameters?.id;
-    if (!raffleId) {
-      logger.warn("Missing raffle_id in path", { operation: "close-raffle" });
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Missing raffle_id in path",
-        }),
-      };
-    }
+  const userId = getUserId(claims);
+  tracer.putAnnotation("userId", userId);
 
+  const {
+    valid: validRaffleId,
+    raffleId,
+    error: raffleIdError,
+  } = validateRaffleId(event);
+  if (!validRaffleId) {
+    logger.warn(raffleIdError);
+    return {
+      statusCode: 400,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({
+        message: raffleIdError,
+      }),
+    };
+  }
+
+  tracer.putAnnotation("raffleId", raffleId);
+
+  try {
+    logger.info("Fetching raffle from DynamoDB", { raffle_id: raffleId });
     const getRaffleCommand = new GetCommand({
-      TableName: process.env.DYNAMODB_RAFFLES_TABLE,
+      TableName: RAFFLES_TABLE,
       Key: { raffle_id: raffleId },
     });
 
     const raffleResponse = await docClient.send(getRaffleCommand);
 
     if (!raffleResponse.Item) {
+      logger.warn("Raffle not found", { raffle_id: raffleId });
+      metrics.addMetric("RaffleNotFound", "Count", 1);
       return {
         statusCode: 404,
         headers: {
@@ -94,7 +99,22 @@ exports.handler = async (event, context) => {
 
     const raffle = raffleResponse.Item;
 
-    if (raffle.status !== "active") {
+    const {
+      valid: validState,
+      error: stateError,
+      currentStatus,
+    } = validateRaffleForClosure(raffle);
+
+    if (!validState) {
+      logger.warn(stateError, {
+        raffle_id: raffleId,
+        current_status: currentStatus,
+      });
+
+      if (stateError === "Raffle is not active") {
+        metrics.addMetric("RaffleNotActive", "Count", 1);
+      }
+
       return {
         statusCode: 400,
         headers: {
@@ -102,93 +122,43 @@ exports.handler = async (event, context) => {
           "Access-Control-Allow-Origin": "*",
         },
         body: JSON.stringify({
-          message: "Raffle is not active",
-          status: raffle.status,
+          message: stateError,
+          ...(currentStatus && { status: currentStatus }),
         }),
       };
     }
 
-    if (raffle.current_participants === 0) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Cannot close raffle with no participants",
-        }),
-      };
-    }
+    const hasParticipants = raffle.current_participants > 0;
+    const targetStatus = hasParticipants ? "processing" : "closed";
 
-    const closedTimestamp = new Date().toISOString();
-
-    const updateRaffleCommand = new UpdateCommand({
-      TableName: process.env.DYNAMODB_RAFFLES_TABLE,
-      Key: { raffle_id: raffleId },
-      UpdateExpression:
-        "SET #status = :status, closed_at = :closed_at, updated_at = :updated_at",
-      ConditionExpression: "#status = :active_status",
-      ExpressionAttributeNames: {
-        "#status": "status",
-      },
-      ExpressionAttributeValues: {
-        ":status": "processing",
-        ":closed_at": closedTimestamp,
-        ":updated_at": closedTimestamp,
-        ":active_status": "active",
-      },
-      ReturnValues: "ALL_NEW",
+    logger.info(`Updating raffle to ${targetStatus} status`, {
+      raffle_id: raffleId,
+      has_participants: hasParticipants,
+      current_participants: raffle.current_participants,
     });
+    const updatedRaffle = await updateRaffleStatus(
+      raffleId,
+      userId,
+      hasParticipants
+    );
 
-    const updatedRaffle = await docClient.send(updateRaffleCommand);
-
-    let eventResponse = null;
-    try {
-      const eventDetail = {
-        raffle_id: raffleId,
-        title: raffle.title,
-        status: "processing",
-        previous_status: "active",
-        closed_at: closedTimestamp,
-        current_participants: raffle.current_participants,
-        max_participants: raffle.max_participants,
-        closed_by: claims.sub,
-      };
-
-      const putEventsCommand = new PutEventsCommand({
-        Entries: [
-          {
-            EventBusName: process.env.EVENT_BUS_NAME,
-            Source: "rafflenow.raffles",
-            DetailType: "raffle.closed",
-            Detail: JSON.stringify(eventDetail),
-          },
-        ],
-      });
-
-      eventResponse = await eventBridgeClient.send(putEventsCommand);
-
-      logger.logExternalCall("EventBridge", "PutEvents", {
-        operation: "close-raffle",
-        event_type: "raffle.closed",
+    if (hasParticipants) {
+      logger.info("Emitting raffle.closed event for winner selection", {
         raffle_id: raffleId,
       });
-    } catch (eventError) {
-      logger.error("Error emitting raffle.closed event", eventError, {
-        operation: "close-raffle",
-        fatal: false,
+      await emitRaffleClosedEvent(updatedRaffle, userId);
+    } else {
+      logger.info("Raffle closed without participants, no event emission", {
+        raffle_id: raffleId,
       });
     }
 
-    const response = {
-      message: "Raffle closed successfully and winner selection initiated",
-      raffle: updatedRaffle.Attributes,
-    };
+    metrics.addMetric("RaffleClosed", "Count", 1);
+    metrics.addMetric("RaffleCloseAttempt", "Count", 1);
 
-    if (eventResponse?.Entries?.[0]?.EventId) {
-      response.event_id = eventResponse.Entries[0].EventId;
-    }
+    const message = hasParticipants
+      ? "Raffle closed successfully and winner selection initiated"
+      : "Raffle closed successfully without participants";
 
     return {
       statusCode: 200,
@@ -196,10 +166,15 @@ exports.handler = async (event, context) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify(response),
+      body: JSON.stringify({
+        message,
+        raffle: updatedRaffle,
+      }),
     };
   } catch (error) {
     if (error.name === "ConditionalCheckFailedException") {
+      logger.warn("Concurrent close attempt detected", { raffle_id: raffleId });
+      metrics.addMetric("ConcurrentCloseAttempt", "Count", 1);
       return {
         statusCode: 409,
         headers: {
@@ -212,10 +187,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    logger.error("Error closing raffle", error, {
-      operation: "close-raffle",
-      fatal: true,
-    });
+    logger.error("Error closing raffle", { error, raffle_id: raffleId });
 
     return {
       statusCode: 500,
