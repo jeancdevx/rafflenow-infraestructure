@@ -54,13 +54,15 @@
     "security": {
       "cognito": {
         "tier": "Essentials",
-        "mau": 80000,
+        "mau": 2100000,
         "free_tier_mau": 10000,
-        "billable_mau": 70000,
+        "billable_mau": 2090000,
         "cost_per_mau_usd": 0.015,
-        "monthly_cost_usd": 1050,
+        "monthly_cost_usd": 31350,
+        "monthly_cost_pen": 117563,
         "sla_uptime": 0.999,
-        "features": ["MFA", "Social Login", "Password Policies", "Passwordless"]
+        "features": ["MFA", "Social Login", "Password Policies", "Passwordless"],
+        "calculation_notes": "2.04M participations/month (12×3K + 8×50K + 3×250K + 1×1.5M), ~2.1M unique MAU considering multi-raffle participation patterns"
       },
       "waf": {
         "web_acls": 3,
@@ -104,12 +106,14 @@
     "totals": {
       "compute_and_logic_usd": 239.50,
       "storage_and_db_usd": 480,
-      "security_usd": 1114,
+      "security_usd": 31414,
       "communications_usd": 18,
       "observability_usd": 47,
-      "total_monthly_usd": 1898.50,
-      "total_monthly_pen": 7120,
-      "exchange_rate_usd_to_pen": 3.75
+      "total_monthly_usd": 32198.50,
+      "total_monthly_pen": 120745,
+      "exchange_rate_usd_to_pen": 3.75,
+      "operations_monthly_pen": 6000,
+      "total_with_operations_pen": 126745
     }
   },
   "aws_performance_targets": {
@@ -154,7 +158,8 @@
       "mfa_enabled": true,
       "bot_detection": "WAF + Cognito Advanced Security",
       "estimated_bot_reduction": 0.95,
-      "fraud_prevention_per_viral_day_pen": 598500
+      "fraud_prevention_per_premium_raffle_pen": 1995000,
+      "notes": "Blocks 95% of 1.05M bot participations in premium raffles (70% of 1.5M)"
     },
     "waf_rules": {
       "rate_limiting_per_ip": "2000 requests per 5 minutes",
@@ -164,25 +169,26 @@
   },
   "comparison": {
     "infrastructure_costs": {
-      "current_pen": 43000,
-      "aws_pen": 13120,
-      "savings_pen": 29880,
-      "savings_percentage": 0.70
+      "current_pen": 49200,
+      "aws_pen": 126745,
+      "additional_cost_pen": 77545,
+      "cost_increase_percentage": 1.58,
+      "note": "Cognito representa 93% del costo AWS debido a 2.1M MAU"
     },
     "revenue": {
-      "current_monthly_pen": 455000,
-      "aws_monthly_pen": 1095000,
-      "increase_pen": 640000,
-      "increase_percentage": 1.41
+      "current_monthly_pen": 1518400,
+      "aws_monthly_pen": 5068320,
+      "increase_pen": 3549920,
+      "increase_percentage": 2.34
     },
     "lost_revenue": {
-      "current_monthly_pen": 670000,
-      "aws_monthly_pen": 30000,
-      "savings_pen": 640000,
-      "reduction_percentage": 0.96
+      "current_monthly_pen": 3653600,
+      "aws_monthly_pen": 103680,
+      "captured_pen": 3549920,
+      "reduction_percentage": 0.97
     },
-    "net_benefit_monthly_pen": 669880,
-    "roi_percentage": 32.26,
-    "break_even_days": 3
+    "net_benefit_monthly_pen": 3472375,
+    "break_even_months": 0.022,
+    "note": "A pesar del mayor costo de Cognito, el beneficio neto sigue siendo masivo debido a captura de participaciones"
   }
 }
