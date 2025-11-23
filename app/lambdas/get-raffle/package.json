@@ -1,8 +1,9 @@
 {
   "name": "get-raffle",
-  "version": "1.0.0",
-  "description": "Lambda function to retrieve a single raffle by ID",
+  "version": "2.0.0",
+  "description": "Lambda function to retrieve raffle by ID with user participation status and calculated fields",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -16,6 +17,9 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.922.0",
     "@aws-sdk/lib-dynamodb": "3.922.0",
-    "aws-jwt-verify": "^4.0.1"
+    "@aws-lambda-powertools/logger": "2.29.0",
+    "@aws-lambda-powertools/tracer": "2.29.0",
+    "@aws-lambda-powertools/metrics": "2.29.0",
+    "aws-jwt-verify": "4.0.1"
   }
 }
