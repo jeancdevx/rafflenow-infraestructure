@@ -16,7 +16,6 @@ export async function emitParticipationReceivedEvent(params) {
     raffle_title: raffle.title,
     participant_email: participantData.participant_email,
     participant_name: participantData.participant_name,
-    participant_phone: participantData.participant_phone,
     participated_at: participationTimestamp,
     current_participants: raffle.current_participants,
     max_participants: raffle.max_participants,
