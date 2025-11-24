@@ -1,14 +1,22 @@
 import { logger, tracer, metrics } from "./lib/powertools.js";
 import { MetricUnit } from "@aws-lambda-powertools/metrics";
-import { extractClaims, getUserEmail, isAdmin } from "./lib/auth-validator.js";
+import {
+  extractClaims,
+  getUserEmail,
+  getUserName,
+  isAdmin,
+} from "./lib/auth-validator.js";
 import {
   validateRaffleId,
-  validateParticipationData,
   validateRaffleStatus,
-  validateRaffleCapacity,
   validateRaffleEndDate,
+  validateNoDuplicateParticipation,
+  validateRaffleCapacity,
 } from "./lib/participation-validator.js";
-import { getRaffle } from "./lib/raffle-repository.js";
+import {
+  getRaffle,
+  checkExistingParticipation,
+} from "./lib/raffle-repository.js";
 import { emitParticipationReceivedEvent } from "./lib/event-emitter.js";
 
 const buildResponse = (statusCode, body) => ({
@@ -35,7 +43,8 @@ export const handler = async (event) => {
     }
 
     const userEmail = getUserEmail(claims);
-    logger.appendKeys({ user_email: userEmail });
+    const userName = getUserName(claims);
+    logger.appendKeys({ user_email: userEmail, user_name: userName });
 
     if (isAdmin(claims)) {
       logger.warn("Admin attempted to participate in raffle", {
@@ -58,30 +67,14 @@ export const handler = async (event) => {
     const raffleId = raffleIdValidation.raffleId;
     logger.appendKeys({ raffle_id: raffleId });
 
-    let parsedBody;
-    try {
-      parsedBody = JSON.parse(event.body);
-    } catch (error) {
-      logger.warn("Invalid JSON body", { error: error.message });
-      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
-      return buildResponse(400, { message: "Invalid JSON body" });
-    }
+    const participantData = {
+      participant_email: userEmail.toLowerCase(),
+      participant_name: userName,
+    };
 
-    const bodyValidation = validateParticipationData(parsedBody);
-    if (!bodyValidation.valid) {
-      logger.warn("Invalid participation data", {
-        error: bodyValidation.error,
-      });
-      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
-      return buildResponse(400, {
-        message: "Validation error",
-        error: bodyValidation.error,
-      });
-    }
-
-    const participantData = bodyValidation.data;
-    logger.info("Participation data validated", {
+    logger.info("Participation data from JWT", {
       participant_email: participantData.participant_email,
+      participant_name: participantData.participant_name,
     });
 
     const raffle = await getRaffle(raffleId);
@@ -104,25 +97,46 @@ export const handler = async (event) => {
       });
     }
 
-    const capacityValidation = validateRaffleCapacity(raffle);
-    if (!capacityValidation.valid) {
-      logger.warn("Raffle at full capacity", {
-        current: raffle.current_participants,
-        max: raffle.max_participants,
-      });
-      metrics.addMetric("RaffleFull", MetricUnit.Count, 1);
-      return buildResponse(400, {
-        message: capacityValidation.error,
-        current_participants: raffle.current_participants,
-        max_participants: raffle.max_participants,
-      });
-    }
-
     const dateValidation = validateRaffleEndDate(raffle);
     if (!dateValidation.valid) {
       logger.warn("Raffle has ended", { end_date: raffle.end_date });
       metrics.addMetric("RaffleExpired", MetricUnit.Count, 1);
       return buildResponse(400, { message: dateValidation.error });
+    }
+
+    const alreadyParticipated = await checkExistingParticipation(
+      raffleId,
+      participantData.participant_email
+    );
+
+    const duplicateValidation =
+      validateNoDuplicateParticipation(alreadyParticipated);
+    if (!duplicateValidation.valid) {
+      logger.warn("Duplicate participation attempt", {
+        raffle_id: raffleId,
+        participant_email: participantData.participant_email,
+      });
+      metrics.addMetric("DuplicateParticipation", MetricUnit.Count, 1);
+      return buildResponse(409, {
+        message: duplicateValidation.error,
+        raffle_id: raffleId,
+      });
+    }
+
+    const capacityValidation = validateRaffleCapacity(raffle);
+    if (!capacityValidation.valid) {
+      logger.warn("Raffle at full capacity", {
+        raffle_id: raffleId,
+        current_participants: capacityValidation.current,
+        max_participants: capacityValidation.max,
+      });
+      metrics.addMetric("RaffleFull", MetricUnit.Count, 1);
+      return buildResponse(400, {
+        message: capacityValidation.error,
+        raffle_id: raffleId,
+        current_participants: capacityValidation.current,
+        max_participants: capacityValidation.max,
+      });
     }
 
     await emitParticipationReceivedEvent({

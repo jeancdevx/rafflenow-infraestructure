@@ -35,3 +35,31 @@ export async function getRaffle(raffleId) {
 
   return response.Item;
 }
+
+export async function checkExistingParticipation(raffleId, participantEmail) {
+  logger.info("Checking for existing participation", {
+    raffle_id: raffleId,
+    participant_email: participantEmail,
+  });
+
+  const getCommand = new GetCommand({
+    TableName: process.env.DYNAMODB_PARTICIPANTS_TABLE,
+    Key: {
+      raffle_id: raffleId,
+      participant_email: participantEmail,
+    },
+  });
+
+  const response = await docClient.send(getCommand);
+
+  const alreadyParticipated = !!response.Item;
+
+  if (alreadyParticipated) {
+    logger.warn("User already participated in this raffle", {
+      raffle_id: raffleId,
+      participant_email: participantEmail,
+    });
+  }
+
+  return alreadyParticipated;
+}

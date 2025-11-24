@@ -42,38 +42,26 @@ resource "aws_cognito_user_pool" "rafflenow_pool" {
   }
 
   schema {
-    name                = "name"
-    attribute_data_type = "String"
-    required            = false
-    mutable             = true
-
-    string_attribute_constraints {
-      min_length = 1
-      max_length = 256
-    }
-  }
-
-  schema {
     name                = "given_name"
     attribute_data_type = "String"
-    required            = false
+    required            = true
     mutable             = true
 
     string_attribute_constraints {
-      min_length = 1
-      max_length = 256
+      min_length = 2
+      max_length = 50
     }
   }
 
   schema {
     name                = "family_name"
     attribute_data_type = "String"
-    required            = false
+    required            = true
     mutable             = true
 
     string_attribute_constraints {
-      min_length = 1
-      max_length = 256
+      min_length = 2
+      max_length = 50
     }
   }
 
