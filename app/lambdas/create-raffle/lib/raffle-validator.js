@@ -106,6 +106,14 @@ export function validateEndDate(endDateInput, startDate) {
     };
   }
 
+  const now = new Date();
+  if (endDate < now) {
+    return {
+      valid: false,
+      error: "end_date cannot be in the past",
+    };
+  }
+
   return { valid: true, endDate };
 }
 
