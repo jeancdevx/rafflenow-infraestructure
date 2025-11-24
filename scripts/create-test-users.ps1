@@ -24,7 +24,7 @@ Write-Host "`nCreando usuario Admin..." -ForegroundColor Yellow
 aws cognito-idp admin-create-user `
   --user-pool-id $UserPoolId `
   --username admin@rafflenow.com `
-  --user-attributes Name=email,Value=admin@rafflenow.com Name=email_verified,Value=true `
+  --user-attributes Name=email,Value=admin@rafflenow.com Name=email_verified,Value=true Name=given_name,Value=Admin Name=family_name,Value=RaffleNow `
   --temporary-password "TempAdmin123!" `
   --message-action SUPPRESS `
   --profile $Profile 2>$null
@@ -53,7 +53,7 @@ Write-Host "`nCreando usuario regular..." -ForegroundColor Yellow
 aws cognito-idp admin-create-user `
   --user-pool-id $UserPoolId `
   --username user@rafflenow.com `
-  --user-attributes Name=email,Value=user@rafflenow.com Name=email_verified,Value=true `
+  --user-attributes Name=email,Value=user@rafflenow.com Name=email_verified,Value=true Name=given_name,Value=Carlos Name=family_name,Value=García `
   --temporary-password "TempUser123!" `
   --message-action SUPPRESS `
   --profile $Profile 2>$null
