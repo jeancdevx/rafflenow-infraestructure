@@ -136,9 +136,6 @@ export const handler = async (event, context) => {
       );
     }
 
-    tracer.putAnnotation("raffleCreator", getUserEmail(claims));
-    tracer.putAnnotation("raffleDuration", durationValidation.durationDays);
-
     const raffleData = {
       title: body.title,
       description: body.description,

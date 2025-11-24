@@ -63,9 +63,6 @@ export const handler = async (event, context) => {
       fileType: fileType,
     });
 
-    tracer.putAnnotation("fileKey", uploadData.fileKey);
-    tracer.putAnnotation("adminEmail", userEmail);
-
     metrics.addMetric("PresignedUrlGenerated", MetricUnit.Count, 1);
     metrics.publishStoredMetrics();
 
