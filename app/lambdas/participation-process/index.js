@@ -47,6 +47,61 @@ export const handler = async (event) => {
         throw new Error("Missing required fields");
       }
 
+      const idempotencyKey = eventDetail.idempotency_key;
+      logger.appendKeys({ idempotency_key: idempotencyKey });
+
+      const participationData = {
+        raffle_id: raffleId,
+        participant_email: participantEmail,
+        participant_name: participantName,
+        participated_at: participatedAt,
+        ...(idempotencyKey && { idempotency_key: idempotencyKey }),
+      };
+
+      const putCommand = new PutCommand({
+        TableName: PARTICIPANTS_TABLE,
+        Item: participationData,
+        ConditionExpression: idempotencyKey
+          ? "(attribute_not_exists(raffle_id) AND attribute_not_exists(participant_email)) OR idempotency_key = :idempotency_key"
+          : "attribute_not_exists(raffle_id) AND attribute_not_exists(participant_email)",
+        ...(idempotencyKey && {
+          ExpressionAttributeValues: {
+            ":idempotency_key": idempotencyKey,
+          },
+        }),
+      });
+
+      try {
+        const result = await docClient.send(putCommand);
+
+        const isRetry =
+          result.$metadata?.httpStatusCode === 200 && idempotencyKey;
+
+        logger.info("Participation record created", {
+          raffle_id: raffleId,
+          participant_email: participantEmail,
+          is_retry: isRetry,
+        });
+      } catch (error) {
+        if (error.name === "ConditionalCheckFailedException") {
+          logger.warn("Duplicate participation detected - skipping", {
+            raffle_id: raffleId,
+            participant_email: participantEmail,
+            has_idempotency_key: !!idempotencyKey,
+          });
+          metrics.addMetric("DuplicateParticipation", MetricUnit.Count, 1);
+
+          logger.removeKeys([
+            "raffle_id",
+            "participant_email",
+            "message_id",
+            "idempotency_key",
+          ]);
+          continue;
+        }
+        throw error;
+      }
+
       const updateCommand = new UpdateCommand({
         TableName: RAFFLES_TABLE,
         Key: { raffle_id: raffleId },
@@ -74,50 +129,17 @@ export const handler = async (event) => {
         });
       } catch (error) {
         if (error.name === "ConditionalCheckFailedException") {
-          logger.warn("Raffle is full or not active, participation rejected", {
-            raffle_id: raffleId,
-            participant_email: participantEmail,
-          });
+          logger.error(
+            "Raffle full after participation created - inconsistent state",
+            {
+              raffle_id: raffleId,
+              participant_email: participantEmail,
+            }
+          );
 
-          metrics.addMetric("ParticipationRejectedFull", MetricUnit.Count, 1);
+          metrics.addMetric("ParticipationInconsistency", MetricUnit.Count, 1);
 
-          // TODO FASE 4: Enviar email de rechazo "Sorteo lleno"
-          // await sendRaffleFullEmail(participantEmail, participantName, raffleId);
-
-          continue;
-        }
-        throw error;
-      }
-
-      const participationData = {
-        raffle_id: raffleId,
-        participant_email: participantEmail,
-        participant_name: participantName,
-        participated_at: participatedAt,
-      };
-
-      const putCommand = new PutCommand({
-        TableName: PARTICIPANTS_TABLE,
-        Item: participationData,
-        ConditionExpression:
-          "attribute_not_exists(raffle_id) AND attribute_not_exists(participant_email)",
-      });
-
-      try {
-        await docClient.send(putCommand);
-        logger.info("Participation record created", {
-          raffle_id: raffleId,
-          participant_email: participantEmail,
-        });
-      } catch (error) {
-        if (error.name === "ConditionalCheckFailedException") {
-          logger.warn("Duplicate participation detected", {
-            raffle_id: raffleId,
-            participant_email: participantEmail,
-          });
-          metrics.addMetric("DuplicateParticipation", MetricUnit.Count, 1);
-
-          continue;
+          throw new Error("Raffle became full during processing");
         }
         throw error;
       }
@@ -145,7 +167,12 @@ export const handler = async (event) => {
 
       metrics.addMetric("ParticipationProcessingError", MetricUnit.Count, 1);
     } finally {
-      logger.removeKeys(["raffle_id", "participant_email", "message_id"]);
+      logger.removeKeys([
+        "raffle_id",
+        "participant_email",
+        "message_id",
+        "idempotency_key",
+      ]);
     }
   }
 
