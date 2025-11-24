@@ -13,7 +13,7 @@ export async function emitRaffleClosedEvent(raffle, closedBy) {
     Source: "rafflenow.raffles",
     DetailType: "raffle.closed",
     Detail: JSON.stringify({
-      raffle_id: raffle.id,
+      raffle_id: raffle.raffle_id,
       title: raffle.title,
       status: raffle.status,
       previous_status: "active",
@@ -40,7 +40,7 @@ export async function emitRaffleClosedEvent(raffle, closedBy) {
   }
 
   logger.info("Successfully emitted raffle.closed event", {
-    raffle_id: raffle.id,
+    raffle_id: raffle.raffle_id,
     closed_by: closedBy,
     failed_entry_count: response.FailedEntryCount,
   });

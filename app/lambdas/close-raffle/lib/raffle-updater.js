@@ -27,8 +27,11 @@ export async function updateRaffleStatus(raffleId, closedBy, hasParticipants) {
       ":updated_at": now,
       ":closed_by": closedBy,
       ":active_status": "active",
+      ":processing_status": "processing",
+      ":closed_status": "closed",
     },
-    ConditionExpression: "#status = :active_status",
+    ConditionExpression:
+      "#status = :active_status OR #status = :processing_status OR #status = :closed_status",
     ReturnValues: "ALL_NEW",
   };
 
