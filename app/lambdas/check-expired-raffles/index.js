@@ -1,63 +1,42 @@
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const {
-  DynamoDBDocumentClient,
-  QueryCommand,
-  UpdateCommand,
-} = require("@aws-sdk/lib-dynamodb");
-const {
-  EventBridgeClient,
-  PutEventsCommand,
-} = require("@aws-sdk/client-eventbridge");
-const Logger = require("./logger");
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { EventBridgeClient } from "@aws-sdk/client-eventbridge";
+import { logger, tracer, metrics } from "./lib/powertools.js";
+import { MetricUnit } from "@aws-lambda-powertools/metrics";
+import { queryExpiredRaffles } from "./lib/raffle-query.js";
+import {
+  updateRaffleToProcessing,
+  updateRaffleToClosed,
+} from "./lib/raffle-updater.js";
+import { emitRaffleClosedEvent } from "./lib/event-emitter.js";
 
-const dynamoClient = new DynamoDBClient({});
+const dynamoClient = tracer.captureAWSv3Client(new DynamoDBClient({}));
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
-const eventBridgeClient = new EventBridgeClient({});
+const eventBridgeClient = tracer.captureAWSv3Client(new EventBridgeClient({}));
 
-exports.handler = async (event, context) => {
-  const logger = new Logger(context);
-  logger.logRequest(event);
+export const handler = async (event) => {
+  logger.info("Starting expired raffles check", {
+    scheduled_event: event.time,
+  });
 
   try {
     const now = new Date();
     const targetDate = now.toISOString();
 
-    logger.info("Checking for expired raffles", {
-      operation: "check-expired-raffles",
-      target_date: targetDate,
-    });
+    const expiredRaffles = await queryExpiredRaffles(docClient, targetDate);
 
-    const queryParams = {
-      TableName: process.env.DYNAMODB_RAFFLES_TABLE,
-      IndexName: "StatusEndDateIndex",
-      KeyConditionExpression: "#status = :active AND #endDate <= :targetDate",
-      ExpressionAttributeNames: {
-        "#status": "status",
-        "#endDate": "end_date",
-      },
-      ExpressionAttributeValues: {
-        ":active": "active",
-        ":targetDate": targetDate,
-      },
-    };
-
-    logger.logDbOperation("Query", process.env.DYNAMODB_RAFFLES_TABLE, {
-      operation: "check-expired-raffles",
-      index: "StatusEndDateIndex",
-    });
-
-    const queryResult = await docClient.send(new QueryCommand(queryParams));
-    const expiredRaffles = queryResult.Items || [];
-
-    logger.info("Expired raffles search completed", {
-      operation: "check-expired-raffles",
+    logger.info("Expired raffles found", {
       count: expiredRaffles.length,
     });
 
+    metrics.addMetric(
+      "ExpiredRafflesFound",
+      MetricUnit.Count,
+      expiredRaffles.length
+    );
+
     if (expiredRaffles.length === 0) {
-      logger.info("No expired raffles found", {
-        operation: "check-expired-raffles",
-      });
+      metrics.publishStoredMetrics();
       return {
         statusCode: 200,
         body: JSON.stringify({
@@ -71,111 +50,91 @@ exports.handler = async (event, context) => {
 
     for (const raffle of expiredRaffles) {
       try {
-        logger.info("Processing expired raffle", {
-          operation: "check-expired-raffles",
+        logger.appendKeys({
           raffle_id: raffle.raffle_id,
+          raffle_title: raffle.title,
+        });
+
+        logger.info("Processing expired raffle", {
+          current_participants: raffle.current_participants,
+          max_participants: raffle.max_participants,
         });
 
         if (raffle.current_participants === 0) {
-          logger.info("Raffle has no participants, skipping", {
-            operation: "check-expired-raffles",
+          logger.info("Raffle has no participants, closing directly", {
             raffle_id: raffle.raffle_id,
           });
+
+          const closedTimestamp = await updateRaffleToClosed(
+            docClient,
+            raffle.raffle_id
+          );
+
+          metrics.addMetric("RaffleClosedNoParticipants", MetricUnit.Count, 1);
+
           results.push({
             raffle_id: raffle.raffle_id,
-            status: "skipped",
-            reason: "no_participants",
+            status: "closed",
+            closed_at: closedTimestamp,
           });
+
+          logger.removeKeys(["raffle_id", "raffle_title"]);
           continue;
         }
 
-        const closedTimestamp = new Date().toISOString();
-
-        const updateParams = {
-          TableName: process.env.DYNAMODB_RAFFLES_TABLE,
-          Key: { raffle_id: raffle.raffle_id },
-          UpdateExpression:
-            "SET #status = :processing, closed_at = :closed_at, updated_at = :updated_at",
-          ConditionExpression: "#status = :active",
-          ExpressionAttributeNames: {
-            "#status": "status",
-          },
-          ExpressionAttributeValues: {
-            ":processing": "processing",
-            ":closed_at": closedTimestamp,
-            ":updated_at": closedTimestamp,
-            ":active": "active",
-          },
-        };
-
-        await docClient.send(new UpdateCommand(updateParams));
-
-        logger.info("Raffle closed, emitting event", {
-          operation: "check-expired-raffles",
-          raffle_id: raffle.raffle_id,
-        });
+        const closedTimestamp = await updateRaffleToProcessing(
+          docClient,
+          raffle.raffle_id
+        );
 
         try {
-          const eventDetail = {
-            raffle_id: raffle.raffle_id,
-            title: raffle.title,
-            status: "processing",
-            previous_status: "active",
-            closed_at: closedTimestamp,
-            current_participants: raffle.current_participants,
-            max_participants: raffle.max_participants,
-            triggered_by: "automated_expiration",
-          };
-
-          const putEventsCommand = new PutEventsCommand({
-            Entries: [
-              {
-                EventBusName: process.env.EVENT_BUS_NAME,
-                Source: "rafflenow.raffles",
-                DetailType: "raffle.closed",
-                Detail: JSON.stringify(eventDetail),
-              },
-            ],
-          });
-
-          await eventBridgeClient.send(putEventsCommand);
-
-          logger.logExternalCall("EventBridge", "PutEvents", {
-            operation: "check-expired-raffles",
-            event_type: "raffle.closed",
-            raffle_id: raffle.raffle_id,
-          });
+          await emitRaffleClosedEvent(
+            eventBridgeClient,
+            raffle,
+            closedTimestamp
+          );
         } catch (eventError) {
-          logger.error("Error emitting raffle.closed event", eventError, {
-            operation: "check-expired-raffles",
-            fatal: false,
+          logger.error("Error emitting raffle.closed event", {
+            error: eventError.message,
+            raffle_id: raffle.raffle_id,
           });
+          metrics.addMetric("EventEmissionError", MetricUnit.Count, 1);
         }
+
+        metrics.addMetric("RaffleClosed", MetricUnit.Count, 1);
 
         results.push({
           raffle_id: raffle.raffle_id,
-          status: "closed",
+          status: "processing",
           closed_at: closedTimestamp,
         });
+
+        logger.removeKeys(["raffle_id", "raffle_title"]);
       } catch (error) {
-        logger.error("Error processing individual raffle", error, {
-          operation: "check-expired-raffles",
+        logger.error("Error processing individual raffle", {
+          error: error.message,
+          error_name: error.name,
           raffle_id: raffle.raffle_id,
         });
+
+        metrics.addMetric("RaffleProcessingError", MetricUnit.Count, 1);
 
         results.push({
           raffle_id: raffle.raffle_id,
           status: "error",
           error: error.message,
         });
+
+        logger.removeKeys(["raffle_id", "raffle_title"]);
       }
     }
 
     logger.info("Expired raffles processing completed", {
-      operation: "check-expired-raffles",
       total_found: expiredRaffles.length,
       results_count: results.length,
     });
+
+    metrics.publishStoredMetrics();
 
     return {
       statusCode: 200,
@@ -186,10 +145,13 @@ exports.handler = async (event, context) => {
       }),
     };
   } catch (error) {
-    logger.error("Fatal error checking expired raffles", error, {
-      operation: "check-expired-raffles",
-      fatal: true,
+    logger.error("Fatal error checking expired raffles", {
+      error: error.message,
+      stack: error.stack,
     });
+
+    metrics.addMetric("FatalError", MetricUnit.Count, 1);
+    metrics.publishStoredMetrics();
 
     return {
       statusCode: 500,
