@@ -151,8 +151,6 @@ export const handler = async (event) => {
     });
 
     metrics.addMetric("ParticipationReceived", MetricUnit.Count, 1);
-    tracer.putAnnotation("raffleId", raffleId);
-    tracer.putAnnotation("participantEmail", participantData.participant_email);
 
     return buildResponse(202, {
       message: "Participation request accepted",

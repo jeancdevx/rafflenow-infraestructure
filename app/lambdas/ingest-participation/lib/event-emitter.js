@@ -3,13 +3,25 @@ import {
   PutEventsCommand,
 } from "@aws-sdk/client-eventbridge";
 import { tracer, logger } from "./powertools.js";
+import { createHash } from "crypto";
 
 const eventBridgeClient = tracer.captureAWSv3Client(new EventBridgeClient({}));
+
+function generateIdempotencyKey(raffleId, participantEmail) {
+  return createHash("sha256")
+    .update(`${raffleId}:${participantEmail}`)
+    .digest("hex")
+    .substring(0, 16);
+}
 
 export async function emitParticipationReceivedEvent(params) {
   const { raffleId, raffle, participantData } = params;
 
   const participationTimestamp = new Date().toISOString();
+  const idempotencyKey = generateIdempotencyKey(
+    raffleId,
+    participantData.participant_email
+  );
 
   const eventDetail = {
     raffle_id: raffleId,
@@ -20,12 +32,14 @@ export async function emitParticipationReceivedEvent(params) {
     current_participants: raffle.current_participants,
     max_participants: raffle.max_participants,
     raffle_status: raffle.status,
+    idempotency_key: idempotencyKey,
   };
 
   logger.info("Emitting participation.received event to EventBridge", {
     raffle_id: raffleId,
     participant_email: participantData.participant_email,
     event_bus: process.env.EVENT_BUS_NAME,
+    idempotency_key: idempotencyKey,
   });
 
   const putEventsCommand = new PutEventsCommand({

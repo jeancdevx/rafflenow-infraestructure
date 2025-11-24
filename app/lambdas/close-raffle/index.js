@@ -50,7 +50,6 @@ export const handler = async (event, context) => {
   }
 
   const userId = getUserId(claims);
-  tracer.putAnnotation("userId", userId);
 
   const {
     valid: validRaffleId,
@@ -70,8 +69,6 @@ export const handler = async (event, context) => {
       }),
     };
   }
-
-  tracer.putAnnotation("raffleId", raffleId);
 
   try {
     logger.info("Fetching raffle from DynamoDB", { raffle_id: raffleId });

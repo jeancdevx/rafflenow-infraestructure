@@ -24,14 +24,9 @@ export const handler = async (event, context) => {
 
     let response;
     if (status) {
-      tracer.putAnnotation("queryType", "GSI");
-      tracer.putAnnotation("status", status);
-
       response = await queryRafflesByStatus(status, limit, lastEvaluatedKey);
       metrics.addMetric("QueryByStatus", MetricUnit.Count, 1);
     } else {
-      tracer.putAnnotation("queryType", "Scan");
-
       response = await scanAllRaffles(limit, lastEvaluatedKey);
       metrics.addMetric("ScanAll", MetricUnit.Count, 1);
     }

@@ -1,134 +1,97 @@
 import json
-import random
 import os
-from datetime import datetime
-from decimal import Decimal
 import boto3
-from boto3.dynamodb.conditions import Key
+from aws_lambda_powertools.utilities.typing import LambdaContext
+from aws_lambda_powertools.metrics import MetricUnit
+
+from lib.powertools_config import logger, tracer, metrics
+from lib.participant_selector import get_participants, select_winner
+from lib.raffle_updater import update_raffle_to_completed, update_raffle_to_failed
 
 dynamodb = boto3.resource('dynamodb')
 raffles_table = dynamodb.Table(os.environ['DYNAMODB_RAFFLES_TABLE'])
 participants_table = dynamodb.Table(os.environ['DYNAMODB_PARTICIPANTS_TABLE'])
 
 
-def handler(event, context):
-    print(f"Event received: {json.dumps(event)}")
+@logger.inject_lambda_context
+@tracer.capture_lambda_handler
+@metrics.log_metrics(capture_cold_start_metric=True)
+def handler(event: dict, context: LambdaContext) -> dict:
+    logger.info("Processing raffle closed events", extra={"record_count": len(event['Records'])})
     
     for record in event['Records']:
         try:
             message_body = json.loads(record['body'])
             
             if 'detail-type' not in message_body or message_body.get('detail-type') != 'raffle.closed':
-                print(f"Invalid event type: {message_body.get('detail-type')}")
+                logger.warning(
+                    "Invalid event type",
+                    extra={"detail_type": message_body.get('detail-type')}
+                )
                 continue
             
             detail = message_body.get('detail', {})
             raffle_id = detail.get('raffle_id')
             
             if not raffle_id:
-                print(f"Invalid message format - no raffle_id: {message_body}")
+                logger.warning("Missing raffle_id in message", extra={"message_body": message_body})
                 continue
             
-            print(f"Processing raffle_id: {raffle_id}")
+            logger.append_keys(raffle_id=raffle_id)
+            logger.info("Processing raffle")
             
             raffle_response = raffles_table.get_item(Key={'raffle_id': raffle_id})
             
             if 'Item' not in raffle_response:
-                print(f"Raffle not found: {raffle_id}")
+                logger.warning("Raffle not found")
+                logger.remove_keys(['raffle_id'])
                 continue
             
             raffle = raffle_response['Item']
             
             if raffle.get('status') != 'processing':
-                print(f"Raffle {raffle_id} is not in processing status: {raffle.get('status')}")
+                logger.warning(
+                    "Raffle not in processing status",
+                    extra={"current_status": raffle.get('status')}
+                )
+                logger.remove_keys(['raffle_id'])
                 continue
             
-            participants_response = participants_table.query(
-                KeyConditionExpression=Key('raffle_id').eq(raffle_id)
-            )
+            try:
+                participants = get_participants(participants_table, raffle_id)
+                winner = select_winner(participants, raffle_id)
+                
+                completed_at = update_raffle_to_completed(raffles_table, raffle_id, winner)
+                
+                metrics.add_metric(name="WinnerSelected", unit=MetricUnit.Count, value=1)
+                metrics.add_metric(
+                    name="TotalParticipants",
+                    unit=MetricUnit.Count,
+                    value=len(participants)
+                )
+                
+                logger.info(
+                    "Raffle processing completed successfully",
+                    extra={
+                        "winner_email": winner['participant_email'],
+                        "total_participants": len(participants),
+                        "completed_at": completed_at
+                    }
+                )
+                
+            except ValueError as e:
+                logger.warning(f"No participants: {str(e)}")
+                update_raffle_to_failed(raffles_table, raffle_id, 'No participants found')
+                metrics.add_metric(name="RaffleFailedNoParticipants", unit=MetricUnit.Count, value=1)
             
-            participants = participants_response.get('Items', [])
-            
-            if not participants:
-                print(f"No participants found for raffle {raffle_id}")
-                update_raffle_status(raffle_id, 'failed', 'No participants found')
-                continue
-            
-            print(f"Found {len(participants)} participants for raffle {raffle_id}")
-            
-            winner = random.choice(participants)
-            
-            print(f"Winner selected: {winner['participant_email']}")
-            
-            update_raffle_with_winner(raffle_id, winner)
-            
-            print(f"Successfully processed raffle {raffle_id}")
+            logger.remove_keys(['raffle_id'])
             
         except Exception as e:
-            print(f"Error processing record: {str(e)}")
-            raise e
+            logger.exception("Error processing record", extra={"error": str(e)})
+            metrics.add_metric(name="ProcessingError", unit=MetricUnit.Count, value=1)
+            raise
     
     return {
         'statusCode': 200,
         'body': json.dumps({'message': 'Processing completed'})
     }
-
-
-def update_raffle_with_winner(raffle_id, winner):
-    now = datetime.utcnow().isoformat()
-    
-    try:
-        raffles_table.update_item(
-            Key={'raffle_id': raffle_id},
-            UpdateExpression='''
-                SET #status = :status,
-                    winner_email = :winner_email,
-                    winner_name = :winner_name,
-                    winner_selected_at = :selected_at,
-                    updated_at = :updated_at
-            ''',
-            ExpressionAttributeNames={
-                '#status': 'status'
-            },
-            ExpressionAttributeValues={
-                ':status': 'completed',
-                ':winner_email': winner['participant_email'],
-                ':winner_name': winner['participant_name'],
-                ':selected_at': now,
-                ':updated_at': now,
-                ':processing_status': 'processing'
-            },
-            ConditionExpression='#status = :processing_status'
-        )
-        print(f"Raffle {raffle_id} updated to completed with winner {winner['participant_email']}")
-    except Exception as e:
-        print(f"Error updating raffle {raffle_id}: {str(e)}")
-        raise e
-
-
-def update_raffle_status(raffle_id, status, error_message=None):
-    now = datetime.utcnow().isoformat()
-    
-    update_expression = 'SET #status = :status, updated_at = :updated_at'
-    expression_values = {
-        ':status': status,
-        ':updated_at': now
-    }
-    
-    if error_message:
-        update_expression += ', error_message = :error_message'
-        expression_values[':error_message'] = error_message
-    
-    try:
-        raffles_table.update_item(
-            Key={'raffle_id': raffle_id},
-            UpdateExpression=update_expression,
-            ExpressionAttributeNames={
-                '#status': 'status'
-            },
-            ExpressionAttributeValues=expression_values
-        )
-        print(f"Raffle {raffle_id} status updated to {status}")
-    except Exception as e:
-        print(f"Error updating raffle status {raffle_id}: {str(e)}")
-        raise e

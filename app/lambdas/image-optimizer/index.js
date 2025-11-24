@@ -60,9 +60,6 @@ export const handler = async (event, context) => {
         compressionRatio: compressionRatio,
       });
 
-      tracer.putAnnotation("optimizedKey", optimizedKey);
-      tracer.putAnnotation("compressionRatio", compressionRatio);
-
       logger.info("Image optimization completed successfully", {
         message_id: messageId,
         original_key: objectKey,

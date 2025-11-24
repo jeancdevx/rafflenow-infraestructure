@@ -24,7 +24,6 @@ export const handler = async (event, context) => {
     }
 
     logger.info("Processing get-raffle request", { raffleId });
-    tracer.putAnnotation("raffleId", raffleId);
 
     const raffle = await getRaffleById(raffleId);
 
@@ -39,8 +38,6 @@ export const handler = async (event, context) => {
       };
     }
 
-    tracer.putAnnotation("raffleStatus", raffle.status);
-
     let userHasParticipated = false;
     const authHeader =
       event.headers?.Authorization || event.headers?.authorization;
@@ -49,10 +46,8 @@ export const handler = async (event, context) => {
       const userEmail = await verifyToken(authHeader);
 
       if (userEmail) {
-        tracer.putAnnotation("authenticated", true);
         userHasParticipated = await hasUserParticipated(raffleId, userEmail);
       } else {
-        tracer.putAnnotation("authenticated", false);
       }
     }
 
