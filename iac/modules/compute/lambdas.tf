@@ -151,11 +151,53 @@ resource "aws_lambda_function" "close_raffle" {
   })
 }
 
-# Lambda: worker-process (Python)
+resource "null_resource" "build_python_layer" {
+  triggers = {
+    requirements = filemd5("${path.root}/../../../app/lambdas/worker-process/requirements.txt")
+  }
+
+  provisioner "local-exec" {
+    command     = <<-EOT
+      $layerDir = "${path.root}/../../../app/lambdas/worker-process/layer"
+      if (Test-Path $layerDir) { Remove-Item -Recurse -Force $layerDir }
+      New-Item -ItemType Directory -Force -Path "$layerDir/python" | Out-Null
+      pip install -r "${path.root}/../../../app/lambdas/worker-process/requirements.txt" -t "$layerDir/python" --quiet --upgrade
+      Write-Host "Lambda Layer dependencies installed successfully"
+    EOT
+    interpreter = ["pwsh", "-Command"]
+  }
+}
+
+data "archive_file" "worker_process_layer_zip" {
+  type        = "zip"
+  source_dir  = "${path.root}/../../../app/lambdas/worker-process/layer"
+  output_path = "${path.module}/../../../app/lambdas/worker-process-layer.zip"
+
+  depends_on = [null_resource.build_python_layer]
+}
+
+resource "aws_lambda_layer_version" "worker_process_dependencies" {
+  filename            = data.archive_file.worker_process_layer_zip.output_path
+  layer_name          = "${var.name_prefix}-worker-process-dependencies"
+  compatible_runtimes = ["python3.12"]
+  source_code_hash    = data.archive_file.worker_process_layer_zip.output_base64sha256
+
+  depends_on = [null_resource.build_python_layer]
+}
+
 data "archive_file" "worker_process_zip" {
   type        = "zip"
   source_dir  = "${path.root}/../../../app/lambdas/worker-process"
   output_path = "${path.module}/../../../app/lambdas/worker-process.zip"
+
+  excludes = [
+    "venv",
+    "layer",
+    "__pycache__",
+    "*.pyc",
+    ".pytest_cache",
+    "tests"
+  ]
 }
 
 resource "aws_lambda_function" "worker_process" {
@@ -167,6 +209,8 @@ resource "aws_lambda_function" "worker_process" {
   runtime          = "python3.12"
   timeout          = 30
   memory_size      = 1024
+
+  layers = [aws_lambda_layer_version.worker_process_dependencies.arn]
 
   environment {
     variables = {
