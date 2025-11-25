@@ -28,14 +28,24 @@ output "dynamodb_raffles_table_arn" {
   value       = aws_dynamodb_table.raffles.arn
 }
 
-output "dynamodb_participants_table_name" {
-  description = "Name of the participants DynamoDB table"
-  value       = aws_dynamodb_table.participants.name
+output "dynamodb_participations_table_name" {
+  description = "Name of the participations DynamoDB table"
+  value       = aws_dynamodb_table.participations.name
 }
 
-output "dynamodb_participants_table_arn" {
-  description = "ARN of the participants DynamoDB table"
-  value       = aws_dynamodb_table.participants.arn
+output "dynamodb_participations_table_arn" {
+  description = "ARN of the participations DynamoDB table"
+  value       = aws_dynamodb_table.participations.arn
+}
+
+output "dynamodb_winners_table_name" {
+  description = "Name of the winners DynamoDB table"
+  value       = aws_dynamodb_table.winners.name
+}
+
+output "dynamodb_winners_table_arn" {
+  description = "ARN of the winners DynamoDB table"
+  value       = aws_dynamodb_table.winners.arn
 }
 
 output "sqs_raffle_winner_queue_url" {
