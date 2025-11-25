@@ -76,10 +76,10 @@ resource "aws_lambda_function" "get_raffle" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE              = var.dynamodb_table_name
-      DYNAMODB_PARTICIPANTS_TABLE = var.dynamodb_participants_table_name
-      COGNITO_USER_POOL_ID        = var.cognito_user_pool_id
-      COGNITO_CLIENT_ID           = var.cognito_client_id
+      DYNAMODB_TABLE                = var.dynamodb_table_name
+      DYNAMODB_PARTICIPATIONS_TABLE = var.dynamodb_participations_table_name
+      COGNITO_USER_POOL_ID          = var.cognito_user_pool_id
+      COGNITO_CLIENT_ID             = var.cognito_client_id
     }
   }
 
@@ -108,9 +108,9 @@ resource "aws_lambda_function" "ingest_participation" {
 
   environment {
     variables = {
-      DYNAMODB_RAFFLES_TABLE      = var.dynamodb_table_name
-      DYNAMODB_PARTICIPANTS_TABLE = var.dynamodb_participants_table_name
-      EVENT_BUS_NAME              = var.event_bus_name
+      DYNAMODB_RAFFLES_TABLE        = var.dynamodb_table_name
+      DYNAMODB_PARTICIPATIONS_TABLE = var.dynamodb_participations_table_name
+      EVENT_BUS_NAME                = var.event_bus_name
     }
   }
 
@@ -214,8 +214,9 @@ resource "aws_lambda_function" "worker_process" {
 
   environment {
     variables = {
-      DYNAMODB_RAFFLES_TABLE      = var.dynamodb_table_name
-      DYNAMODB_PARTICIPANTS_TABLE = var.dynamodb_participants_table_name
+      DYNAMODB_RAFFLES_TABLE        = var.dynamodb_table_name
+      DYNAMODB_PARTICIPATIONS_TABLE = var.dynamodb_participations_table_name
+      DYNAMODB_WINNERS_TABLE        = var.dynamodb_winners_table_name
     }
   }
 
@@ -305,8 +306,8 @@ resource "aws_lambda_function" "participation_process" {
 
   environment {
     variables = {
-      DYNAMODB_RAFFLES_TABLE      = var.dynamodb_table_name
-      DYNAMODB_PARTICIPANTS_TABLE = var.dynamodb_participants_table_name
+      DYNAMODB_RAFFLES_TABLE        = var.dynamodb_table_name
+      DYNAMODB_PARTICIPATIONS_TABLE = var.dynamodb_participations_table_name
     }
   }
 

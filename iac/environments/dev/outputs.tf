@@ -32,9 +32,10 @@ output "infrastructure" {
 
     # Storage
     storage = {
-      s3_bucket             = module.storage.s3_assets_bucket_name
-      dynamodb_raffles      = module.storage.dynamodb_raffles_table_name
-      dynamodb_participants = module.storage.dynamodb_participants_table_name
+      s3_bucket               = module.storage.s3_assets_bucket_name
+      dynamodb_raffles        = module.storage.dynamodb_raffles_table_name
+      dynamodb_participations = module.storage.dynamodb_participations_table_name
+      dynamodb_winners        = module.storage.dynamodb_winners_table_name
     }
 
     # CDN

@@ -38,8 +38,10 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
         Resource = [
           "arn:aws:dynamodb:*:*:table/${var.dynamodb_table_name}",
           "arn:aws:dynamodb:*:*:table/${var.dynamodb_table_name}/index/*",
-          "arn:aws:dynamodb:*:*:table/${var.dynamodb_participants_table_name}",
-          "arn:aws:dynamodb:*:*:table/${var.dynamodb_participants_table_name}/index/*"
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_participations_table_name}",
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_participations_table_name}/index/*",
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_winners_table_name}",
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_winners_table_name}/index/*"
         ]
       }
     ]
