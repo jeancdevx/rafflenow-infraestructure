@@ -19,8 +19,13 @@ variable "dynamodb_table_name" {
   type        = string
 }
 
-variable "dynamodb_participants_table_name" {
-  description = "Name of the DynamoDB table for participants"
+variable "dynamodb_participations_table_name" {
+  description = "Name of the DynamoDB table for participations"
+  type        = string
+}
+
+variable "dynamodb_winners_table_name" {
+  description = "Name of the DynamoDB table for winners"
   type        = string
 }
 
