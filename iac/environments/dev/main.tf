@@ -31,18 +31,19 @@ module "compute" {
   name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
   environment = var.environment
 
-  dynamodb_table_name              = module.storage.dynamodb_raffles_table_name
-  dynamodb_participants_table_name = module.storage.dynamodb_participants_table_name
-  sqs_queue_url                    = module.storage.sqs_raffle_winner_queue_url
-  sqs_queue_arn                    = module.storage.sqs_raffle_winner_queue_arn
-  sqs_participations_queue_arn     = module.storage.sqs_participations_queue_arn
-  sqs_image_optimizer_queue_arn    = module.storage.sqs_image_optimizer_queue_arn
-  s3_assets_bucket_arn             = module.storage.s3_assets_bucket_arn
-  s3_assets_bucket_name            = module.storage.s3_assets_bucket_id
-  cloudfront_url                   = module.cdn.cloudfront_distribution_url
-  cognito_user_pool_id             = module.cognito.user_pool_id
-  cognito_client_id                = module.cognito.user_pool_client_id
-  event_bus_name                   = module.eventbridge.event_bus_name
+  dynamodb_table_name                = module.storage.dynamodb_raffles_table_name
+  dynamodb_participations_table_name = module.storage.dynamodb_participations_table_name
+  dynamodb_winners_table_name        = module.storage.dynamodb_winners_table_name
+  sqs_queue_url                      = module.storage.sqs_raffle_winner_queue_url
+  sqs_queue_arn                      = module.storage.sqs_raffle_winner_queue_arn
+  sqs_participations_queue_arn       = module.storage.sqs_participations_queue_arn
+  sqs_image_optimizer_queue_arn      = module.storage.sqs_image_optimizer_queue_arn
+  s3_assets_bucket_arn               = module.storage.s3_assets_bucket_arn
+  s3_assets_bucket_name              = module.storage.s3_assets_bucket_id
+  cloudfront_url                     = module.cdn.cloudfront_distribution_url
+  cognito_user_pool_id               = module.cognito.user_pool_id
+  cognito_client_id                  = module.cognito.user_pool_client_id
+  event_bus_name                     = module.eventbridge.event_bus_name
 
   tags = {
     Environment = var.environment
