@@ -1,85 +1,64 @@
-import { MetricUnit } from "@aws-lambda-powertools/metrics";
-import { logger, tracer, metrics } from "./lib/powertools.js";
-import { queryRafflesByStatus, scanAllRaffles } from "./lib/raffle-query.js";
-import {
-  validateLimit,
-  decodeCursor,
-  buildPaginatedResponse,
-} from "./utils/pagination.js";
+import { logger, metrics } from './lib/powertools.js'
+import { MetricUnit } from '@aws-lambda-powertools/metrics'
+import { handleListRaffles } from './handler.js'
+import { ValidationError } from './lib/errors.js'
 
 export const handler = async (event, context) => {
   try {
-    logger.addContext(context);
+    logger.addContext(context)
 
-    const queryParams = event.queryStringParameters || {};
-    const status = queryParams.status;
-    const limit = validateLimit(queryParams.limit);
-    const lastEvaluatedKey = decodeCursor(queryParams.cursor);
+    const result = await handleListRaffles(event)
 
-    logger.info("Processing list raffles request", {
-      status,
-      limit,
-      hasCursor: !!lastEvaluatedKey,
-    });
-
-    let response;
-    if (status) {
-      response = await queryRafflesByStatus(status, limit, lastEvaluatedKey);
-      metrics.addMetric("QueryByStatus", MetricUnit.Count, 1);
-    } else {
-      response = await scanAllRaffles(limit, lastEvaluatedKey);
-      metrics.addMetric("ScanAll", MetricUnit.Count, 1);
-    }
-
-    const paginatedResult = buildPaginatedResponse(
-      response.Items,
-      response.LastEvaluatedKey,
-      response.ScannedCount
-    );
-
-    logger.info("Raffles retrieved successfully", {
-      count: paginatedResult.count,
-      hasMore: paginatedResult.has_more,
-      scannedCount: paginatedResult.scanned_count,
-    });
-
-    metrics.addMetric(
-      "RafflesRetrieved",
-      MetricUnit.Count,
-      paginatedResult.count
-    );
-    metrics.publishStoredMetrics();
+    metrics.publishStoredMetrics()
 
     return {
       statusCode: 200,
       headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({
-        message: "Raffles retrieved successfully",
-        ...paginatedResult,
-      }),
-    };
+        message: 'Raffles retrieved successfully',
+        ...result
+      })
+    }
   } catch (error) {
-    logger.error("Error retrieving raffles", {
-      error: error.message,
-      stack: error.stack,
-    });
+    if (error instanceof ValidationError) {
+      logger.warn('Validation error', { error: error.message })
+      metrics.addMetric('ValidationError', MetricUnit.Count, 1)
+      metrics.publishStoredMetrics()
+      return {
+        statusCode: error.statusCode,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          message: 'Validation error',
+          error: error.message,
+          ...error.details
+        })
+      }
+    }
 
-    metrics.addMetric("ListRafflesError", MetricUnit.Count, 1);
-    metrics.publishStoredMetrics();
+    logger.error('Error retrieving raffles', {
+      error: error.message,
+      stack: error.stack
+    })
+
+    metrics.addMetric('ListRafflesError', MetricUnit.Count, 1)
+    metrics.publishStoredMetrics()
 
     return {
       statusCode: 500,
       headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({
-        message: "Error retrieving raffles",
-        error: error.message,
-      }),
-    };
+        message: 'Error retrieving raffles',
+        error: error.message
+      })
+    }
   }
-};
+}
