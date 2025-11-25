@@ -1,88 +1,52 @@
-import { MetricUnit } from "@aws-lambda-powertools/metrics";
-import { logger, tracer, metrics } from "./lib/powertools.js";
-import { verifyToken } from "./lib/cognito-verifier.js";
-import { getRaffleById, hasUserParticipated } from "./lib/raffle-repository.js";
-import { prepareRaffleResponse } from "./utils/raffle-formatter.js";
+import { logger, metrics } from './lib/powertools.js'
+import { MetricUnit } from '@aws-lambda-powertools/metrics'
+import { handleGetRaffle } from './handler.js'
+import { NotFoundError, ValidationError } from './lib/errors.js'
 
 export const handler = async (event, context) => {
-  const segment = tracer.getSegment();
-  const subsegment = segment.addNewSubsegment("get-raffle-handler");
-
   try {
-    logger.addContext(context);
+    logger.addContext(context)
 
-    const raffleId = event.pathParameters?.id;
-    if (!raffleId) {
-      logger.warn("Missing id in path parameters");
-      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
-      subsegment.close();
-      return {
-        statusCode: 400,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "raffle_id is required" }),
-      };
+    const result = await handleGetRaffle(event)
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(result)
     }
-
-    logger.info("Processing get-raffle request", { raffleId });
-
-    const raffle = await getRaffleById(raffleId);
-
-    if (!raffle) {
-      logger.warn("Raffle not found", { raffleId });
-      metrics.addMetric("RaffleNotFound", MetricUnit.Count, 1);
-      subsegment.close();
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      logger.warn('Validation error', { error: error.message })
+      metrics.addMetric('ValidationError', MetricUnit.Count, 1)
       return {
-        statusCode: 404,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Raffle not found" }),
-      };
-    }
-
-    let userHasParticipated = false;
-    const authHeader =
-      event.headers?.Authorization || event.headers?.authorization;
-
-    if (authHeader) {
-      const userEmail = await verifyToken(authHeader);
-
-      if (userEmail) {
-        userHasParticipated = await hasUserParticipated(raffleId, userEmail);
-      } else {
+        statusCode: error.statusCode,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: error.message })
       }
     }
 
-    const responseData = prepareRaffleResponse(raffle);
-    responseData.user_has_participated = userHasParticipated;
+    if (error instanceof NotFoundError) {
+      logger.warn('Raffle not found', { error: error.message })
+      metrics.addMetric('RaffleNotFound', MetricUnit.Count, 1)
+      return {
+        statusCode: error.statusCode,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: error.message })
+      }
+    }
 
-    logger.info("Raffle retrieved successfully", {
-      raffleId,
-      status: raffle.status,
-      userHasParticipated,
-    });
-
-    metrics.addMetric("RaffleRetrieved", MetricUnit.Count, 1);
-    metrics.addDimension("RaffleStatus", raffle.status);
-
-    subsegment.close();
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(responseData),
-    };
-  } catch (error) {
-    logger.error("Error retrieving raffle", {
+    logger.error('Error retrieving raffle', {
       error: error.message,
-      stack: error.stack,
-    });
-    metrics.addMetric("GetRaffleError", MetricUnit.Count, 1);
+      stack: error.stack
+    })
+    metrics.addMetric('GetRaffleError', MetricUnit.Count, 1)
 
-    subsegment.close();
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Internal server error" }),
-    };
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'Internal server error' })
+    }
   } finally {
-    metrics.publishStoredMetrics();
+    metrics.publishStoredMetrics()
   }
-};
+}
