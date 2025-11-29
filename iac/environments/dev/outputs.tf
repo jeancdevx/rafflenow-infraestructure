@@ -27,7 +27,7 @@ output "infrastructure" {
       user_pool_id = module.cognito.user_pool_id
       client_id    = module.cognito.user_pool_client_id
       domain       = module.cognito.user_pool_domain
-      auth_url     = "https://${module.cognito.user_pool_domain}.auth.${var.region}.amazoncognito.com"
+      auth_url     = "https://${module.cognito.user_pool_domain}.auth.${var.aws_region}.amazoncognito.com"
     }
 
     # Storage
@@ -47,7 +47,15 @@ output "infrastructure" {
 
     # EventBridge
     eventbridge = {
-      bus_name = "rafflenow-${var.env}-${data.aws_caller_identity.me.account_id}-event-bus"
+      bus_name = module.eventbridge.event_bus_name
+    }
+
+    # SES
+    ses = {
+      sender_email           = module.ses.sender_email
+      configuration_set      = module.ses.configuration_set_name
+      participation_template = module.ses.participation_template_name
+      winner_template        = module.ses.winner_template_name
     }
   }
 }

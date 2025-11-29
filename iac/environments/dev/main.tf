@@ -45,6 +45,11 @@ module "compute" {
   cognito_client_id                  = module.cognito.user_pool_client_id
   event_bus_name                     = module.eventbridge.event_bus_name
 
+  ses_sender_email           = module.ses.sender_email
+  ses_configuration_set      = module.ses.configuration_set_name
+  ses_participation_template = module.ses.participation_template_name
+  ses_winner_template        = module.ses.winner_template_name
+
   tags = {
     Environment = var.environment
     Project     = "RaffleNow"
@@ -121,6 +126,18 @@ module "eventbridge" {
   sqs_image_optimizer_queue_arn = module.storage.sqs_image_optimizer_queue_arn
   sqs_image_optimizer_queue_url = module.storage.sqs_image_optimizer_queue_url
   s3_assets_bucket_name         = module.storage.s3_assets_bucket_name
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
+
+module "ses" {
+  source = "../../modules/ses"
+
+  name_prefix  = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+  sender_email = var.ses_sender_email
 
   tags = {
     Environment = var.environment

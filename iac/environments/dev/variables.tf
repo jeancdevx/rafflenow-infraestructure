@@ -81,3 +81,8 @@ variable "dynamodb_write_capacity" {
   type        = number
   default     = 5
 }
+
+variable "ses_sender_email" {
+  description = "Email address to use as sender for SES (must be verified)"
+  type        = string
+}
