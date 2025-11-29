@@ -1,0 +1,15 @@
+¡Participación Confirmada!
+
+Hola {{participant_name}},
+
+Tu participación en el sorteo "{{raffle_title}}" ha sido registrada exitosamente.
+
+Detalles del sorteo:
+- Premio: {{prize_description}}
+- Valor: S/ {{prize_value}}
+- Fecha de cierre: {{end_date}}
+- Tu número de participación: #{{participation_number}}
+
+Te notificaremos por este medio si resultas ganador. ¡Buena suerte!
+
+© 2025 RaffleNow
