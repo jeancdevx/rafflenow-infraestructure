@@ -1,0 +1,31 @@
+{
+  "name": "rafflenow-v2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "husky",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "lint": "eslint app/lambdas/",
+    "lint:fix": "eslint app/lambdas/ --fix",
+    "format": "prettier --write app/lambdas/",
+    "format:check": "prettier --check app/lambdas/"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "eslint": "9.39.1",
+    "eslint-config-prettier": "9.1.0",
+    "eslint-plugin-react": "7.37.5",
+    "globals": "16.5.0",
+    "husky": "9.1.7",
+    "jest": "29.7.0",
+    "lint-staged": "15.2.10",
+    "prettier": "3.4.1"
+  },
+  "lint-staged": {
+    "app/lambdas/**/*.js": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  }
+}
