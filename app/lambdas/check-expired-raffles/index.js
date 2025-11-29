@@ -1,7 +1,7 @@
 import { logger, metrics } from './lib/powertools.js'
 import { checkAndCloseExpiredRaffles } from './handler.js'
 
-export const handler = async (event) => {
+export const handler = async event => {
   try {
     const result = await checkAndCloseExpiredRaffles(event.time)
 
