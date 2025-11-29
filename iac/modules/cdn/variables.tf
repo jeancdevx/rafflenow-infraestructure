@@ -23,3 +23,9 @@ variable "assets_bucket_regional_domain_name" {
   description = "Regional domain name of the S3 assets bucket"
   type        = string
 }
+
+variable "web_acl_id" {
+  description = "WAF WebACL ID to associate with CloudFront distribution"
+  type        = string
+  default     = null
+}

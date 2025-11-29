@@ -6,6 +6,7 @@ resource "aws_cloudfront_distribution" "assets_cdn" {
   comment             = "CDN for ${var.name_prefix} assets"
   default_root_object = "index.html"
   price_class         = "PriceClass_200"
+  web_acl_id          = var.web_acl_id
 
   origin {
     domain_name = var.assets_bucket_regional_domain_name
