@@ -2,27 +2,14 @@ type: collection.insomnia.rest/5.0
 schema_version: "5.1"
 name: rafflenow
 meta:
-  id: wrk_8af41df28711465592de50b8a57ba552
-  created: 1762465041206
-  modified: 1762465041206
-  description: |
-    RaffleNow API Collection - Arquitectura Dual API Gateway
-    
-    API Pública (Sin autenticación):
-    - GET /api/v1/raffles - Listar sorteos (con paginación y filtros)
-    - GET /api/v1/raffles/{id} - Obtener sorteo por ID
-    
-    API Autenticada (Requiere token Cognito):
-    - POST /api/v1/raffles - Crear sorteo (Solo Admin)
-    - POST /api/v1/raffles/{id}/participate - Participar en sorteo (Usuario o Admin)
-    - POST /api/v1/raffles/{id}/close - Cerrar sorteo (Solo Admin)
-    - POST /api/v1/assets/upload - Obtener URL presignada (Solo Admin)
-    
-    Actualizado: 2025-11-22 - FASE 1 y FASE 2 (list-raffles con Powertools)
+  id: wrk_eba6cf419e844b3f93f2ed8ab39dc73a
+  created: 1763866318215
+  modified: 1763866318215
+  description: ""
 collection:
   - name: auth
     meta:
-      id: fld_4f663595274d45428fa3406053a5342b
+      id: fld_9b4d0835a6334ff5927682f18bbfade7
       created: 1762452558268
       modified: 1762452717195
       sortKey: -1762452626778
@@ -31,7 +18,7 @@ collection:
       - url: https://cognito-idp.{{ _.region }}.amazonaws.com/
         name: get admin token
         meta:
-          id: req_b993e86b384743b0a4430157feac69cc
+          id: req_df36672e4a274bfaae1987e90021fbdd
           created: 1762452268359
           modified: 1762867889787
           isPrivate: false
@@ -65,7 +52,7 @@ collection:
       - url: https://cognito-idp.{{ _.region }}.amazonaws.com/
         name: get user token
         meta:
-          id: req_f9cc0e5a097f484687c389ea49877b27
+          id: req_925d42dfc6b84ef29799109f9935ecb3
           created: 1762452268360
           modified: 1762471189195
           isPrivate: false
@@ -98,7 +85,7 @@ collection:
           rebuildPath: true
   - name: admin
     meta:
-      id: fld_24250dccadf047e28fc786bbaf0f0469
+      id: fld_0c8e6e84414442e397b6aaa126876fca
       created: 1762452626478
       modified: 1762452718491
       sortKey: -1762452626728
@@ -106,7 +93,7 @@ collection:
     children:
       - name: raffles
         meta:
-          id: fld_5645fed8bbfb4941a305b51222355250
+          id: fld_8decf8c9a9744b89a02c4ff951b8b17a
           created: 1762452637975
           modified: 1762471674125
           sortKey: -1762452638076
@@ -115,9 +102,9 @@ collection:
           - url: "{{ _.authenticated_api_url }}/api/v1/raffles"
             name: crear raffles
             meta:
-              id: req_f30c22a56ea943599cf621c887375374
+              id: req_ecf932b62b1540c0b0e0c7e34e26797c
               created: 1762452268363
-              modified: 1763823802661
+              modified: 1764015946174
               isPrivate: false
               description: ""
               sortKey: -1762452665571
@@ -126,12 +113,13 @@ collection:
               mimeType: application/json
               text: >-
                 {
-                  "title": "MacBook Pro M3",
+                  "title": "Prueba de sorteo 2",
                   "description": "Sorteo de una MacBook Pro M3 Pro 14 pulgadas con 18GB RAM y 512GB SSD",
                   "end_date": "2025-11-31",
-                  "max_participants": 500,
+                  "max_participants": 2,
+                  "prize_value": 8500,
                 	"prize_images": [
-                			"{{ _.cloudfront_url }}/optimized/your-image-id.webp"
+                			"{{ _.cloudfront_url }}/optimized/83e8071a-8346-430d-8963-e47314cdd9d9-prize-macbook.webp"
                 	]
                 }
             headers:
@@ -149,7 +137,7 @@ collection:
               rebuildPath: true
           - name: id
             meta:
-              id: fld_213cc0461df94832839733c55b72bbb5
+              id: fld_e50778fa5c3846f9924bdb6228db5976
               created: 1762452665471
               modified: 1762452674100
               sortKey: -1762452665471
@@ -158,7 +146,7 @@ collection:
               - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close"
                 name: cerrar raffle
                 meta:
-                  id: req_b02d7de144af49b99186d6ef06f37650
+                  id: req_6a75d0f07fbf45a0a248075c22560746
                   created: 1762452268366
                   modified: 1762453542919
                   isPrivate: false
@@ -183,7 +171,7 @@ collection:
                   rebuildPath: true
       - name: assets
         meta:
-          id: fld_dbe20fa2372844d596f9867ce76fe133
+          id: fld_5106f114bb8b4ce0949a2c0c9291ab2f
           created: 1762462400000
           modified: 1762472386219
           sortKey: -1762452638176
@@ -192,7 +180,7 @@ collection:
           - url: "{{ _.authenticated_api_url }}/api/v1/assets/upload"
             name: upload image - get presigned URL
             meta:
-              id: req_a362a05833f9492ebecbf5dbeb99035e
+              id: req_23d6bd9a0a9b401c97be36c45f5b0ef1
               created: 1762462400000
               modified: 1763330905626
               isPrivate: false
@@ -222,7 +210,7 @@ collection:
           - url: "{{ _.presigned_url }}"
             name: upload file to S3
             meta:
-              id: req_7d9b379e09b647bbb2e99a1672df7900
+              id: req_f3dab7d526454e7fabcabcfa73568b91
               created: 1762462400002
               modified: 1763823625479
               isPrivate: false
@@ -246,7 +234,7 @@ collection:
               rebuildPath: true
   - name: user
     meta:
-      id: fld_0a8e3d86e32f45569c72af23c7ee395c
+      id: fld_44c55e7c3844463498fc7a1f7eec694d
       created: 1762452703858
       modified: 1762537654684
       sortKey: -1762452626678
@@ -254,7 +242,7 @@ collection:
     children:
       - name: raffles
         meta:
-          id: fld_a69e6981483a44be817b16391b814188
+          id: fld_39c07539fa864eeeabe882301ada7127
           created: 1762452766205
           modified: 1762452771457
           sortKey: -1762452771433
@@ -263,7 +251,7 @@ collection:
           - url: "{{ _.authenticated_api_url }}/api/v1/raffles"
             name: crear raffle user
             meta:
-              id: req_46e1b109096a44e591c74f8553d113ce
+              id: req_d5d487aea03f4fa994b6ec7f506fce5c
               created: 1762452268364
               modified: 1762453575277
               isPrivate: false
@@ -278,7 +266,8 @@ collection:
                   "description": "Este request debe fallar con 403 Forbidden",
                   "end_date": "2025-11-25",
                   "max_participants": 100,
-                  "prize_image_url": "https://example.com/image.jpg"
+                  "prize_value": 500,
+                  "prize_images": ["https://example.com/image.jpg"]
                 }
             headers:
               - name: Content-Type
@@ -293,23 +282,20 @@ collection:
                 send: true
                 store: true
               rebuildPath: true
-          - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate"
+          - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id
+              }}/participate"
             name: agregar participacion
             meta:
-              id: req_4339d0571e054d1c9063c50c550a675e
+              id: req_edacddfdc37949e7a8b50ec4a7e13689
               created: 1762452268365
-              modified: 1762891084347
+              modified: 1763953328212
               isPrivate: false
               description: ""
               sortKey: -1762452778177
             method: POST
             body:
               mimeType: application/json
-              text: |-
-                {
-                  "participant_name": "Axel Leon",
-                  "participant_email": "axel.erico.leon.garcia@gmail.com"
-                }
+              text: ""
             headers:
               - name: Content-Type
                 value: application/json
@@ -326,7 +312,7 @@ collection:
           - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}/close"
             name: cerrar raffle user
             meta:
-              id: req_6574ec5aa41749c2b6c3664b9903d819
+              id: req_63abe1e1dce0485a94b80b132a9aad1c
               created: 1762452268367
               modified: 1762453582256
               isPrivate: false
@@ -352,7 +338,7 @@ collection:
           - url: "{{ _.authenticated_api_url }}/api/v1/assets/upload"
             name: upload image user
             meta:
-              id: req_59882d80ac8748e78988cfa3cab74cfd
+              id: req_8c6d254af6ba4fe2b635505c20ac237d
               created: 1762462400001
               modified: 1762866449073
               isPrivate: false
@@ -381,7 +367,7 @@ collection:
               rebuildPath: true
   - name: public
     meta:
-      id: fld_ffe7202244504d428a4ac2626950216c
+      id: fld_7d65c8a231bc4c8189a31f48fe746147
       created: 1762452728066
       modified: 1762452875749
       sortKey: -1762452626753
@@ -389,7 +375,7 @@ collection:
     children:
       - name: raffles
         meta:
-          id: fld_077e69c5e6ed46dd8da9934c35a34a38
+          id: fld_b25023cf579546bc983624aea98170cc
           created: 1762537513046
           modified: 1762537513046
           sortKey: -1762537513046
@@ -398,7 +384,7 @@ collection:
           - url: "{{ _.public_api_url }}/api/v1/raffles"
             name: mostrar raffles
             meta:
-              id: req_feab0087b0854dba919a8dd9dc787b68
+              id: req_3a2cfbb5e3774cc5b3cc50cc980a66a6
               created: 1762452268361
               modified: 1762537517150
               isPrivate: false
@@ -413,14 +399,15 @@ collection:
                 send: true
                 store: true
               rebuildPath: true
-          - url: "{{ _.public_api_url }}/api/v1/raffles?limit=10"
+          - url: "{{ _.public_api_url }}/api/v1/raffles?limit=3"
             name: mostrar raffles (paginado - 10 items)
             meta:
-              id: req_list_raffles_paginated
+              id: req_477aa6b024a54ad396d1bef7b4397af1
               created: 1762537517116
-              modified: 1762537517116
+              modified: 1763923971478
               isPrivate: false
-              description: "Obtiene 10 sorteos. Usa next_cursor de la respuesta para siguientes páginas"
+              description: Obtiene 10 sorteos. Usa next_cursor de la respuesta para siguientes
+                páginas
               sortKey: -1762537517114
             method: GET
             settings:
@@ -434,30 +421,13 @@ collection:
           - url: "{{ _.public_api_url }}/api/v1/raffles?status=active"
             name: mostrar raffles activos (filtro por status)
             meta:
-              id: req_list_raffles_active
+              id: req_eaa90179fd604442b3045928917e6a92
               created: 1762537517117
-              modified: 1762537517117
+              modified: 1763867355070
               isPrivate: false
-              description: "Filtra sorteos usando GSI StatusEndDateIndex. Valores: active, closed, expired"
+              description: "Filtra sorteos usando GSI StatusEndDateIndex. Valores: active,
+                closed, expired"
               sortKey: -1762537517113
-            method: GET
-            settings:
-              renderRequestBody: true
-              encodeUrl: true
-              followRedirects: global
-              cookies:
-                send: true
-                store: true
-              rebuildPath: true
-          - url: "{{ _.public_api_url }}/api/v1/raffles?status=active&limit=20"
-            name: mostrar raffles activos con paginación
-            meta:
-              id: req_list_raffles_filtered
-              created: 1762537517118
-              modified: 1762537517118
-              isPrivate: false
-              description: "Combina filtro por status (GSI) con límite de 20 items"
-              sortKey: -1762537517112
             method: GET
             settings:
               renderRequestBody: true
@@ -469,7 +439,7 @@ collection:
               rebuildPath: true
           - name: id
             meta:
-              id: fld_8e5e34b19b2f47f98b1c02137aaa250b
+              id: fld_930b0f8c3aa94cf5a57789241ba1e77b
               created: 1762537522884
               modified: 1762537525831
               sortKey: -1762537517015
@@ -478,9 +448,9 @@ collection:
               - url: "{{ _.public_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}"
                 name: mostrar raffle por id
                 meta:
-                  id: req_336b08e2f6e9454f9e8212ce1ebcf1bd
+                  id: req_0477c4f2a7434cdab96fab438ea0ee08
                   created: 1762452268362
-                  modified: 1762537530766
+                  modified: 1763922819300
                   isPrivate: false
                   description: ""
                   sortKey: -1762537530731
@@ -493,10 +463,11 @@ collection:
                     send: true
                     store: true
                   rebuildPath: true
-              - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id }}/participate"
+              - url: "{{ _.authenticated_api_url }}/api/v1/raffles/{{ _.test_raffle_id
+                  }}/participate"
                 name: agregar participacion sin auth
                 meta:
-                  id: req_9ca6717572b846cfa98793d756a18028
+                  id: req_3dd66157e9644826810ca14a165a90fa
                   created: 1762452268366
                   modified: 1762537534972
                   isPrivate: false
@@ -524,13 +495,13 @@ collection:
 cookieJar:
   name: Default Jar
   meta:
-    id: jar_71dff622b009430aaf23ad37fa6f7bfc
+    id: jar_c7adc8082f134968989a2dca5c46b887
     created: 1762281947288
     modified: 1762281947288
 environments:
   name: Base Environment
   meta:
-    id: env_96d52974377a48aab9091964e360304a
+    id: env_35fa0a6fb63043f28305b5fb3c23c68b
     created: 1761082893779
     modified: 1762452524118
     isPrivate: false
@@ -552,23 +523,23 @@ environments:
   subEnvironments:
     - name: RaffleNow Dev
       meta:
-        id: env_26871c7dbff1432ea1b1514d50e131a5
+        id: env_59fe06c83a6647cb92355cdce2da569d
         created: 1762452268357
-        modified: 1763823858148
+        modified: 1764028608754
         isPrivate: false
         sortKey: 1762452268357
       data:
-        public_api_url: https://eyabp37mde.execute-api.us-east-2.amazonaws.com/dev
-        authenticated_api_url: https://ihi6yv18pj.execute-api.us-east-2.amazonaws.com/dev
-        user_pool_id: us-east-2_2gkfKBcCw
-        client_id: n747s4vqrp0kil6lsph1972us
+        public_api_url: https://zdquugn9wl.execute-api.us-east-2.amazonaws.com/dev
+        authenticated_api_url: https://plfru4qjhe.execute-api.us-east-2.amazonaws.com/dev
+        user_pool_id: us-east-2_zDacRaJgy
+        client_id: 47copqmfjus8p3jlursb2hvetr
         region: us-east-2
         admin_email: admin@rafflenow.com
         admin_password: AdminPass123!
         user_email: user@rafflenow.com
         user_password: UserPass123!
-        admin_token: ""
-        user_token: ""
-        presigned_url: ""
-        cloudfront_url: https://d1006dxjpy74r9.cloudfront.net
-        test_raffle_id: ""
+        admin_token: eyJraWQiOiIrbW1odW9hd0VnYVRkSWZBS055bUNKSGlvUTRPRDQ5RWJ3TCtMS1hiXC9NTT0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMTJiNzVlMC1kMGExLTcwODgtOTk4Mi1iYWNiMTNiOTQzMWQiLCJjb2duaXRvOmdyb3VwcyI6WyJBZG1pbiJdLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMi5hbWF6b25hd3MuY29tXC91cy1lYXN0LTJfekRhY1JhSmd5IiwiY29nbml0bzp1c2VybmFtZSI6IjExMmI3NWUwLWQwYTEtNzA4OC05OTgyLWJhY2IxM2I5NDMxZCIsImdpdmVuX25hbWUiOiJBZG1pbiIsIm9yaWdpbl9qdGkiOiI1Y2JjZTk1Yy1hZDU3LTRiZDgtOTExNC1kNzJkNDBlYTAxMDEiLCJhdWQiOiI0N2NvcHFtZmp1czhwM2psdXJzYjJodmV0ciIsImV2ZW50X2lkIjoiM2FkMGVlYWMtODU2NC00MTZmLTg3MDUtYmU3NTVkZDFhNTFhIiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE3NjQwMjg1NzAsImV4cCI6MTc2NDAzMjE3MCwiaWF0IjoxNzY0MDI4NTcwLCJmYW1pbHlfbmFtZSI6IlJhZmZsZU5vdyIsImp0aSI6ImFjMzAxMTE4LTk3YjAtNGJiNy1hYzcwLTYxYWIzZDE5YWZlYSIsImVtYWlsIjoiYWRtaW5AcmFmZmxlbm93LmNvbSJ9.evTM0Wetbx4CaSc32nju1yXEXhlK4Q-QpB7kPiJZJw75E4yEXp1Q3W6Xu9acEUszOJESXh__4en2xERBymY2z1u5vvDuTuAs_gC4LHwu8xHv5Gn9ID6wVoAW6efIzD8HlMINQaILqGRoCD-339iPeLDUwZ2lxaMBHzocLxZpJL0LykyDP1M61OGeubr7yTlzXLektV2CKCz0n213erwUie1ojONT7Ye3psgWFEji5SySACa3kq0X2_RgUqozGpKWTRpLmqkPtSgF6mJYKqXMZr1oUkJ_aUpbiQuy7zWR4oiXFbiFplHUWVhPGXZniudhcyYONZZq8uYYznwXvJwAjA
+        user_token: eyJraWQiOiIrbW1odW9hd0VnYVRkSWZBS055bUNKSGlvUTRPRDQ5RWJ3TCtMS1hiXC9NTT0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI1MTViZDUxMC1mMDAxLTcwOWUtY2Y0MS04MTAxZjIyNGViODAiLCJjb2duaXRvOmdyb3VwcyI6WyJVc2VyIl0sImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0yLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMl96RGFjUmFKZ3kiLCJjb2duaXRvOnVzZXJuYW1lIjoiNTE1YmQ1MTAtZjAwMS03MDllLWNmNDEtODEwMWYyMjRlYjgwIiwiZ2l2ZW5fbmFtZSI6IkNhcmxvcyIsIm9yaWdpbl9qdGkiOiIxYWU1OTM0NC0yNTkyLTRiNmQtYWNkNy1mMmJmYjIzNTIyNDQiLCJhdWQiOiI0N2NvcHFtZmp1czhwM2psdXJzYjJodmV0ciIsImV2ZW50X2lkIjoiNmQ3NThiYWEtM2JjZi00Mzc5LWEzNzUtNzNjMDY3NzgzYzc4IiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE3NjQwMjg1OTQsImV4cCI6MTc2NDAzMjE5NCwiaWF0IjoxNzY0MDI4NTk0LCJmYW1pbHlfbmFtZSI6IkdhcmPDrWEiLCJqdGkiOiI4MTYwOTcyMy02ZWRlLTRkMjItOGMzNy0yMWNlNzAxYTg0NmMiLCJlbWFpbCI6InVzZXJAcmFmZmxlbm93LmNvbSJ9.DDf37SMmCaVN3MOwgXYHHKScc2hTnsMRF7Zvfqid1id7hPeSiWUeDqGpJ7xw1X6s8BO0v9OGVhOSG6HEsfshZqzS6DWvhE6GLNjh9yr3t3EksxZ7qkW70TEDa0iLJUgsI4KIycnB5-wck6Oj9PGHzRCQEydeiiJcf8ybI9ZgTNyTnE8OT7pUB2ibgnhSuCzVGBnQWIDyqwI9-ok4GVTnfecoz604eO7Ky7gJuHhzHJ_pZubL0r5pxQHjRErCP-9bA2xXAa8VyWmCmzz3DmTMt0XnYAO2vg0KED0nVGuXo11qNrBEKdKqxALoKaafJ5aftlMrMbo-4MYkxOek6dXhyg
+        presigned_url: https://rafflenow-dev-422228629090-assets.s3.us-east-2.amazonaws.com/prizes/83e8071a-8346-430d-8963-e47314cdd9d9-prize-macbook.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAWETWJSZRCWNVLYFW%2F20251124%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20251124T201408Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJT%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMiJHMEUCIQDnhKdctN%2F%2BY1tdHfvioxuBYDf3jyLvlLXFb0LuqdLSKgIgMX52yQvvX%2BkmNQqco2wsEzobugTgJ%2Ff3hS0E7uwczoQqowMIXRAAGgw0MjIyMjg2MjkwOTAiDKTndRdW4nMAKnlQdCqAA%2FQiRlcxEUl1552s9Y7Y%2Bve03ygdSHBlRWHfLBM5W6L5%2B1XjK%2BDBlSXmFj4R0oQFtxNsb6XL6owbQplHWL6zT67f1Kto5MILq5WLN8a4fT5uzNe91anlpSnotrea7V5uy9%2BVjpK62KHfvDt31xuF%2Bdtbqo%2FvZ%2FDoyzxrm4SfMaINj5x3JUUrIBpW7twbT%2BffpKTH0tvo2IYZ0JA4GlcFjh1Jt5GTqjupOdNYngLrZW7YH07%2BZg22Aw0g0PrcASd3EwKsS2HBFEaccBzfPqzs3tb0gAYJRRgiHuuh4sG1tnP43cXULowYOtq6G9BQDzwhkj%2B6aOmpmBLZwz1tnhpwUhzpEYVeb%2BlGx94%2B4AKnuTu6IJJLewmNEvRP7PQZ6oLx5ucwXALklbJbKKjP7Eh3aChX83OmFvSai2Z5q9QT7GHPowoHwEQ70SQNTH7PeNWafVZ9nG1a8twrlfjZYMCI6FvdT5nDkRbgSEE6myVm8uvuQMw%2FX5S855HAZIsEF%2BClQTCP%2BZLJBjqdAVhIgbOF8fkkCeiHqyF5TnHw8zfu4YVphM57%2FJo4O51%2BRtEzFYC8Nht7utOU%2BsFlt9clzYRH9DniSjW3E37PZ%2FCaZuJL%2Brz3ktktd7kisVX2ZJiAHcEWsOjPDcERx6tuPJm4DPke4mHybyw2nsOJZLHz%2FDY5yGZldvh30eGaS2JJlYZnsgmQvkWpruqr9ocdti3y08yRbDbeNCOuwRI%3D&X-Amz-Signature=1a4add8da3519a400283c3a0bc28d0b364175f89ba5acd3c50c73b581c5e90c3&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-uploadedat=2025-11-24T20%3A14%3A08.363Z&x-amz-meta-uploadedby=admin%40rafflenow.com&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
+        cloudfront_url: https://d3uiiga9xgt96v.cloudfront.net
+        test_raffle_id: raffle-393ebae7-2113-40aa-b84f-829619c07901
