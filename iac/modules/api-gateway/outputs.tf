@@ -51,3 +51,13 @@ output "api_endpoints" {
     }
   }
 }
+
+output "public_api_stage_arn" {
+  description = "ARN of the Public API Gateway stage (for WAF association)"
+  value       = aws_api_gateway_stage.public_api_stage.arn
+}
+
+output "authenticated_api_stage_arn" {
+  description = "ARN of the Authenticated API Gateway stage (for WAF association)"
+  value       = aws_api_gateway_stage.authenticated_api_stage.arn
+}
