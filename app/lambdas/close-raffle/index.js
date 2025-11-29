@@ -4,8 +4,7 @@ import {
   ValidationError,
   UnauthorizedError,
   ForbiddenError,
-  NotFoundError,
-  ConflictError
+  NotFoundError
 } from './lib/errors.js'
 
 const buildResponse = (statusCode, body) => ({
@@ -17,7 +16,7 @@ const buildResponse = (statusCode, body) => ({
   body: JSON.stringify(body)
 })
 
-export const handler = async (event) => {
+export const handler = async event => {
   logger.info('Incoming raffle close request', { path: event.path })
 
   try {

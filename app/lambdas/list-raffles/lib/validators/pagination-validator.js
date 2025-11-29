@@ -31,7 +31,7 @@ export function decodeCursor(cursor) {
   try {
     const decoded = Buffer.from(cursor, 'base64').toString('utf-8')
     return JSON.parse(decoded)
-  } catch (error) {
+  } catch {
     throw new ValidationError('Invalid cursor format')
   }
 }
