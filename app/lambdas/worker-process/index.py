@@ -7,10 +7,12 @@ from aws_lambda_powertools.metrics import MetricUnit
 from lib.powertools_config import logger, tracer, metrics
 from lib.participant_selector import get_participants, select_winner
 from lib.raffle_updater import update_raffle_to_completed, update_raffle_to_failed
+from lib.winner_recorder import create_winner_record
 
 dynamodb = boto3.resource('dynamodb')
 raffles_table = dynamodb.Table(os.environ['DYNAMODB_RAFFLES_TABLE'])
-participants_table = dynamodb.Table(os.environ['DYNAMODB_PARTICIPANTS_TABLE'])
+participations_table = dynamodb.Table(os.environ['DYNAMODB_PARTICIPATIONS_TABLE'])
+winners_table = dynamodb.Table(os.environ['DYNAMODB_WINNERS_TABLE'])
 
 
 @logger.inject_lambda_context
@@ -58,8 +60,10 @@ def handler(event: dict, context: LambdaContext) -> dict:
                 continue
             
             try:
-                participants = get_participants(participants_table, raffle_id)
+                participants = get_participants(participations_table, raffle_id)
                 winner = select_winner(participants, raffle_id)
+                
+                create_winner_record(winners_table, raffle, winner, len(participants))
                 
                 completed_at = update_raffle_to_completed(raffles_table, raffle_id, winner)
                 
