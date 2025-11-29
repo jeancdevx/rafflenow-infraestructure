@@ -1,9 +1,19 @@
-import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { docClient } from '../clients.js'
 import { logger } from '../powertools.js'
 import { ProcessingError } from '../errors.js'
 
 const RAFFLES_TABLE = process.env.DYNAMODB_RAFFLES_TABLE
+
+export async function getRaffle(raffleId) {
+  const command = new GetCommand({
+    TableName: RAFFLES_TABLE,
+    Key: { raffle_id: raffleId }
+  })
+
+  const result = await docClient.send(command)
+  return result.Item
+}
 
 export async function incrementParticipantCount(raffleId, participatedAt) {
   const command = new UpdateCommand({

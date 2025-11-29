@@ -7,6 +7,7 @@ def get_participants(participants_table, raffle_id: str) -> list:
     logger.info("Querying participants", extra={"raffle_id": raffle_id})
     
     response = participants_table.query(
+        IndexName='RaffleIdIndex',
         KeyConditionExpression=Key('raffle_id').eq(raffle_id)
     )
     

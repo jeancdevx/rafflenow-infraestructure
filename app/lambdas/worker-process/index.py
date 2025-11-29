@@ -8,6 +8,7 @@ from lib.powertools_config import logger, tracer, metrics
 from lib.participant_selector import get_participants, select_winner
 from lib.raffle_updater import update_raffle_to_completed, update_raffle_to_failed
 from lib.winner_recorder import create_winner_record
+from lib.email_service import send_winner_notification
 
 dynamodb = boto3.resource('dynamodb')
 raffles_table = dynamodb.Table(os.environ['DYNAMODB_RAFFLES_TABLE'])
@@ -63,9 +64,24 @@ def handler(event: dict, context: LambdaContext) -> dict:
                 participants = get_participants(participations_table, raffle_id)
                 winner = select_winner(participants, raffle_id)
                 
+                completed_at = update_raffle_to_completed(raffles_table, raffle_id, winner)
+                
                 create_winner_record(winners_table, raffle, winner, len(participants))
                 
-                completed_at = update_raffle_to_completed(raffles_table, raffle_id, winner)
+                email_sent = send_winner_notification(
+                    winner=winner,
+                    raffle=raffle,
+                    total_participants=len(participants),
+                    selected_at=completed_at
+                )
+                
+                if email_sent:
+                    winners_table.update_item(
+                        Key={'raffle_id': raffle_id},
+                        UpdateExpression='SET notification_sent = :sent',
+                        ExpressionAttributeValues={':sent': True}
+                    )
+                    metrics.add_metric(name="WinnerEmailSent", unit=MetricUnit.Count, value=1)
                 
                 metrics.add_metric(name="WinnerSelected", unit=MetricUnit.Count, value=1)
                 metrics.add_metric(
@@ -79,7 +95,8 @@ def handler(event: dict, context: LambdaContext) -> dict:
                     extra={
                         "winner_email": winner['participant_email'],
                         "total_participants": len(participants),
-                        "completed_at": completed_at
+                        "completed_at": completed_at,
+                        "email_sent": email_sent
                     }
                 )
                 

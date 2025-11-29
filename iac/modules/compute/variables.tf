@@ -77,3 +77,23 @@ variable "event_bus_name" {
   description = "Name of the EventBridge custom event bus"
   type        = string
 }
+
+variable "ses_sender_email" {
+  description = "Verified SES sender email address"
+  type        = string
+}
+
+variable "ses_configuration_set" {
+  description = "SES configuration set name"
+  type        = string
+}
+
+variable "ses_participation_template" {
+  description = "SES template name for participation confirmation"
+  type        = string
+}
+
+variable "ses_winner_template" {
+  description = "SES template name for winner notification"
+  type        = string
+}

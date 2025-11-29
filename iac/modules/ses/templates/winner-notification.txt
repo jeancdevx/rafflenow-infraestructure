@@ -1,0 +1,20 @@
+🎊 ¡FELICIDADES! ¡Eres el ganador!
+
+Hola {{winner_name}},
+
+¡Increíbles noticias! Has sido seleccionado como el GANADOR del sorteo "{{raffle_title}}".
+
+Tu premio:
+{{prize_description}}
+Valor: S/ {{prize_value}}
+
+Estadísticas del sorteo:
+- Total de participantes: {{total_participants}}
+- Fecha de selección: {{selected_at}}
+
+Próximos pasos:
+Nos pondremos en contacto contigo en las próximas 24-48 horas para coordinar la entrega de tu premio.
+
+¡Gracias por participar en RaffleNow!
+
+© 2025 RaffleNow

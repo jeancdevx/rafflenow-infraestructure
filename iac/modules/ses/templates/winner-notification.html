@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0"
+    style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td
+        style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 50px 20px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 32px;">🎊 ¡FELICIDADES!</h1>
+        <p style="color: #ffffff; margin: 15px 0 0; font-size: 20px; opacity: 0.9;">¡Eres el ganador!</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 30px;">
+        <p style="font-size: 20px; color: #333; margin: 0 0 20px;">
+          Hola <strong>{{winner_name}}</strong>,
+        </p>
+        <p style="font-size: 16px; color: #555; line-height: 1.6; margin: 0 0 30px;">
+          ¡Increíbles noticias! Has sido seleccionado como el <strong>GANADOR</strong> del sorteo
+          <strong>"{{raffle_title}}"</strong>.
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0"
+          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; margin-bottom: 30px;">
+          <tr>
+            <td style="padding: 25px; text-align: center;">
+              <p
+                style="margin: 0 0 10px; color: rgba(255,255,255,0.8); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                Tu premio</p>
+              <p style="margin: 0 0 15px; color: #ffffff; font-size: 24px; font-weight: bold;">
+                {{prize_description}}
+              </p>
+              <p style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">
+                S/ {{prize_value}}
+              </p>
+            </td>
+          </tr>
+        </table>
+        <table width="100%" cellpadding="0" cellspacing="0"
+          style="background-color: #f8f9fa; border-radius: 8px; margin-bottom: 30px;">
+          <tr>
+            <td style="padding: 20px;">
+              <p style="margin: 0 0 15px; color: #333; font-size: 16px; font-weight: bold;">
+                📊 Estadísticas del sorteo:
+              </p>
+              <p style="margin: 0 0 8px; color: #555; font-size: 14px;">
+                Total de participantes: <strong>{{total_participants}}</strong>
+              </p>
+              <p style="margin: 0; color: #555; font-size: 14px;">
+                Fecha de selección: <strong>{{selected_at}}</strong>
+              </p>
+            </td>
+          </tr>
+        </table>
+        <div
+          style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 30px; border-radius: 0 8px 8px 0;">
+          <p style="margin: 0; color: #856404; font-size: 14px;">
+            <strong>📧 Próximos pasos:</strong><br>
+            Nos pondremos en contacto contigo en las próximas 24-48 horas para coordinar la entrega de tu premio.
+          </p>
+        </div>
+        <p style="font-size: 14px; color: #888; line-height: 1.6; margin: 0;">
+          ¡Gracias por participar en RaffleNow! 🎉
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center;">
+        <p style="margin: 0; color: #888; font-size: 12px;">
+          © 2025 RaffleNow. Todos los derechos reservados.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>
