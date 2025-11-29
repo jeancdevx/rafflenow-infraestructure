@@ -19,6 +19,7 @@ module "cdn" {
   assets_bucket_id                   = module.storage.s3_assets_bucket_id
   assets_bucket_arn                  = module.storage.s3_assets_bucket_arn
   assets_bucket_regional_domain_name = module.storage.s3_assets_bucket_regional_domain_name
+  web_acl_id                         = module.waf.cloudfront_web_acl_arn
 
   tags = {
     Environment = var.environment
@@ -138,6 +139,30 @@ module "ses" {
 
   name_prefix  = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
   sender_email = var.ses_sender_email
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
+
+module "waf" {
+  source = "../../modules/waf"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+  environment = var.environment
+
+  allowed_country_codes         = ["PE"]
+  rate_limit_global             = 2000
+  rate_limit_participate        = 50
+  rate_limit_auth               = 25
+  api_gateway_public_arn        = module.api_gateway.public_api_stage_arn
+  api_gateway_authenticated_arn = module.api_gateway.authenticated_api_stage_arn
 
   tags = {
     Environment = var.environment
