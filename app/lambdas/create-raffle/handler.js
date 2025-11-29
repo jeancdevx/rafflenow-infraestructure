@@ -10,7 +10,7 @@ import {
   validateTitle,
   validateDescription,
   validatePrizeImages,
-  validateMaxParticipants,
+  calculateMaxParticipants,
   validatePrizeValue,
   calculateCategory,
   calculateDefaultDuration,
@@ -33,15 +33,16 @@ export async function handleCreateRaffle(event) {
   validateDescription(body.description)
   validatePrizeImages(body.prize_images)
 
-  const maxParticipants = validateMaxParticipants(body.max_participants)
   const prizeValue = validatePrizeValue(body.prize_value)
+  const maxParticipants = calculateMaxParticipants(prizeValue)
   const category = calculateCategory(prizeValue)
   const durationDays = calculateDefaultDuration(prizeValue)
 
-  logger.info('Category and duration calculated automatically', {
+  logger.info('Raffle parameters calculated automatically', {
     prize_value: prizeValue,
     category: category,
-    duration_days: durationDays
+    duration_days: durationDays,
+    max_participants: maxParticipants
   })
 
   const now = new Date()
