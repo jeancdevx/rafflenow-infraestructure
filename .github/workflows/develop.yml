@@ -17,10 +17,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm ci
-        working-directory: app/lambdas/create-raffle
       - name: Run ESLint
         run: npm run lint
-        working-directory: app/lambdas/create-raffle
 
   prettier:
     name: Prettier
@@ -32,10 +30,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm ci
-        working-directory: app/lambdas/create-raffle
       - name: Check formatting
         run: npm run format:check
-        working-directory: app/lambdas/create-raffle
 
   test:
     name: Unit Tests
@@ -47,10 +43,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm ci
-        working-directory: app/lambdas/create-raffle
       - name: Run tests
         run: npm run test:coverage
-        working-directory: app/lambdas/create-raffle
 
   sonarqube:
     name: SonarQube Analysis
