@@ -217,6 +217,9 @@ resource "aws_lambda_function" "worker_process" {
       DYNAMODB_RAFFLES_TABLE        = var.dynamodb_table_name
       DYNAMODB_PARTICIPATIONS_TABLE = var.dynamodb_participations_table_name
       DYNAMODB_WINNERS_TABLE        = var.dynamodb_winners_table_name
+      SES_SENDER_EMAIL              = var.ses_sender_email
+      SES_CONFIGURATION_SET         = var.ses_configuration_set
+      SES_WINNER_TEMPLATE           = var.ses_winner_template
     }
   }
 
@@ -308,6 +311,9 @@ resource "aws_lambda_function" "participation_process" {
     variables = {
       DYNAMODB_RAFFLES_TABLE        = var.dynamodb_table_name
       DYNAMODB_PARTICIPATIONS_TABLE = var.dynamodb_participations_table_name
+      SES_SENDER_EMAIL              = var.ses_sender_email
+      SES_CONFIGURATION_SET         = var.ses_configuration_set
+      SES_PARTICIPATION_TEMPLATE    = var.ses_participation_template
     }
   }
 
