@@ -10,14 +10,17 @@ const MAX_DURATION_DAYS = 60
 const MIN_PRIZE_IMAGES = 1
 const MAX_PRIZE_IMAGES = 5
 
+const EXPECTED_PARTICIPANTS_BY_CATEGORY = {
+  pequeño: 3000,
+  mediano: 50000,
+  grande: 250000,
+  premium: 1500000
+}
+
+const MAX_PARTICIPANTS_MARGIN = 1.2
+
 export function validateRequiredFields(body) {
-  const requiredFields = [
-    'title',
-    'description',
-    'max_participants',
-    'prize_value',
-    'prize_images'
-  ]
+  const requiredFields = ['title', 'description', 'prize_value', 'prize_images']
 
   for (const field of requiredFields) {
     if (!body[field]) {
@@ -74,7 +77,7 @@ export function validateDescription(description) {
   }
 }
 
-export function validateEndDate(endDateInput, startDate) {
+export function validateEndDate(endDateInput) {
   let endDate
 
   if (endDateInput.includes('T')) {
@@ -154,26 +157,6 @@ export function validatePrizeImages(prizeImages) {
   }
 }
 
-export function validateMaxParticipants(maxParticipants) {
-  if (typeof maxParticipants !== 'number' || maxParticipants <= 0) {
-    throw new ValidationError('max_participants must be a positive number')
-  }
-
-  if (maxParticipants < 10) {
-    throw new ValidationError('max_participants must be at least 10', 400, {
-      current_value: maxParticipants
-    })
-  }
-
-  if (maxParticipants > 2000000) {
-    throw new ValidationError('max_participants cannot exceed 2,000,000', 400, {
-      current_value: maxParticipants
-    })
-  }
-
-  return maxParticipants
-}
-
 export function validatePrizeValue(prizeValue) {
   if (typeof prizeValue !== 'number' || prizeValue <= 0) {
     throw new ValidationError('prize_value must be a positive number')
@@ -201,20 +184,41 @@ export function calculateCategory(prizeValue) {
   return 'premium'
 }
 
+export function calculateMaxParticipants(prizeValue) {
+  const category = calculateCategory(prizeValue)
+  const expectedParticipants =
+    EXPECTED_PARTICIPANTS_BY_CATEGORY[category] ||
+    EXPECTED_PARTICIPANTS_BY_CATEGORY.pequeño
+
+  const maxParticipants = Math.ceil(
+    expectedParticipants * MAX_PARTICIPANTS_MARGIN
+  )
+
+  logger.info('max_participants calculated automatically', {
+    prize_value: prizeValue,
+    category: category,
+    expected_participants: expectedParticipants,
+    max_participants: maxParticipants,
+    margin_percent: `${(MAX_PARTICIPANTS_MARGIN - 1) * 100}%`
+  })
+
+  return maxParticipants
+}
+
 export function calculateDefaultDuration(prizeValue) {
   const category = calculateCategory(prizeValue)
 
   switch (category) {
     case 'pequeño':
-      return 7 // días
+      return 7
     case 'mediano':
-      return 14 // días
+      return 14
     case 'grande':
-      return 30 // días
+      return 30
     case 'premium':
-      return 60 // días
+      return 60
     default:
-      return 7 // fallback
+      return 7
   }
 }
 
@@ -224,7 +228,6 @@ export function calculateEndDate(startDate, prizeValue, customDuration = null) {
       ? customDuration
       : calculateDefaultDuration(prizeValue)
 
-  // Validar que la duración esté en el rango permitido
   if (durationDays < MIN_DURATION_DAYS || durationDays > MAX_DURATION_DAYS) {
     throw new ValidationError(
       `Duration must be between ${MIN_DURATION_DAYS} and ${MAX_DURATION_DAYS} days`,
@@ -235,7 +238,7 @@ export function calculateEndDate(startDate, prizeValue, customDuration = null) {
 
   const endDate = new Date(startDate)
   endDate.setUTCDate(endDate.getUTCDate() + durationDays)
-  endDate.setUTCHours(23, 59, 0, 0) // Siempre cierra a las 23:59:00
+  endDate.setUTCHours(23, 59, 0, 0)
 
   logger.debug('End date calculated', {
     start_date: startDate.toISOString(),

@@ -13,6 +13,7 @@ def update_raffle_to_completed(raffles_table, raffle_id: str, winner: dict) -> s
                     winner_email = :winner_email,
                     winner_name = :winner_name,
                     winner_selected_at = :selected_at,
+                    completed_at = :completed_at,
                     updated_at = :updated_at
             ''',
             ExpressionAttributeNames={
@@ -23,6 +24,7 @@ def update_raffle_to_completed(raffles_table, raffle_id: str, winner: dict) -> s
                 ':winner_email': winner['participant_email'],
                 ':winner_name': winner['participant_name'],
                 ':selected_at': now,
+                ':completed_at': now,
                 ':updated_at': now,
                 ':processing_status': 'processing',
                 ':completed_status': 'completed'

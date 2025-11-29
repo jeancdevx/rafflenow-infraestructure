@@ -9,6 +9,7 @@
     "@aws-lambda-powertools/metrics": "2.29.0",
     "@aws-lambda-powertools/tracer": "2.29.0",
     "@aws-sdk/client-dynamodb": "3.914.0",
+    "@aws-sdk/client-ses": "3.914.0",
     "@aws-sdk/lib-dynamodb": "3.914.0"
   }
 }
