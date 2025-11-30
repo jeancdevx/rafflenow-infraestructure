@@ -57,5 +57,10 @@ output "infrastructure" {
       cloudfront_web_acl_arn = module.waf.cloudfront_web_acl_arn
       cloudfront_web_acl_id  = module.waf.cloudfront_web_acl_id
     }
+
+    monitoring = {
+      golden_signals_dashboard = module.monitoring.golden_signals_dashboard_name
+      dashboards               = module.monitoring.dashboard_names
+    }
   }
 }
