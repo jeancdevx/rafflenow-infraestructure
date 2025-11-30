@@ -13,6 +13,15 @@ import { getRaffle } from './lib/repositories/raffle-repository.js'
 import { closeRaffle } from './lib/services/raffle-service.js'
 import { publishRaffleClosedEvent } from './lib/services/event-publisher.js'
 
+const Actions = {
+  AUTH_VALIDATED: 'AUTH_VALIDATED',
+  RAFFLE_VALIDATED: 'RAFFLE_VALIDATED',
+  RAFFLE_CLOSING: 'RAFFLE_CLOSING',
+  RAFFLE_CLOSED: 'RAFFLE_CLOSED',
+  EVENT_PUBLISHED: 'EVENT_PUBLISHED',
+  NO_PARTICIPANTS: 'NO_PARTICIPANTS'
+}
+
 export async function handleCloseRaffle(event) {
   const claims = extractClaims(event)
   ensureIsAdmin(claims)
@@ -22,32 +31,45 @@ export async function handleCloseRaffle(event) {
 
   logger.appendKeys({ raffle_id: raffleId, user_id: userId })
 
-  logger.info('Processing raffle close request', {
-    raffle_id: raffleId,
+  logger.info('Admin authenticated for close operation', {
+    action: Actions.AUTH_VALIDATED,
     closed_by: userId
   })
 
   const raffle = await getRaffle(raffleId)
   ensureRaffleIsActive(raffle)
 
+  logger.appendKeys({ raffle_title: raffle.title })
+
   const hasParticipants = raffle.current_participants > 0
 
-  logger.info('Closing raffle', {
-    raffle_id: raffleId,
+  logger.info('Raffle validated for closing', {
+    action: Actions.RAFFLE_VALIDATED,
     has_participants: hasParticipants,
-    current_participants: raffle.current_participants
+    current_participants: raffle.current_participants,
+    raffle_status: raffle.status
+  })
+
+  logger.info('Closing raffle', {
+    action: Actions.RAFFLE_CLOSING,
+    has_participants: hasParticipants
   })
 
   const updatedRaffle = await closeRaffle(raffleId, userId, hasParticipants)
 
+  logger.info('Raffle closed in database', {
+    action: Actions.RAFFLE_CLOSED,
+    new_status: updatedRaffle.status
+  })
+
   if (hasParticipants) {
-    logger.info('Publishing raffle.closed event for winner selection', {
-      raffle_id: raffleId
-    })
     await publishRaffleClosedEvent(updatedRaffle, userId)
+    logger.info('Raffle closed event published for winner selection', {
+      action: Actions.EVENT_PUBLISHED
+    })
   } else {
-    logger.info('Raffle closed without participants, no event emission', {
-      raffle_id: raffleId
+    logger.info('Raffle closed without participants, no event emitted', {
+      action: Actions.NO_PARTICIPANTS
     })
   }
 

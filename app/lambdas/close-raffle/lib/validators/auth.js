@@ -1,9 +1,12 @@
-import { UnauthorizedError, ForbiddenError } from '../errors.js'
+import { UnauthorizedError, ForbiddenError, ErrorCodes } from '../errors.js'
 
 export function extractClaims(event) {
   const claims = event.requestContext?.authorizer?.claims
   if (!claims) {
-    throw new UnauthorizedError('Authentication required')
+    throw new UnauthorizedError(
+      'Authentication required',
+      ErrorCodes.UNAUTHORIZED
+    )
   }
   return claims
 }
@@ -12,7 +15,10 @@ export function ensureIsAdmin(claims) {
   const groups = claims?.['cognito:groups']
 
   if (!groups) {
-    throw new ForbiddenError('Admin role required to close raffles')
+    throw new ForbiddenError(
+      'Admin role required to close raffles',
+      ErrorCodes.ADMIN_REQUIRED
+    )
   }
 
   const isAdmin =
@@ -21,7 +27,10 @@ export function ensureIsAdmin(claims) {
       : Array.isArray(groups) && groups.includes('Admin')
 
   if (!isAdmin) {
-    throw new ForbiddenError('Admin role required to close raffles')
+    throw new ForbiddenError(
+      'Admin role required to close raffles',
+      ErrorCodes.ADMIN_REQUIRED
+    )
   }
 }
 
