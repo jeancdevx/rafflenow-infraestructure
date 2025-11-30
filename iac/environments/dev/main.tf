@@ -209,6 +209,9 @@ module "monitoring" {
   api_gateway_authenticated_name  = module.api_gateway.authenticated_api_name
   api_gateway_authenticated_stage = module.api_gateway.authenticated_api_stage_name
 
+  api_gateway_public_access_logs_name        = module.api_gateway.public_api_access_logs_name
+  api_gateway_authenticated_access_logs_name = module.api_gateway.authenticated_api_access_logs_name
+
   cloudfront_distribution_id = module.cdn.cloudfront_distribution_id
   cognito_user_pool_id       = module.cognito.user_pool_id
   s3_assets_bucket_name      = module.storage.s3_assets_bucket_name
