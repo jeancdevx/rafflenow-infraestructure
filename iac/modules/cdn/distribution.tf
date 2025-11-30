@@ -10,7 +10,7 @@ resource "aws_cloudfront_distribution" "assets_cdn" {
 
   origin {
     domain_name = var.assets_bucket_regional_domain_name
-    origin_id   = "S3-${var.assets_bucket_id}"
+    origin_id   = "S3-Website"
     origin_path = "/website"
 
     s3_origin_config {
@@ -18,10 +18,31 @@ resource "aws_cloudfront_distribution" "assets_cdn" {
     }
   }
 
+  origin {
+    domain_name = var.assets_bucket_regional_domain_name
+    origin_id   = "S3-Images"
+
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.assets_oai.cloudfront_access_identity_path
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "optimized/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = "S3-Images"
+    cache_policy_id        = aws_cloudfront_cache_policy.assets_cache_policy.id
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_policy.id
+  }
+
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = "S3-${var.assets_bucket_id}"
+    target_origin_id       = "S3-Website"
     cache_policy_id        = aws_cloudfront_cache_policy.assets_cache_policy.id
     viewer_protocol_policy = "redirect-to-https"
     compress               = true

@@ -1,5 +1,7 @@
 locals {
-  cors_origin = var.cloudfront_url != "" ? var.cloudfront_url : "*"
+  # En desarrollo permitimos cualquier origen, en producción solo CloudFront
+  # Para producción estricta, cambiar a: cors_origin = var.cloudfront_url
+  cors_origin = "*"
 }
 
 resource "aws_api_gateway_method_response" "authenticated_options_raffles_200" {
@@ -9,10 +11,9 @@ resource "aws_api_gateway_method_response" "authenticated_options_raffles_200" {
   status_code = "200"
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers"     = true
-    "method.response.header.Access-Control-Allow-Methods"     = true
-    "method.response.header.Access-Control-Allow-Origin"      = true
-    "method.response.header.Access-Control-Allow-Credentials" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
   }
 
   response_models = {
@@ -27,10 +28,9 @@ resource "aws_api_gateway_integration_response" "authenticated_options_raffles_2
   status_code = aws_api_gateway_method_response.authenticated_options_raffles_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers"     = "'Content-Type,Authorization'"
-    "method.response.header.Access-Control-Allow-Methods"     = "'POST,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Origin"      = "'${local.cors_origin}'"
-    "method.response.header.Access-Control-Allow-Credentials" = "'true'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'${local.cors_origin}'"
   }
 
   depends_on = [
@@ -45,10 +45,9 @@ resource "aws_api_gateway_method_response" "authenticated_options_participate_20
   status_code = "200"
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers"     = true
-    "method.response.header.Access-Control-Allow-Methods"     = true
-    "method.response.header.Access-Control-Allow-Origin"      = true
-    "method.response.header.Access-Control-Allow-Credentials" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
   }
 
   response_models = {
@@ -63,10 +62,9 @@ resource "aws_api_gateway_integration_response" "authenticated_options_participa
   status_code = aws_api_gateway_method_response.authenticated_options_participate_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers"     = "'Content-Type,Authorization'"
-    "method.response.header.Access-Control-Allow-Methods"     = "'POST,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Origin"      = "'${local.cors_origin}'"
-    "method.response.header.Access-Control-Allow-Credentials" = "'true'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'${local.cors_origin}'"
   }
 
   depends_on = [
@@ -81,10 +79,9 @@ resource "aws_api_gateway_method_response" "authenticated_options_close_200" {
   status_code = "200"
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers"     = true
-    "method.response.header.Access-Control-Allow-Methods"     = true
-    "method.response.header.Access-Control-Allow-Origin"      = true
-    "method.response.header.Access-Control-Allow-Credentials" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
   }
 
   response_models = {
@@ -99,10 +96,9 @@ resource "aws_api_gateway_integration_response" "authenticated_options_close_200
   status_code = aws_api_gateway_method_response.authenticated_options_close_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers"     = "'Content-Type,Authorization'"
-    "method.response.header.Access-Control-Allow-Methods"     = "'POST,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Origin"      = "'${local.cors_origin}'"
-    "method.response.header.Access-Control-Allow-Credentials" = "'true'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'${local.cors_origin}'"
   }
 
   depends_on = [
@@ -117,10 +113,9 @@ resource "aws_api_gateway_method_response" "authenticated_options_assets_upload_
   status_code = "200"
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers"     = true
-    "method.response.header.Access-Control-Allow-Methods"     = true
-    "method.response.header.Access-Control-Allow-Origin"      = true
-    "method.response.header.Access-Control-Allow-Credentials" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
   }
 
   response_models = {
@@ -135,10 +130,9 @@ resource "aws_api_gateway_integration_response" "authenticated_options_assets_up
   status_code = aws_api_gateway_method_response.authenticated_options_assets_upload_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers"     = "'Content-Type,Authorization'"
-    "method.response.header.Access-Control-Allow-Methods"     = "'POST,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Origin"      = "'${local.cors_origin}'"
-    "method.response.header.Access-Control-Allow-Credentials" = "'true'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'${local.cors_origin}'"
   }
 
   depends_on = [

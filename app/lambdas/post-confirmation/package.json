@@ -1,0 +1,14 @@
+{
+  "name": "post-confirmation",
+  "version": "1.0.0",
+  "description": "Cognito Post Confirmation Lambda Trigger - Assigns new users to default group",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@aws-lambda-powertools/logger": "2.29.0",
+    "@aws-sdk/client-cognito-identity-provider": "3.940.0"
+  }
+}
