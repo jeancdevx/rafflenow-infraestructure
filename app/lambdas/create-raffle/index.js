@@ -5,8 +5,15 @@ import {
   ValidationError,
   UnauthorizedError,
   ForbiddenError,
-  ConflictError
+  ConflictError,
+  ErrorCodes
 } from './lib/errors.js'
+
+const Actions = {
+  REQUEST_RECEIVED: 'REQUEST_RECEIVED',
+  RAFFLE_CREATED: 'RAFFLE_CREATED',
+  REQUEST_FAILED: 'REQUEST_FAILED'
+}
 
 const buildResponse = (statusCode, body) => ({
   statusCode,
@@ -21,7 +28,18 @@ export const handler = async (event, context) => {
   try {
     logger.addContext(context)
 
+    logger.info('Create raffle request received', {
+      action: Actions.REQUEST_RECEIVED
+    })
+
     const raffle = await handleCreateRaffle(event)
+
+    logger.info('Raffle created successfully', {
+      action: Actions.RAFFLE_CREATED,
+      raffle_id: raffle.id,
+      raffle_title: raffle.title,
+      category: raffle.category
+    })
 
     metrics.publishStoredMetrics()
 
@@ -31,7 +49,11 @@ export const handler = async (event, context) => {
     })
   } catch (error) {
     if (error instanceof UnauthorizedError) {
-      logger.warn('Unauthorized attempt', { error: error.message })
+      logger.warn('Unauthorized attempt', {
+        action: Actions.REQUEST_FAILED,
+        error_code: error.errorCode,
+        error: error.message
+      })
       metrics.addMetric('UnauthorizedAttempt', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
       return buildResponse(error.statusCode, {
@@ -40,7 +62,11 @@ export const handler = async (event, context) => {
     }
 
     if (error instanceof ForbiddenError) {
-      logger.warn('Forbidden attempt', { error: error.message })
+      logger.warn('Forbidden attempt', {
+        action: Actions.REQUEST_FAILED,
+        error_code: error.errorCode,
+        error: error.message
+      })
       metrics.addMetric('ForbiddenAttempt', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
       return buildResponse(error.statusCode, {
@@ -49,7 +75,11 @@ export const handler = async (event, context) => {
     }
 
     if (error instanceof ValidationError) {
-      logger.warn('Validation error', { error: error.message })
+      logger.warn('Validation error', {
+        action: Actions.REQUEST_FAILED,
+        error_code: error.errorCode,
+        error: error.message
+      })
       metrics.addMetric('ValidationError', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
       return buildResponse(error.statusCode, {
@@ -60,7 +90,11 @@ export const handler = async (event, context) => {
     }
 
     if (error instanceof ConflictError) {
-      logger.warn('Raffle ID collision', { error: error.message })
+      logger.warn('Raffle ID collision', {
+        action: Actions.REQUEST_FAILED,
+        error_code: error.errorCode,
+        error: error.message
+      })
       metrics.addMetric('ConflictError', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
       return buildResponse(error.statusCode, {
@@ -69,6 +103,8 @@ export const handler = async (event, context) => {
     }
 
     logger.error('Error creating raffle', {
+      action: Actions.REQUEST_FAILED,
+      error_code: ErrorCodes.INTERNAL_ERROR,
       error: error.message,
       stack: error.stack
     })

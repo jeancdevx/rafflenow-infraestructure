@@ -19,6 +19,14 @@ import {
 import { createRaffle } from './lib/repositories/raffle-repository.js'
 import { publishRaffleCreatedEvent } from './lib/services/event-publisher.js'
 
+const Actions = {
+  AUTH_VALIDATED: 'AUTH_VALIDATED',
+  INPUT_VALIDATED: 'INPUT_VALIDATED',
+  PARAMETERS_CALCULATED: 'PARAMETERS_CALCULATED',
+  RAFFLE_SAVED: 'RAFFLE_SAVED',
+  EVENT_PUBLISHED: 'EVENT_PUBLISHED'
+}
+
 export async function handleCreateRaffle(event) {
   const claims = extractClaims(event)
   ensureIsAdmin(claims)
@@ -26,19 +34,32 @@ export async function handleCreateRaffle(event) {
   const adminEmail = getUserEmail(claims)
   const body = JSON.parse(event.body)
 
-  logger.info('Creating new raffle', { admin_email: adminEmail })
+  logger.appendKeys({ admin_email: adminEmail })
+
+  logger.info('Admin authenticated', {
+    action: Actions.AUTH_VALIDATED,
+    admin_email: adminEmail
+  })
 
   validateRequiredFields(body)
   validateTitle(body.title)
   validateDescription(body.description)
   validatePrizeImages(body.prize_images)
 
+  logger.info('Input validated', {
+    action: Actions.INPUT_VALIDATED,
+    title_length: body.title.length,
+    description_length: body.description.length,
+    image_count: body.prize_images.length
+  })
+
   const prizeValue = validatePrizeValue(body.prize_value)
   const maxParticipants = calculateMaxParticipants(prizeValue)
   const category = calculateCategory(prizeValue)
   const durationDays = calculateDefaultDuration(prizeValue)
 
-  logger.info('Raffle parameters calculated automatically', {
+  logger.info('Raffle parameters calculated', {
+    action: Actions.PARAMETERS_CALCULATED,
     prize_value: prizeValue,
     category: category,
     duration_days: durationDays,
@@ -48,13 +69,6 @@ export async function handleCreateRaffle(event) {
   const now = new Date()
   const startDate = now
   const endDate = calculateEndDate(startDate, prizeValue)
-
-  logger.info('Raffle dates calculated', {
-    start_date: startDate.toISOString(),
-    end_date: endDate.toISOString(),
-    duration_days: durationDays,
-    category: category
-  })
 
   const raffleData = {
     title: body.title,
@@ -69,7 +83,24 @@ export async function handleCreateRaffle(event) {
 
   const raffle = await createRaffle(raffleData, adminEmail)
 
+  logger.appendKeys({
+    raffle_id: raffle.id,
+    raffle_title: raffle.title
+  })
+
+  logger.info('Raffle saved to database', {
+    action: Actions.RAFFLE_SAVED,
+    raffle_id: raffle.id,
+    start_date: startDate.toISOString(),
+    end_date: endDate.toISOString()
+  })
+
   await publishRaffleCreatedEvent(raffle)
+
+  logger.info('Raffle created event published', {
+    action: Actions.EVENT_PUBLISHED,
+    raffle_id: raffle.id
+  })
 
   metrics.addMetric('RaffleCreated', MetricUnit.Count, 1)
   metrics.addMetric('RaffleDuration', MetricUnit.Count, durationDays)
