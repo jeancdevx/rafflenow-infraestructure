@@ -82,6 +82,18 @@ variable "s3_assets_bucket_name" {
   type        = string
 }
 
+variable "api_gateway_public_access_logs_name" {
+  description = "CloudWatch Log Group name for Public API Gateway access logs"
+  type        = string
+  default     = ""
+}
+
+variable "api_gateway_authenticated_access_logs_name" {
+  description = "CloudWatch Log Group name for Authenticated API Gateway access logs"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
