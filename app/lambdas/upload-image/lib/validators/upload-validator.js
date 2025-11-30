@@ -1,4 +1,4 @@
-import { ValidationError } from '../errors.js'
+import { ValidationError, ErrorCodes } from '../errors.js'
 
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
@@ -16,32 +16,49 @@ export function validateUploadRequest(body) {
   const { fileName, fileType, fileSize } = body
 
   if (!fileName || !fileType) {
-    throw new ValidationError('fileName and fileType are required')
+    throw new ValidationError(
+      'fileName and fileType are required',
+      400,
+      {},
+      ErrorCodes.MISSING_REQUIRED_FIELDS
+    )
   }
 
   if (typeof fileName !== 'string' || typeof fileType !== 'string') {
-    throw new ValidationError('fileName and fileType must be strings')
+    throw new ValidationError(
+      'fileName and fileType must be strings',
+      400,
+      {},
+      ErrorCodes.INVALID_FIELD_TYPE
+    )
   }
 
   if (!ALLOWED_MIME_TYPES.includes(fileType)) {
     throw new ValidationError(
       `Invalid file type. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`,
       400,
-      { allowedTypes: ALLOWED_MIME_TYPES }
+      { allowedTypes: ALLOWED_MIME_TYPES },
+      ErrorCodes.INVALID_MIME_TYPE
     )
   }
 
   const extension = fileName.split('.').pop()?.toLowerCase()
 
   if (!extension) {
-    throw new ValidationError('File name must have an extension')
+    throw new ValidationError(
+      'File name must have an extension',
+      400,
+      {},
+      ErrorCodes.INVALID_EXTENSION
+    )
   }
 
   if (!ALLOWED_EXTENSIONS.includes(extension)) {
     throw new ValidationError(
       `Invalid file extension. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`,
       400,
-      { extension }
+      { extension },
+      ErrorCodes.INVALID_EXTENSION
     )
   }
 
@@ -52,7 +69,8 @@ export function validateUploadRequest(body) {
       throw new ValidationError(
         `File size exceeds maximum allowed size of ${MAX_FILE_SIZE_MB}MB`,
         400,
-        { maxSizeMB: MAX_FILE_SIZE_MB }
+        { maxSizeMB: MAX_FILE_SIZE_MB },
+        ErrorCodes.FILE_TOO_LARGE
       )
     }
   }
