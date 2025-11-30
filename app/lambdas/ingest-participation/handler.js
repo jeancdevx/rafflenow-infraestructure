@@ -21,7 +21,7 @@ import {
 } from './lib/repositories/raffle-repository.js'
 import { publishParticipationReceivedEvent } from './lib/services/event-publisher.js'
 
-export async function handleParticipationRequest(event) {
+export async function handleParticipationRequest(event, correlationId) {
   const claims = extractClaims(event)
 
   const userEmail = getUserEmail(claims)
@@ -52,6 +52,14 @@ export async function handleParticipationRequest(event) {
 
   const raffle = await getRaffle(raffleId)
   ensureRaffleExists(raffle)
+
+  logger.appendKeys({
+    raffle_title: raffle.title,
+    raffle_status: raffle.status,
+    current_participants: raffle.current_participants,
+    max_participants: raffle.max_participants
+  })
+
   ensureRaffleIsActive(raffle)
   ensureRaffleNotExpired(raffle)
 
@@ -63,7 +71,8 @@ export async function handleParticipationRequest(event) {
   await publishParticipationReceivedEvent({
     raffleId,
     raffle,
-    participantData
+    participantData,
+    correlationId
   })
 
   logger.info('Participation request accepted', {

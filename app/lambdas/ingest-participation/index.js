@@ -1,87 +1,136 @@
-import { logger, metrics } from "./lib/powertools.js";
-import { MetricUnit } from "@aws-lambda-powertools/metrics";
-import { handleParticipationRequest } from "./handler.js";
+import { logger, metrics } from './lib/powertools.js'
+import { MetricUnit } from '@aws-lambda-powertools/metrics'
+import { handleParticipationRequest } from './handler.js'
 import {
   ValidationError,
   UnauthorizedError,
   ForbiddenError,
   NotFoundError,
   ConflictError,
-} from "./lib/errors.js";
+  ErrorCodes
+} from './lib/errors.js'
+
+const Actions = {
+  PARTICIPATION_STARTED: 'PARTICIPATION_STARTED',
+  PARTICIPATION_ACCEPTED: 'PARTICIPATION_ACCEPTED',
+  PARTICIPATION_REJECTED: 'PARTICIPATION_REJECTED'
+}
 
 const buildResponse = (statusCode, body) => ({
   statusCode,
   headers: {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*'
   },
-  body: JSON.stringify(body),
-});
+  body: JSON.stringify(body)
+})
+
+const generateCorrelationId = (event) => {
+  return (
+    event.headers?.['x-correlation-id'] ||
+    event.requestContext?.requestId ||
+    crypto.randomUUID()
+  )
+}
 
 export const handler = async (event) => {
-  logger.info("Incoming participation request", { path: event.path });
+  const correlationId = generateCorrelationId(event)
+  logger.appendKeys({ correlation_id: correlationId })
+
+  logger.info('Incoming participation request', {
+    action: Actions.PARTICIPATION_STARTED,
+    path: event.path
+  })
 
   try {
-    const result = await handleParticipationRequest(event);
+    const result = await handleParticipationRequest(event, correlationId)
+
+    logger.info('Participation request completed', {
+      action: Actions.PARTICIPATION_ACCEPTED
+    })
 
     return buildResponse(202, {
-      message: "Participation request accepted",
-      ...result,
-    });
+      message: 'Participation request accepted',
+      ...result
+    })
   } catch (error) {
+    const errorCode = error.errorCode || ErrorCodes.INTERNAL_ERROR
+
     if (error instanceof UnauthorizedError) {
-      logger.warn("Unauthorized attempt", { error: error.message });
-      metrics.addMetric("UnauthorizedAttempt", MetricUnit.Count, 1);
+      logger.warn('Unauthorized attempt', {
+        action: Actions.PARTICIPATION_REJECTED,
+        error_code: errorCode,
+        error: error.message
+      })
+      metrics.addMetric('UnauthorizedAttempt', MetricUnit.Count, 1)
       return buildResponse(error.statusCode, {
-        message: error.message,
-      });
+        message: error.message
+      })
     }
 
     if (error instanceof ForbiddenError) {
-      logger.warn("Forbidden attempt", { error: error.message });
-      metrics.addMetric("ForbiddenAttempt", MetricUnit.Count, 1);
+      logger.warn('Forbidden attempt', {
+        action: Actions.PARTICIPATION_REJECTED,
+        error_code: errorCode,
+        error: error.message
+      })
+      metrics.addMetric('ForbiddenAttempt', MetricUnit.Count, 1)
       return buildResponse(error.statusCode, {
-        message: error.message,
-      });
+        message: error.message
+      })
     }
 
     if (error instanceof NotFoundError) {
-      logger.warn("Resource not found", { error: error.message });
-      metrics.addMetric("ResourceNotFound", MetricUnit.Count, 1);
+      logger.warn('Resource not found', {
+        action: Actions.PARTICIPATION_REJECTED,
+        error_code: errorCode,
+        error: error.message
+      })
+      metrics.addMetric('ResourceNotFound', MetricUnit.Count, 1)
       return buildResponse(error.statusCode, {
-        message: error.message,
-      });
+        message: error.message
+      })
     }
 
     if (error instanceof ConflictError) {
-      logger.warn("Conflict detected", { error: error.message });
-      metrics.addMetric("ConflictError", MetricUnit.Count, 1);
+      logger.warn('Conflict detected', {
+        action: Actions.PARTICIPATION_REJECTED,
+        error_code: errorCode,
+        error: error.message
+      })
+      metrics.addMetric('ConflictError', MetricUnit.Count, 1)
       return buildResponse(error.statusCode, {
         message: error.message,
-        ...error.details,
-      });
+        ...error.details
+      })
     }
 
     if (error instanceof ValidationError) {
-      logger.warn("Validation error", { error: error.message });
-      metrics.addMetric("ValidationError", MetricUnit.Count, 1);
+      logger.warn('Validation error', {
+        action: Actions.PARTICIPATION_REJECTED,
+        error_code: errorCode,
+        error: error.message
+      })
+      metrics.addMetric('ValidationError', MetricUnit.Count, 1)
       return buildResponse(error.statusCode, {
         message: error.message,
-        ...error.details,
-      });
+        ...error.details
+      })
     }
 
-    logger.error("Unexpected error processing participation request", {
+    logger.error('Unexpected error processing participation request', {
+      action: Actions.PARTICIPATION_REJECTED,
+      error_code: ErrorCodes.INTERNAL_ERROR,
       error: error.message,
-      stack: error.stack,
-    });
-    metrics.addMetric("UnexpectedError", MetricUnit.Count, 1);
+      stack: error.stack
+    })
+    metrics.addMetric('UnexpectedError', MetricUnit.Count, 1)
 
     return buildResponse(500, {
-      message: "Error processing participation request",
-      error: error.message,
-    });
+      message: 'Error processing participation request',
+      error: error.message
+    })
   } finally {
-    metrics.publishStoredMetrics();
+    metrics.publishStoredMetrics()
   }
-};
+}
