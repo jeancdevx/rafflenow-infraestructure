@@ -107,3 +107,33 @@ output "sqs_image_optimizer_dlq_arn" {
   description = "ARN of the image optimizer DLQ"
   value       = aws_sqs_queue.image_optimizer_dlq.arn
 }
+
+output "sqs_raffle_winner_queue_name" {
+  description = "Name of the raffle winner SQS queue"
+  value       = aws_sqs_queue.raffle_winner_queue.name
+}
+
+output "sqs_raffle_winner_dlq_name" {
+  description = "Name of the raffle winner DLQ"
+  value       = aws_sqs_queue.raffle_winner_dlq.name
+}
+
+output "sqs_participations_queue_name" {
+  description = "Name of the participations SQS queue"
+  value       = aws_sqs_queue.participations_queue.name
+}
+
+output "sqs_participations_dlq_name" {
+  description = "Name of the participations DLQ"
+  value       = aws_sqs_queue.participations_dlq.name
+}
+
+output "sqs_image_optimizer_queue_name" {
+  description = "Name of the image optimizer SQS queue"
+  value       = aws_sqs_queue.image_optimizer_queue.name
+}
+
+output "sqs_image_optimizer_dlq_name" {
+  description = "Name of the image optimizer DLQ"
+  value       = aws_sqs_queue.image_optimizer_dlq.name
+}
