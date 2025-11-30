@@ -5,6 +5,10 @@ resource "aws_cognito_user_pool" "rafflenow_pool" {
   username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
 
+  lambda_config {
+    post_confirmation = aws_lambda_function.post_confirmation.arn
+  }
+
   password_policy {
     minimum_length                   = 8
     require_lowercase                = true
