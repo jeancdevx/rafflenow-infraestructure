@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Dict, Any
-from lib.powertools_config import logger
+from lib.powertools_config import logger, Actions
 
 
 def create_winner_record(
@@ -25,11 +25,15 @@ def create_winner_record(
     logger.info(
         "Creating winner record",
         extra={
-            "raffle_id": raffle['raffle_id'],
-            "winner_email": winner['participant_email']
+            "action": Actions.WINNER_RECORD_CREATED.value,
+            "winner_email": winner['participant_email'],
+            "total_participants": total_participants
         }
     )
     
     winners_table.put_item(Item=winner_record)
     
-    logger.info("Winner record created successfully")
+    logger.info(
+        "Winner record created successfully",
+        extra={"action": Actions.WINNER_RECORD_CREATED.value}
+    )

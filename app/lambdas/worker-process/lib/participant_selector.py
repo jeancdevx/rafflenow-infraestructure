@@ -1,10 +1,16 @@
 import random
 from boto3.dynamodb.conditions import Key
-from lib.powertools_config import logger
+from lib.powertools_config import logger, Actions, ErrorCodes
 
 
 def get_participants(participants_table, raffle_id: str) -> list:
-    logger.info("Querying participants", extra={"raffle_id": raffle_id})
+    logger.info(
+        "Querying participants",
+        extra={
+            "action": Actions.PARTICIPANTS_QUERIED.value,
+            "raffle_id": raffle_id
+        }
+    )
     
     response = participants_table.query(
         IndexName='RaffleIdIndex',
@@ -16,7 +22,7 @@ def get_participants(participants_table, raffle_id: str) -> list:
     logger.info(
         "Participants retrieved",
         extra={
-            "raffle_id": raffle_id,
+            "action": Actions.PARTICIPANTS_QUERIED.value,
             "participant_count": len(participants)
         }
     )
@@ -28,7 +34,11 @@ def select_winner(participants: list, raffle_id: str) -> dict:
     if not participants:
         logger.warning(
             "No participants found",
-            extra={"raffle_id": raffle_id}
+            extra={
+                "action": Actions.RAFFLE_FAILED.value,
+                "error_code": ErrorCodes.NO_PARTICIPANTS.value,
+                "raffle_id": raffle_id
+            }
         )
         raise ValueError("No participants found for raffle")
     
@@ -37,7 +47,7 @@ def select_winner(participants: list, raffle_id: str) -> dict:
     logger.info(
         "Winner selected",
         extra={
-            "raffle_id": raffle_id,
+            "action": Actions.WINNER_SELECTED.value,
             "winner_email": winner.get('participant_email'),
             "total_participants": len(participants)
         }

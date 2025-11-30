@@ -2,7 +2,7 @@ import os
 import json
 import boto3
 from botocore.exceptions import ClientError
-from lib.powertools_config import logger
+from lib.powertools_config import logger, Actions, ErrorCodes
 
 ses_client = boto3.client('ses')
 
@@ -16,6 +16,8 @@ def send_winner_notification(winner: dict, raffle: dict, total_participants: int
         logger.warning(
             "SES not configured, skipping email",
             extra={
+                "action": Actions.EMAIL_SKIPPED.value,
+                "error_code": ErrorCodes.SES_NOT_CONFIGURED.value,
                 "has_sender": bool(SES_SENDER_EMAIL),
                 "has_template": bool(SES_WINNER_TEMPLATE)
             }
@@ -49,9 +51,9 @@ def send_winner_notification(winner: dict, raffle: dict, total_participants: int
         logger.info(
             "Winner notification email sent",
             extra={
+                "action": Actions.EMAIL_SENT.value,
                 "message_id": response['MessageId'],
-                "recipient": winner['participant_email'],
-                "raffle_id": raffle.get('raffle_id')
+                "recipient": winner['participant_email']
             }
         )
 
@@ -61,10 +63,11 @@ def send_winner_notification(winner: dict, raffle: dict, total_participants: int
         logger.error(
             "Failed to send winner notification email",
             extra={
+                "action": Actions.EMAIL_FAILED.value,
+                "error_code": ErrorCodes.EMAIL_SEND_ERROR.value,
+                "ses_error_code": error.response['Error']['Code'],
                 "error": str(error),
-                "error_code": error.response['Error']['Code'],
-                "recipient": winner['participant_email'],
-                "raffle_id": raffle.get('raffle_id')
+                "recipient": winner['participant_email']
             }
         )
         return False
@@ -73,9 +76,10 @@ def send_winner_notification(winner: dict, raffle: dict, total_participants: int
         logger.error(
             "Unexpected error sending winner email",
             extra={
+                "action": Actions.EMAIL_FAILED.value,
+                "error_code": ErrorCodes.INTERNAL_ERROR.value,
                 "error": str(error),
-                "recipient": winner['participant_email'],
-                "raffle_id": raffle.get('raffle_id')
+                "recipient": winner['participant_email']
             }
         )
         return False
