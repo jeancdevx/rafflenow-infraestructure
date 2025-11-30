@@ -42,6 +42,33 @@ resource "aws_api_gateway_stage" "authenticated_api_stage" {
 
   xray_tracing_enabled = true
 
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.authenticated_api_access_logs.arn
+    format = jsonencode({
+      requestId          = "$context.requestId"
+      ip                 = "$context.identity.sourceIp"
+      caller             = "$context.identity.caller"
+      user               = "$context.identity.user"
+      userAgent          = "$context.identity.userAgent"
+      requestTime        = "$context.requestTime"
+      requestTimeEpoch   = "$context.requestTimeEpoch"
+      httpMethod         = "$context.httpMethod"
+      resourcePath       = "$context.resourcePath"
+      path               = "$context.path"
+      status             = "$context.status"
+      protocol           = "$context.protocol"
+      responseLength     = "$context.responseLength"
+      responseLatency    = "$context.responseLatency"
+      integrationLatency = "$context.integrationLatency"
+      errorMessage       = "$context.error.message"
+      errorType          = "$context.error.responseType"
+      cognitoUser        = "$context.authorizer.claims.sub"
+      cognitoEmail       = "$context.authorizer.claims.email"
+    })
+  }
+
+  depends_on = [aws_api_gateway_account.main]
+
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-authenticated-api-${var.environment}"
   })

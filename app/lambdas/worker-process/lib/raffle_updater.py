@@ -1,5 +1,5 @@
 from datetime import datetime
-from lib.powertools_config import logger
+from lib.powertools_config import logger, Actions, ErrorCodes
 
 
 def update_raffle_to_completed(raffles_table, raffle_id: str, winner: dict) -> str:
@@ -35,7 +35,7 @@ def update_raffle_to_completed(raffles_table, raffle_id: str, winner: dict) -> s
         logger.info(
             "Raffle updated to completed",
             extra={
-                "raffle_id": raffle_id,
+                "action": Actions.RAFFLE_COMPLETED.value,
                 "winner_email": winner['participant_email'],
                 "completed_at": now
             }
@@ -47,7 +47,8 @@ def update_raffle_to_completed(raffles_table, raffle_id: str, winner: dict) -> s
         logger.error(
             "Failed to update raffle",
             extra={
-                "raffle_id": raffle_id,
+                "action": Actions.RAFFLE_FAILED.value,
+                "error_code": ErrorCodes.DATABASE_UPDATE_ERROR.value,
                 "error": str(e)
             }
         )
@@ -74,8 +75,8 @@ def update_raffle_to_failed(raffles_table, raffle_id: str, error_message: str) -
         logger.warning(
             "Raffle marked as failed",
             extra={
-                "raffle_id": raffle_id,
-                "error_message": error_message
+                "action": Actions.RAFFLE_FAILED.value,
+                "failure_reason": error_message
             }
         )
         
@@ -83,7 +84,8 @@ def update_raffle_to_failed(raffles_table, raffle_id: str, error_message: str) -
         logger.error(
             "Failed to mark raffle as failed",
             extra={
-                "raffle_id": raffle_id,
+                "action": Actions.RAFFLE_FAILED.value,
+                "error_code": ErrorCodes.DATABASE_UPDATE_ERROR.value,
                 "error": str(e)
             }
         )

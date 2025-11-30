@@ -4,8 +4,15 @@ import { handleImageUpload } from './handler.js'
 import {
   ValidationError,
   UnauthorizedError,
-  ForbiddenError
+  ForbiddenError,
+  ErrorCodes
 } from './lib/errors.js'
+
+const Actions = {
+  REQUEST_RECEIVED: 'REQUEST_RECEIVED',
+  URL_GENERATED: 'URL_GENERATED',
+  REQUEST_FAILED: 'REQUEST_FAILED'
+}
 
 const buildResponse = (statusCode, body) => ({
   statusCode,
@@ -20,14 +27,26 @@ export const handler = async (event, context) => {
   try {
     logger.addContext(context)
 
+    logger.info('Upload image request received', {
+      action: Actions.REQUEST_RECEIVED
+    })
+
     const result = await handleImageUpload(event)
+
+    logger.info('Presigned URL generated successfully', {
+      action: Actions.URL_GENERATED
+    })
 
     metrics.publishStoredMetrics()
 
     return buildResponse(200, result)
   } catch (error) {
     if (error instanceof UnauthorizedError) {
-      logger.warn('Unauthorized upload attempt', { error: error.message })
+      logger.warn('Unauthorized upload attempt', {
+        action: Actions.REQUEST_FAILED,
+        error_code: error.errorCode,
+        error: error.message
+      })
       metrics.addMetric('UnauthorizedAttempt', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
       return buildResponse(error.statusCode, {
@@ -36,7 +55,11 @@ export const handler = async (event, context) => {
     }
 
     if (error instanceof ForbiddenError) {
-      logger.warn('Forbidden upload attempt', { error: error.message })
+      logger.warn('Forbidden upload attempt', {
+        action: Actions.REQUEST_FAILED,
+        error_code: error.errorCode,
+        error: error.message
+      })
       metrics.addMetric('ForbiddenAttempt', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
       return buildResponse(error.statusCode, {
@@ -45,7 +68,11 @@ export const handler = async (event, context) => {
     }
 
     if (error instanceof ValidationError) {
-      logger.warn('Validation error', { error: error.message })
+      logger.warn('Validation error', {
+        action: Actions.REQUEST_FAILED,
+        error_code: error.errorCode,
+        error: error.message
+      })
       metrics.addMetric('ValidationError', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
       return buildResponse(error.statusCode, {
@@ -56,6 +83,8 @@ export const handler = async (event, context) => {
     }
 
     logger.error('Error generating presigned URL', {
+      action: Actions.REQUEST_FAILED,
+      error_code: ErrorCodes.INTERNAL_ERROR,
       error: error.message,
       stack: error.stack
     })

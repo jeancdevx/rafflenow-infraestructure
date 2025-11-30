@@ -8,20 +8,38 @@ import {
 import { extractUserEmail } from './lib/services/auth-service.js'
 import { prepareRaffleResponse } from './lib/services/raffle-formatter.js'
 
+const Actions = {
+  INPUT_VALIDATED: 'INPUT_VALIDATED',
+  RAFFLE_FETCHED: 'RAFFLE_FETCHED',
+  PARTICIPATION_CHECKED: 'PARTICIPATION_CHECKED'
+}
+
 export async function handleGetRaffle(event) {
   const raffleId = validateRaffleId(event)
 
-  logger.info('Processing get-raffle request', { raffleId })
+  logger.appendKeys({ raffle_id: raffleId })
+
+  logger.info('Input validated', {
+    action: Actions.INPUT_VALIDATED
+  })
 
   const raffle = await getRaffleById(raffleId)
+
+  logger.appendKeys({ raffle_title: raffle.title })
+
+  logger.info('Raffle fetched from database', {
+    action: Actions.RAFFLE_FETCHED,
+    raffle_status: raffle.status,
+    current_participants: raffle.current_participants
+  })
 
   const userEmail = await extractUserEmail(event)
   const userHasParticipated = await checkUserParticipation(raffleId, userEmail)
 
-  logger.info('Raffle retrieved successfully', {
-    raffleId,
-    status: raffle.status,
-    userHasParticipated
+  logger.info('User participation checked', {
+    action: Actions.PARTICIPATION_CHECKED,
+    user_has_participated: userHasParticipated,
+    is_authenticated: !!userEmail
   })
 
   metrics.addMetric('RaffleRetrieved', MetricUnit.Count, 1)

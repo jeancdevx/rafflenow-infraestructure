@@ -1,7 +1,13 @@
 import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
 import { handleGetRaffle } from './handler.js'
-import { NotFoundError, ValidationError } from './lib/errors.js'
+import { NotFoundError, ValidationError, ErrorCodes } from './lib/errors.js'
+
+const Actions = {
+  REQUEST_RECEIVED: 'REQUEST_RECEIVED',
+  RAFFLE_RETRIEVED: 'RAFFLE_RETRIEVED',
+  REQUEST_FAILED: 'REQUEST_FAILED'
+}
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -12,7 +18,17 @@ export const handler = async (event, context) => {
   try {
     logger.addContext(context)
 
+    logger.info('Get raffle request received', {
+      action: Actions.REQUEST_RECEIVED,
+      raffle_id: event.pathParameters?.id
+    })
+
     const result = await handleGetRaffle(event)
+
+    logger.info('Raffle retrieved successfully', {
+      action: Actions.RAFFLE_RETRIEVED,
+      raffle_id: result.raffle?.id || result.id
+    })
 
     return {
       statusCode: 200,
@@ -21,7 +37,11 @@ export const handler = async (event, context) => {
     }
   } catch (error) {
     if (error instanceof ValidationError) {
-      logger.warn('Validation error', { error: error.message })
+      logger.warn('Validation error', {
+        action: Actions.REQUEST_FAILED,
+        error_code: error.errorCode,
+        error: error.message
+      })
       metrics.addMetric('ValidationError', MetricUnit.Count, 1)
       return {
         statusCode: error.statusCode,
@@ -31,7 +51,11 @@ export const handler = async (event, context) => {
     }
 
     if (error instanceof NotFoundError) {
-      logger.warn('Raffle not found', { error: error.message })
+      logger.warn('Raffle not found', {
+        action: Actions.REQUEST_FAILED,
+        error_code: error.errorCode,
+        error: error.message
+      })
       metrics.addMetric('RaffleNotFound', MetricUnit.Count, 1)
       return {
         statusCode: error.statusCode,
@@ -41,6 +65,8 @@ export const handler = async (event, context) => {
     }
 
     logger.error('Error retrieving raffle', {
+      action: Actions.REQUEST_FAILED,
+      error_code: ErrorCodes.INTERNAL_ERROR,
       error: error.message,
       stack: error.stack
     })

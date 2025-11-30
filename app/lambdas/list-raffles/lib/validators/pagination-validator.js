@@ -1,4 +1,4 @@
-import { ValidationError } from '../errors.js'
+import { ValidationError, ErrorCodes } from '../errors.js'
 
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
@@ -11,13 +11,21 @@ export function validateLimit(limitParam) {
   const limit = parseInt(limitParam, 10)
 
   if (isNaN(limit) || limit <= 0) {
-    throw new ValidationError('Limit must be a positive number')
+    throw new ValidationError(
+      'Limit must be a positive number',
+      400,
+      {},
+      ErrorCodes.INVALID_LIMIT
+    )
   }
 
   if (limit > MAX_LIMIT) {
-    throw new ValidationError(`Limit cannot exceed ${MAX_LIMIT}`, 400, {
-      max_limit: MAX_LIMIT
-    })
+    throw new ValidationError(
+      `Limit cannot exceed ${MAX_LIMIT}`,
+      400,
+      { max_limit: MAX_LIMIT },
+      ErrorCodes.LIMIT_EXCEEDED
+    )
   }
 
   return limit
@@ -32,7 +40,12 @@ export function decodeCursor(cursor) {
     const decoded = Buffer.from(cursor, 'base64').toString('utf-8')
     return JSON.parse(decoded)
   } catch (error) {
-    throw new ValidationError('Invalid cursor format')
+    throw new ValidationError(
+      'Invalid cursor format',
+      400,
+      {},
+      ErrorCodes.INVALID_CURSOR
+    )
   }
 }
 

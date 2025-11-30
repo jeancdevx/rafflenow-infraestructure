@@ -1,9 +1,13 @@
-import { ValidationError } from '../errors.js'
+import { ValidationError, ErrorCodes } from '../errors.js'
 
 export function validateRaffleId(event) {
   const raffleId = event.pathParameters?.id
   if (!raffleId) {
-    throw new ValidationError('raffle_id is required')
+    throw new ValidationError(
+      'raffle_id is required',
+      400,
+      ErrorCodes.MISSING_RAFFLE_ID
+    )
   }
   return raffleId
 }

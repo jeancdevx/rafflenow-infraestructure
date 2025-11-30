@@ -61,3 +61,43 @@ output "authenticated_api_stage_arn" {
   description = "ARN of the Authenticated API Gateway stage (for WAF association)"
   value       = aws_api_gateway_stage.authenticated_api_stage.arn
 }
+
+output "public_api_name" {
+  description = "Name of the Public API Gateway"
+  value       = aws_api_gateway_rest_api.public_api.name
+}
+
+output "public_api_stage_name" {
+  description = "Stage name of the Public API Gateway"
+  value       = aws_api_gateway_stage.public_api_stage.stage_name
+}
+
+output "authenticated_api_name" {
+  description = "Name of the Authenticated API Gateway"
+  value       = aws_api_gateway_rest_api.authenticated_api.name
+}
+
+output "authenticated_api_stage_name" {
+  description = "Stage name of the Authenticated API Gateway"
+  value       = aws_api_gateway_stage.authenticated_api_stage.stage_name
+}
+
+output "public_api_access_logs_arn" {
+  description = "ARN of the Public API Gateway access logs CloudWatch Log Group"
+  value       = aws_cloudwatch_log_group.public_api_access_logs.arn
+}
+
+output "public_api_access_logs_name" {
+  description = "Name of the Public API Gateway access logs CloudWatch Log Group"
+  value       = aws_cloudwatch_log_group.public_api_access_logs.name
+}
+
+output "authenticated_api_access_logs_arn" {
+  description = "ARN of the Authenticated API Gateway access logs CloudWatch Log Group"
+  value       = aws_cloudwatch_log_group.authenticated_api_access_logs.arn
+}
+
+output "authenticated_api_access_logs_name" {
+  description = "Name of the Authenticated API Gateway access logs CloudWatch Log Group"
+  value       = aws_cloudwatch_log_group.authenticated_api_access_logs.name
+}

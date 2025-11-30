@@ -1,4 +1,4 @@
-import { ValidationError } from '../errors.js'
+import { ValidationError, ErrorCodes } from '../errors.js'
 import { logger } from '../powertools.js'
 
 const TITLE_MIN_LENGTH = 10
@@ -24,14 +24,24 @@ export function validateRequiredFields(body) {
 
   for (const field of requiredFields) {
     if (!body[field]) {
-      throw new ValidationError(`Missing required field: ${field}`)
+      throw new ValidationError(
+        `Missing required field: ${field}`,
+        400,
+        { field },
+        ErrorCodes.MISSING_REQUIRED_FIELD
+      )
     }
   }
 }
 
 export function validateTitle(title) {
   if (typeof title !== 'string') {
-    throw new ValidationError('Title must be a string')
+    throw new ValidationError(
+      'Title must be a string',
+      400,
+      {},
+      ErrorCodes.INVALID_TITLE
+    )
   }
 
   const length = title.trim().length
@@ -40,7 +50,8 @@ export function validateTitle(title) {
     throw new ValidationError(
       `Title must be at least ${TITLE_MIN_LENGTH} characters`,
       400,
-      { current_length: length }
+      { current_length: length },
+      ErrorCodes.INVALID_TITLE
     )
   }
 
@@ -48,14 +59,20 @@ export function validateTitle(title) {
     throw new ValidationError(
       `Title cannot exceed ${TITLE_MAX_LENGTH} characters`,
       400,
-      { current_length: length }
+      { current_length: length },
+      ErrorCodes.INVALID_TITLE
     )
   }
 }
 
 export function validateDescription(description) {
   if (typeof description !== 'string') {
-    throw new ValidationError('Description must be a string')
+    throw new ValidationError(
+      'Description must be a string',
+      400,
+      {},
+      ErrorCodes.INVALID_DESCRIPTION
+    )
   }
 
   const length = description.trim().length
@@ -64,7 +81,8 @@ export function validateDescription(description) {
     throw new ValidationError(
       `Description must be at least ${DESCRIPTION_MIN_LENGTH} characters`,
       400,
-      { current_length: length }
+      { current_length: length },
+      ErrorCodes.INVALID_DESCRIPTION
     )
   }
 
@@ -72,7 +90,8 @@ export function validateDescription(description) {
     throw new ValidationError(
       `Description cannot exceed ${DESCRIPTION_MAX_LENGTH} characters`,
       400,
-      { current_length: length }
+      { current_length: length },
+      ErrorCodes.INVALID_DESCRIPTION
     )
   }
 }
@@ -85,7 +104,10 @@ export function validateEndDate(endDateInput) {
 
     if (endDate.getUTCHours() !== 23 || endDate.getUTCMinutes() !== 59) {
       throw new ValidationError(
-        'end_date must be set to 23:59 UTC. Use format: YYYY-MM-DD or YYYY-MM-DDT23:59:00Z'
+        'end_date must be set to 23:59 UTC. Use format: YYYY-MM-DD or YYYY-MM-DDT23:59:00Z',
+        400,
+        {},
+        ErrorCodes.INVALID_END_DATE
       )
     }
   } else {
@@ -93,12 +115,22 @@ export function validateEndDate(endDateInput) {
   }
 
   if (isNaN(endDate.getTime())) {
-    throw new ValidationError('Invalid end_date format')
+    throw new ValidationError(
+      'Invalid end_date format',
+      400,
+      {},
+      ErrorCodes.INVALID_END_DATE
+    )
   }
 
   const now = new Date()
   if (endDate < now) {
-    throw new ValidationError('end_date cannot be in the past')
+    throw new ValidationError(
+      'end_date cannot be in the past',
+      400,
+      {},
+      ErrorCodes.INVALID_END_DATE
+    )
   }
 
   return endDate
@@ -112,7 +144,8 @@ export function validateDuration(startDate, endDate) {
     throw new ValidationError(
       `Raffle must last at least ${MIN_DURATION_DAYS} days`,
       400,
-      { duration_days: Math.floor(diffDays) }
+      { duration_days: Math.floor(diffDays) },
+      ErrorCodes.INVALID_DURATION
     )
   }
 
@@ -120,7 +153,8 @@ export function validateDuration(startDate, endDate) {
     throw new ValidationError(
       `Raffle cannot last more than ${MAX_DURATION_DAYS} days`,
       400,
-      { duration_days: Math.floor(diffDays) }
+      { duration_days: Math.floor(diffDays) },
+      ErrorCodes.INVALID_DURATION
     )
   }
 
@@ -131,14 +165,20 @@ export function validateDuration(startDate, endDate) {
 
 export function validatePrizeImages(prizeImages) {
   if (!prizeImages || !Array.isArray(prizeImages)) {
-    throw new ValidationError('prize_images is required and must be an array')
+    throw new ValidationError(
+      'prize_images is required and must be an array',
+      400,
+      {},
+      ErrorCodes.INVALID_PRIZE_IMAGES
+    )
   }
 
   if (prizeImages.length < MIN_PRIZE_IMAGES) {
     throw new ValidationError(
       `At least ${MIN_PRIZE_IMAGES} prize image is required`,
       400,
-      { current_count: prizeImages.length }
+      { current_count: prizeImages.length },
+      ErrorCodes.INVALID_PRIZE_IMAGES
     )
   }
 
@@ -146,32 +186,49 @@ export function validatePrizeImages(prizeImages) {
     throw new ValidationError(
       `Cannot exceed ${MAX_PRIZE_IMAGES} prize images`,
       400,
-      { current_count: prizeImages.length }
+      { current_count: prizeImages.length },
+      ErrorCodes.INVALID_PRIZE_IMAGES
     )
   }
 
   for (const imageUrl of prizeImages) {
     if (typeof imageUrl !== 'string' || !imageUrl.trim()) {
-      throw new ValidationError('All prize images must be valid URL strings')
+      throw new ValidationError(
+        'All prize images must be valid URL strings',
+        400,
+        {},
+        ErrorCodes.INVALID_PRIZE_IMAGES
+      )
     }
   }
 }
 
 export function validatePrizeValue(prizeValue) {
   if (typeof prizeValue !== 'number' || prizeValue <= 0) {
-    throw new ValidationError('prize_value must be a positive number')
+    throw new ValidationError(
+      'prize_value must be a positive number',
+      400,
+      {},
+      ErrorCodes.INVALID_PRIZE_VALUE
+    )
   }
 
   if (prizeValue < 100) {
-    throw new ValidationError('prize_value must be at least 100', 400, {
-      current_value: prizeValue
-    })
+    throw new ValidationError(
+      'prize_value must be at least 100',
+      400,
+      { current_value: prizeValue },
+      ErrorCodes.INVALID_PRIZE_VALUE
+    )
   }
 
   if (prizeValue > 3000000) {
-    throw new ValidationError('prize_value cannot exceed 3,000,000', 400, {
-      current_value: prizeValue
-    })
+    throw new ValidationError(
+      'prize_value cannot exceed 3,000,000',
+      400,
+      { current_value: prizeValue },
+      ErrorCodes.INVALID_PRIZE_VALUE
+    )
   }
 
   return prizeValue
@@ -232,7 +289,8 @@ export function calculateEndDate(startDate, prizeValue, customDuration = null) {
     throw new ValidationError(
       `Duration must be between ${MIN_DURATION_DAYS} and ${MAX_DURATION_DAYS} days`,
       400,
-      { provided_duration: durationDays }
+      { provided_duration: durationDays },
+      ErrorCodes.INVALID_DURATION
     )
   }
 

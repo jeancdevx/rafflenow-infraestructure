@@ -169,3 +169,55 @@ module "waf" {
     Project     = "RaffleNow"
   }
 }
+
+module "monitoring" {
+  source = "../../modules/monitoring"
+
+  name_prefix = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+  environment = var.environment
+
+  lambda_functions = {
+    list_raffles          = module.compute.lambda_list_raffles_name
+    get_raffle            = module.compute.lambda_get_raffle_name
+    create_raffle         = module.compute.lambda_create_raffle_name
+    ingest_participation  = module.compute.lambda_ingest_participation_name
+    close_raffle          = module.compute.lambda_close_raffle_name
+    upload_image          = module.compute.lambda_upload_image_name
+    check_expired_raffles = module.compute.lambda_check_expired_raffles_name
+    worker_process        = module.compute.lambda_worker_process_name
+    participation_process = module.compute.lambda_participation_process_name
+    image_optimizer       = module.compute.lambda_image_optimizer_name
+  }
+
+  dynamodb_tables = {
+    raffles        = module.storage.dynamodb_raffles_table_name
+    participations = module.storage.dynamodb_participations_table_name
+    winners        = module.storage.dynamodb_winners_table_name
+  }
+
+  sqs_queues = {
+    raffle_winner       = module.storage.sqs_raffle_winner_queue_name
+    raffle_winner_dlq   = module.storage.sqs_raffle_winner_dlq_name
+    participations      = module.storage.sqs_participations_queue_name
+    participations_dlq  = module.storage.sqs_participations_dlq_name
+    image_optimizer     = module.storage.sqs_image_optimizer_queue_name
+    image_optimizer_dlq = module.storage.sqs_image_optimizer_dlq_name
+  }
+
+  api_gateway_public_name         = module.api_gateway.public_api_name
+  api_gateway_public_stage        = module.api_gateway.public_api_stage_name
+  api_gateway_authenticated_name  = module.api_gateway.authenticated_api_name
+  api_gateway_authenticated_stage = module.api_gateway.authenticated_api_stage_name
+
+  api_gateway_public_access_logs_name        = module.api_gateway.public_api_access_logs_name
+  api_gateway_authenticated_access_logs_name = module.api_gateway.authenticated_api_access_logs_name
+
+  cloudfront_distribution_id = module.cdn.cloudfront_distribution_id
+  cognito_user_pool_id       = module.cognito.user_pool_id
+  s3_assets_bucket_name      = module.storage.s3_assets_bucket_name
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
