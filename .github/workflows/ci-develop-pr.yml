@@ -80,46 +80,11 @@ jobs:
         working-directory: app
         run: npm run format:check
 
-  build:
-    name: Build Lambdas
-    runs-on: ubuntu-latest
-    needs: [changes, lint, format-check]
-    if: needs.changes.outputs.app == 'true'
-    strategy:
-      matrix:
-        lambda:
-          - check-expired-raffles
-          - close-raffle
-          - create-raffle
-          - get-raffle
-          - image-optimizer
-          - ingest-participation
-          - list-raffles
-          - participation-process
-          - post-confirmation
-          - upload-image
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install lambda dependencies
-        working-directory: app/lambdas/${{ matrix.lambda }}
-        run: npm ci --omit=dev
-
-      - name: Create deployment package
-        working-directory: app/lambdas/${{ matrix.lambda }}
-        run: zip -r ../../../${{ matrix.lambda }}.zip .
-
   terraform-format:
     name: Terraform Format
     runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.iac == 'true'
+    needs: [changes, lint, format-check]
+    if: needs.changes.outputs.iac == 'true' && (needs.lint.result == 'success' || needs.lint.result == 'skipped') && (needs.format-check.result == 'success' || needs.format-check.result == 'skipped')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
