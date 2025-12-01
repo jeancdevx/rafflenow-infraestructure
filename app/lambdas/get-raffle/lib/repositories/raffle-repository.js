@@ -28,20 +28,19 @@ export async function getRaffleById(raffleId) {
   return result.Item
 }
 
-export async function checkUserParticipation(raffleId, userEmail) {
-  if (!userEmail) {
+export async function checkUserParticipation(raffleId, userId) {
+  if (!userId) {
     return false
   }
 
   try {
     const command = new QueryCommand({
       TableName: PARTICIPANTS_TABLE,
-      IndexName: 'RaffleIdIndex',
-      KeyConditionExpression: 'raffle_id = :raffle_id',
-      FilterExpression: 'participant_email = :email',
+      IndexName: 'UserIdRaffleIdIndex',
+      KeyConditionExpression: 'user_id = :user_id AND raffle_id = :raffle_id',
       ExpressionAttributeValues: {
-        ':raffle_id': raffleId,
-        ':email': userEmail
+        ':user_id': userId,
+        ':raffle_id': raffleId
       },
       Limit: 1
     })
@@ -51,7 +50,7 @@ export async function checkUserParticipation(raffleId, userEmail) {
 
     logger.info('Participation check completed', {
       raffleId,
-      userEmail,
+      userId,
       participated
     })
 
@@ -60,7 +59,7 @@ export async function checkUserParticipation(raffleId, userEmail) {
     logger.error('Error checking participation', {
       error: error.message,
       raffleId,
-      userEmail
+      userId
     })
     return false
   }
