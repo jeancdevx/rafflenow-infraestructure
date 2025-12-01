@@ -1,29 +1,23 @@
 output "api_endpoints" {
   description = "Endpoints de la API (via CloudFront como single entry point)"
   value = {
-    # CloudFront URL - SINGLE ENTRY POINT
     cloudfront_base_url = module.cdn.cloudfront_distribution_url
 
-    # When domain is configured, use this instead
     production_base_url = "https://${var.domain_name}"
 
     public = {
-      # Via CloudFront (recommended)
       list_raffles = "${module.cdn.cloudfront_distribution_url}/api/v1/public/raffles"
       get_raffle   = "${module.cdn.cloudfront_distribution_url}/api/v1/public/raffles/{id}"
 
-      # Direct API Gateway (only for debugging, blocked by WAF in production)
       _direct_base_url = module.api_gateway.public_api_url
     }
 
     authenticated = {
-      # Via CloudFront (recommended)
       create_raffle = "${module.cdn.cloudfront_distribution_url}/api/v1/raffles"
       participate   = "${module.cdn.cloudfront_distribution_url}/api/v1/raffles/{id}/participate"
       close_raffle  = "${module.cdn.cloudfront_distribution_url}/api/v1/raffles/{id}/close"
       upload_image  = "${module.cdn.cloudfront_distribution_url}/api/v1/assets/upload"
 
-      # Direct API Gateway (only for debugging, blocked by WAF in production)
       _direct_base_url = module.api_gateway.authenticated_api_url
     }
   }

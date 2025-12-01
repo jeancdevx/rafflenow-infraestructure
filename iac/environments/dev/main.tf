@@ -21,7 +21,6 @@ module "cdn" {
   assets_bucket_regional_domain_name = module.storage.s3_assets_bucket_regional_domain_name
   web_acl_id                         = module.waf.cloudfront_web_acl_arn
 
-  # API Gateway origins for CloudFront
   api_gateway_public_domain        = module.api_gateway.public_api_domain
   api_gateway_public_stage         = module.api_gateway.public_api_stage_name
   api_gateway_authenticated_domain = module.api_gateway.authenticated_api_domain
@@ -56,6 +55,7 @@ module "compute" {
   cognito_user_pool_id               = module.cognito.user_pool_id
   cognito_client_id                  = module.cognito.user_pool_client_id
   event_bus_name                     = module.eventbridge.event_bus_name
+  event_bus_arn                      = module.eventbridge.event_bus_arn
 
   ses_sender_email           = module.ses.sender_email
   ses_configuration_set      = module.ses.configuration_set_name
@@ -104,7 +104,6 @@ module "api_gateway" {
 
   cognito_user_pool_arn = module.cognito.user_pool_arn
 
-  # CloudFront URL no longer needed - CORS is handled in Lambdas and API Gateway uses domain_name
   domain_name                = var.domain_name
   origin_verify_header_value = var.origin_verify_header_value
 
