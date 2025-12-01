@@ -269,7 +269,7 @@ module "github_oidc" {
 
   project_name           = "rafflenow"
   github_org             = "jeancdevx"
-  github_repo            = "rafflenow-infrastructure"
+  github_repo            = "rafflenow-infraestructure"
   aws_region             = var.aws_region
   terraform_state_bucket = "rafflenow-terraform-state-${data.aws_caller_identity.me.account_id}"
   terraform_lock_table   = "rafflenow-tfstate-lock"
