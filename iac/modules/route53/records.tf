@@ -1,3 +1,4 @@
+#checkov:skip=CKV2_AWS_23:A record is an alias to CloudFront distribution - Checkov cannot verify cross-module references
 resource "aws_route53_record" "root" {
   zone_id = data.aws_route53_zone.main.zone_id
   name    = var.domain_name
