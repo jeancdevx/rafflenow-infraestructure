@@ -149,8 +149,11 @@ module "eventbridge" {
 module "ses" {
   source = "../../modules/ses"
 
-  name_prefix  = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
-  sender_email = var.ses_sender_email
+  name_prefix     = "rafflenow-${var.environment}-${data.aws_caller_identity.me.account_id}"
+  domain_name     = var.domain_name
+  sender_email    = var.ses_sender_email
+  route53_zone_id = module.route53.hosted_zone_id
+  aws_region      = var.aws_region
 
   tags = {
     Environment = var.environment

@@ -3,6 +3,11 @@ output "zone_id" {
   value       = data.aws_route53_zone.main.zone_id
 }
 
+output "hosted_zone_id" {
+  description = "Route53 Hosted Zone ID (alias for zone_id)"
+  value       = data.aws_route53_zone.main.zone_id
+}
+
 output "zone_name" {
   description = "Route53 Hosted Zone name"
   value       = data.aws_route53_zone.main.name

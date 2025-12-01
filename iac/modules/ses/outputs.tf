@@ -1,3 +1,13 @@
+output "domain_identity_arn" {
+  description = "ARN of the verified domain identity"
+  value       = aws_ses_domain_identity.main.arn
+}
+
+output "domain_identity_verified" {
+  description = "Whether the domain identity is verified"
+  value       = aws_ses_domain_identity_verification.main.id != null
+}
+
 output "sender_email" {
   description = "Verified sender email address"
   value       = aws_ses_email_identity.sender.email
