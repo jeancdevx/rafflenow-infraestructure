@@ -1,3 +1,4 @@
+#checkov:skip=CKV_AWS_192:Log4j protection included via AWSManagedRulesKnownBadInputsRuleSet rule (priority 8)
 resource "aws_wafv2_web_acl" "regional" {
   name        = "${var.name_prefix}-waf-regional"
   description = "WAF WebACL for API Gateway and regional resources"

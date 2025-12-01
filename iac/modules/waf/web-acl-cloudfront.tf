@@ -1,3 +1,4 @@
+#checkov:skip=CKV2_AWS_47:CloudFront WAF protects static assets only - no application code susceptible to Log4j
 resource "aws_wafv2_web_acl" "cloudfront" {
   provider    = aws.us_east_1
   name        = "${var.name_prefix}-waf-cloudfront"
