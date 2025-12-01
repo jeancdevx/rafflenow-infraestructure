@@ -69,7 +69,11 @@ resource "aws_s3_bucket_policy" "terraform_state_https_only" {
 }
 
 # Logging bucket for terraform state access logs
+# This bucket intentionally does not have its own logging to avoid infinite recursion
+# tfsec:ignore:aws-s3-enable-bucket-logging
+#checkov:skip=CKV_AWS_18:This is the logging destination bucket
 resource "aws_s3_bucket" "terraform_state_logs" {
+  #ts:skip=AWS.S3Bucket.LM.MEDIUM.0078 This is the logging destination bucket
   bucket = "rafflenow-terraform-state-logs-${data.aws_caller_identity.current.account_id}"
 
   tags = {
@@ -126,6 +130,23 @@ resource "aws_s3_bucket_policy" "terraform_state_logs_https_only" {
         Condition = {
           Bool = {
             "aws:SecureTransport" = "false"
+          }
+        }
+      },
+      {
+        Sid    = "S3ServerAccessLogsPolicy"
+        Effect = "Allow"
+        Principal = {
+          Service = "logging.s3.amazonaws.com"
+        }
+        Action   = "s3:PutObject"
+        Resource = "${aws_s3_bucket.terraform_state_logs.arn}/*"
+        Condition = {
+          ArnLike = {
+            "aws:SourceArn" = aws_s3_bucket.terraform_state.arn
+          }
+          StringEquals = {
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
           }
         }
       }
