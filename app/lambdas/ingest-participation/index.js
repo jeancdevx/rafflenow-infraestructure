@@ -1,6 +1,7 @@
 import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
 import { handleParticipationRequest } from './handler.js'
+import { getCorsHeaders } from './lib/cors.js'
 import {
   ValidationError,
   UnauthorizedError,
@@ -16,11 +17,11 @@ const Actions = {
   PARTICIPATION_REJECTED: 'PARTICIPATION_REJECTED'
 }
 
-const buildResponse = (statusCode, body) => ({
+const buildResponse = (statusCode, body, corsHeaders) => ({
   statusCode,
   headers: {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*'
+    ...corsHeaders
   },
   body: JSON.stringify(body)
 })
@@ -34,6 +35,7 @@ const generateCorrelationId = (event) => {
 }
 
 export const handler = async (event) => {
+  const corsHeaders = getCorsHeaders(event)
   const correlationId = generateCorrelationId(event)
   logger.appendKeys({ correlation_id: correlationId })
 
@@ -49,10 +51,14 @@ export const handler = async (event) => {
       action: Actions.PARTICIPATION_ACCEPTED
     })
 
-    return buildResponse(202, {
-      message: 'Participation request accepted',
-      ...result
-    })
+    return buildResponse(
+      202,
+      {
+        message: 'Participation request accepted',
+        ...result
+      },
+      corsHeaders
+    )
   } catch (error) {
     const errorCode = error.errorCode || ErrorCodes.INTERNAL_ERROR
 
@@ -63,9 +69,13 @@ export const handler = async (event) => {
         error: error.message
       })
       metrics.addMetric('UnauthorizedAttempt', MetricUnit.Count, 1)
-      return buildResponse(error.statusCode, {
-        message: error.message
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message
+        },
+        corsHeaders
+      )
     }
 
     if (error instanceof ForbiddenError) {
@@ -75,9 +85,13 @@ export const handler = async (event) => {
         error: error.message
       })
       metrics.addMetric('ForbiddenAttempt', MetricUnit.Count, 1)
-      return buildResponse(error.statusCode, {
-        message: error.message
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message
+        },
+        corsHeaders
+      )
     }
 
     if (error instanceof NotFoundError) {
@@ -87,9 +101,13 @@ export const handler = async (event) => {
         error: error.message
       })
       metrics.addMetric('ResourceNotFound', MetricUnit.Count, 1)
-      return buildResponse(error.statusCode, {
-        message: error.message
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message
+        },
+        corsHeaders
+      )
     }
 
     if (error instanceof ConflictError) {
@@ -99,10 +117,14 @@ export const handler = async (event) => {
         error: error.message
       })
       metrics.addMetric('ConflictError', MetricUnit.Count, 1)
-      return buildResponse(error.statusCode, {
-        message: error.message,
-        ...error.details
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message,
+          ...error.details
+        },
+        corsHeaders
+      )
     }
 
     if (error instanceof ValidationError) {
@@ -112,10 +134,14 @@ export const handler = async (event) => {
         error: error.message
       })
       metrics.addMetric('ValidationError', MetricUnit.Count, 1)
-      return buildResponse(error.statusCode, {
-        message: error.message,
-        ...error.details
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message,
+          ...error.details
+        },
+        corsHeaders
+      )
     }
 
     logger.error('Unexpected error processing participation request', {
@@ -126,10 +152,14 @@ export const handler = async (event) => {
     })
     metrics.addMetric('UnexpectedError', MetricUnit.Count, 1)
 
-    return buildResponse(500, {
-      message: 'Error processing participation request',
-      error: error.message
-    })
+    return buildResponse(
+      500,
+      {
+        message: 'Error processing participation request',
+        error: error.message
+      },
+      corsHeaders
+    )
   } finally {
     metrics.publishStoredMetrics()
   }
