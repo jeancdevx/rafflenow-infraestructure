@@ -9,7 +9,7 @@ import {
   getRaffleById
 } from './lib/repositories/raffle-repository.js'
 
-import { extractUserEmail } from './lib/services/auth-service.js'
+import { extractUserInfo } from './lib/services/auth-service.js'
 import { prepareRaffleResponse } from './lib/services/raffle-formatter.js'
 
 const Actions = {
@@ -37,13 +37,13 @@ export async function handleGetRaffle(event) {
     current_participants: raffle.current_participants
   })
 
-  const userEmail = await extractUserEmail(event)
-  const userHasParticipated = await checkUserParticipation(raffleId, userEmail)
+  const { email: userEmail, userId } = await extractUserInfo(event)
+  const userHasParticipated = await checkUserParticipation(raffleId, userId)
 
   logger.info('User participation checked', {
     action: Actions.PARTICIPATION_CHECKED,
     user_has_participated: userHasParticipated,
-    is_authenticated: !!userEmail
+    is_authenticated: !!userId
   })
 
   metrics.addMetric('RaffleRetrieved', MetricUnit.Count, 1)

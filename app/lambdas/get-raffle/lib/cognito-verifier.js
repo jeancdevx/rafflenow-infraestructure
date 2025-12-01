@@ -26,8 +26,9 @@ export async function verifyToken(authHeader) {
   try {
     const payload = await verifier.verify(token)
     const email = payload.email?.toLowerCase()
-    logger.info('Token verified successfully', { email })
-    return email || null
+    const userId = payload.sub
+    logger.info('Token verified successfully', { email, userId })
+    return { email: email || null, userId: userId || null }
   } catch (error) {
     logger.warn('Token verification failed (optional)', {
       error: error.message
