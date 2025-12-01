@@ -263,3 +263,20 @@ module "route53" {
     Project     = "RaffleNow"
   }
 }
+
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  project_name           = "rafflenow"
+  github_org             = "jeancdevx"
+  github_repo            = "rafflenow-infrastructure"
+  aws_region             = var.aws_region
+  terraform_state_bucket = "rafflenow-terraform-state-${data.aws_caller_identity.me.account_id}"
+  terraform_lock_table   = "rafflenow-tfstate-lock"
+  allow_apply            = true
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
