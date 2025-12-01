@@ -1,13 +1,13 @@
 import { logger, metrics } from './lib/powertools.js'
+
 import { handleCloseRaffle } from './handler.js'
 import { getCorsHeaders } from './lib/cors.js'
 import {
-  ValidationError,
-  UnauthorizedError,
+  ErrorCodes,
   ForbiddenError,
   NotFoundError,
-  ConflictError,
-  ErrorCodes
+  UnauthorizedError,
+  ValidationError
 } from './lib/errors.js'
 
 const Actions = {
@@ -25,7 +25,7 @@ const buildResponse = (statusCode, body, corsHeaders) => ({
   body: JSON.stringify(body)
 })
 
-export const handler = async (event) => {
+export const handler = async event => {
   const corsHeaders = getCorsHeaders(event)
 
   logger.info('Close raffle request received', {

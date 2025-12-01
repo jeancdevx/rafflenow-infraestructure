@@ -1,11 +1,14 @@
-import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
+
+import { logger, metrics } from './lib/powertools.js'
+
 import { queryExpiredRaffles } from './lib/repositories/raffle-repository.js'
-import {
-  closeRaffleToProcessing,
-  closeRaffleDirectly
-} from './lib/services/raffle-service.js'
+
 import { publishRaffleClosedEvent } from './lib/services/event-publisher.js'
+import {
+  closeRaffleDirectly,
+  closeRaffleToProcessing
+} from './lib/services/raffle-service.js'
 
 const Actions = {
   RAFFLE_PROCESSING: 'RAFFLE_PROCESSING',
@@ -76,7 +79,7 @@ async function processExpiredRaffle(raffle) {
   }
 }
 
-export async function checkAndCloseExpiredRaffles(scheduledTime) {
+export async function checkAndCloseExpiredRaffles() {
   const now = new Date()
   const targetDate = now.toISOString()
 
