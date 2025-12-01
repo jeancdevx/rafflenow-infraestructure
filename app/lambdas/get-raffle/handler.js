@@ -1,10 +1,14 @@
-import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
+
+import { logger, metrics } from './lib/powertools.js'
+
 import { validateRaffleId } from './lib/validators/raffle-validator.js'
+
 import {
-  getRaffleById,
-  checkUserParticipation
+  checkUserParticipation,
+  getRaffleById
 } from './lib/repositories/raffle-repository.js'
+
 import { extractUserEmail } from './lib/services/auth-service.js'
 import { prepareRaffleResponse } from './lib/services/raffle-formatter.js'
 
