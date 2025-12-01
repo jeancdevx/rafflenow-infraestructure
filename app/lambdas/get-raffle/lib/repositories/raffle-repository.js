@@ -1,7 +1,8 @@
 import { GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb'
+
 import { docClient } from '../clients.js'
-import { logger } from '../powertools.js'
 import { NotFoundError } from '../errors.js'
+import { logger } from '../powertools.js'
 
 const RAFFLES_TABLE = process.env.DYNAMODB_TABLE
 const PARTICIPANTS_TABLE = process.env.DYNAMODB_PARTICIPATIONS_TABLE

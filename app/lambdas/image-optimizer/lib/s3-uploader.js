@@ -1,5 +1,6 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-import { tracer, logger } from './powertools.js'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+
+import { logger, tracer } from './powertools.js'
 
 const s3Client = tracer.captureAWSv3Client(new S3Client({}))
 

@@ -1,13 +1,16 @@
-import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
+
+import { logger, metrics } from './lib/powertools.js'
+
 import {
-  extractClaims,
   ensureIsAdmin,
+  extractClaims,
   getUserEmail
 } from './lib/validators/auth.js'
 import { validateUploadRequest } from './lib/validators/upload-validator.js'
-import { generatePresignedUrl } from './lib/services/s3-service.js'
+
 import { buildUploadResponse } from './lib/services/response-builder.js'
+import { generatePresignedUrl } from './lib/services/s3-service.js'
 
 const Actions = {
   AUTH_VALIDATED: 'AUTH_VALIDATED',

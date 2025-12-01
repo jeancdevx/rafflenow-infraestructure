@@ -1,6 +1,6 @@
 import {
-  validateRaffleId,
-  ensureRaffleIsActive
+  ensureRaffleIsActive,
+  validateRaffleId
 } from '../lib/validators/business-rules.js'
 
 describe('Validación del ID de rifa', () => {

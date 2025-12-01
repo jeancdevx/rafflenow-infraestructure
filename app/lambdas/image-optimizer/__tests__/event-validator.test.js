@@ -1,7 +1,7 @@
 import {
-  validateSqsRecord,
+  generateOptimizedKey,
   isPrizeImage,
-  generateOptimizedKey
+  validateSqsRecord
 } from '../lib/event-validator.js'
 
 describe('Validación de registro SQS', () => {

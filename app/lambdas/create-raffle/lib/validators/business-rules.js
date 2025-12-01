@@ -1,4 +1,4 @@
-import { ValidationError, ErrorCodes } from '../errors.js'
+import { ErrorCodes, ValidationError } from '../errors.js'
 import { logger } from '../powertools.js'
 
 const TITLE_MIN_LENGTH = 10

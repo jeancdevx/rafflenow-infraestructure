@@ -1,10 +1,10 @@
 import {
-  validateRaffleId,
+  ensureNoDuplicateParticipation,
   ensureRaffleExists,
+  ensureRaffleHasCapacity,
   ensureRaffleIsActive,
   ensureRaffleNotExpired,
-  ensureNoDuplicateParticipation,
-  ensureRaffleHasCapacity
+  validateRaffleId
 } from '../lib/validators/business-rules.js'
 
 describe('Validación del ID de rifa', () => {

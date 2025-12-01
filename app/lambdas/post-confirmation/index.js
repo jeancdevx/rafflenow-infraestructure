@@ -1,4 +1,5 @@
 import { logger } from './lib/powertools.js'
+
 import { handlePostConfirmation } from './handler.js'
 
 export const handler = async (event, context) => {

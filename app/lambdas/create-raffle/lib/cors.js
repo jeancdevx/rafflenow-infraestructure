@@ -1,10 +1,10 @@
 const getAllowedOrigins = () => {
   const originsEnv = process.env.CORS_ALLOWED_ORIGINS || '*'
   if (originsEnv === '*') return ['*']
-  return originsEnv.split(',').map((origin) => origin.trim())
+  return originsEnv.split(',').map(origin => origin.trim())
 }
 
-export const getCorsHeaders = (event) => {
+export const getCorsHeaders = event => {
   const allowedOrigins = getAllowedOrigins()
   const requestOrigin = event?.headers?.origin || event?.headers?.Origin || ''
 

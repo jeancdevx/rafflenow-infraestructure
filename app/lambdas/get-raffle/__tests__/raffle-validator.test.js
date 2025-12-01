@@ -1,7 +1,7 @@
 import {
-  validateRaffleId,
+  calculateDaysRemaining,
   calculateParticipationPercentage,
-  calculateDaysRemaining
+  validateRaffleId
 } from '../lib/validators/raffle-validator.js'
 
 describe('Validación del ID de rifa', () => {

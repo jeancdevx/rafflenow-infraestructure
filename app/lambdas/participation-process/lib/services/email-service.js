@@ -1,4 +1,5 @@
-import { SESClient, SendTemplatedEmailCommand } from '@aws-sdk/client-ses'
+import { SendTemplatedEmailCommand, SESClient } from '@aws-sdk/client-ses'
+
 import { logger } from '../powertools.js'
 import { formatCurrency, formatDate } from '../utils.js'
 

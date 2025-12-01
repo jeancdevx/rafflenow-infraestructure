@@ -1,4 +1,4 @@
-import { ValidationError, ErrorCodes } from '../errors.js'
+import { ErrorCodes, ValidationError } from '../errors.js'
 
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',

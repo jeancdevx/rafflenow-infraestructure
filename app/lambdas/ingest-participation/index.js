@@ -1,14 +1,16 @@
-import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
+
+import { logger, metrics } from './lib/powertools.js'
+
 import { handleParticipationRequest } from './handler.js'
 import { getCorsHeaders } from './lib/cors.js'
 import {
-  ValidationError,
-  UnauthorizedError,
+  ConflictError,
+  ErrorCodes,
   ForbiddenError,
   NotFoundError,
-  ConflictError,
-  ErrorCodes
+  UnauthorizedError,
+  ValidationError
 } from './lib/errors.js'
 
 const Actions = {
@@ -26,7 +28,7 @@ const buildResponse = (statusCode, body, corsHeaders) => ({
   body: JSON.stringify(body)
 })
 
-const generateCorrelationId = (event) => {
+const generateCorrelationId = event => {
   return (
     event.headers?.['x-correlation-id'] ||
     event.requestContext?.requestId ||
@@ -34,7 +36,7 @@ const generateCorrelationId = (event) => {
   )
 }
 
-export const handler = async (event) => {
+export const handler = async event => {
   const corsHeaders = getCorsHeaders(event)
   const correlationId = generateCorrelationId(event)
   logger.appendKeys({ correlation_id: correlationId })

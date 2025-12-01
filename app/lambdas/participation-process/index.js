@@ -1,5 +1,7 @@
-import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
+
+import { logger, metrics } from './lib/powertools.js'
+
 import { processParticipation } from './handler.js'
 import { ErrorCodes } from './lib/errors.js'
 
@@ -11,7 +13,7 @@ const Actions = {
   PARTICIPATION_FAILED: 'PARTICIPATION_FAILED'
 }
 
-export const handler = async (event) => {
+export const handler = async event => {
   logger.info('Processing participation batch', {
     action: Actions.BATCH_STARTED,
     batch_size: event.Records.length

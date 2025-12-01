@@ -1,9 +1,9 @@
-import {
-  validateLimit,
-  decodeCursor,
-  encodeCursor
-} from '../lib/validators/pagination-validator.js'
 import { ValidationError } from '../lib/errors.js'
+import {
+  decodeCursor,
+  encodeCursor,
+  validateLimit
+} from '../lib/validators/pagination-validator.js'
 
 describe('validateLimit', () => {
   it('debería retornar 20 por defecto si no se proporciona límite', () => {

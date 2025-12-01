@@ -1,24 +1,28 @@
-import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
+
+import { logger, metrics } from './lib/powertools.js'
+
 import {
+  ensureNotAdmin,
   extractClaims,
   getUserEmail,
-  getUserName,
   getUserId,
-  ensureNotAdmin
+  getUserName
 } from './lib/validators/auth.js'
 import {
-  validateRaffleId,
+  ensureNoDuplicateParticipation,
   ensureRaffleExists,
+  ensureRaffleHasCapacity,
   ensureRaffleIsActive,
   ensureRaffleNotExpired,
-  ensureNoDuplicateParticipation,
-  ensureRaffleHasCapacity
+  validateRaffleId
 } from './lib/validators/business-rules.js'
+
 import {
-  getRaffle,
-  checkExistingParticipation
+  checkExistingParticipation,
+  getRaffle
 } from './lib/repositories/raffle-repository.js'
+
 import { publishParticipationReceivedEvent } from './lib/services/event-publisher.js'
 
 export async function handleParticipationRequest(event, correlationId) {

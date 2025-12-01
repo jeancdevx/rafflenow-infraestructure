@@ -1,7 +1,8 @@
 import { PutEventsCommand } from '@aws-sdk/client-eventbridge'
+
 import { eventBridgeClient } from '../clients.js'
-import { logger } from '../powertools.js'
 import { ErrorCodes } from '../errors.js'
+import { logger } from '../powertools.js'
 
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME
 

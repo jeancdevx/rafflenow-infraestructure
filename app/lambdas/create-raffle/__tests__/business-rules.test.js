@@ -1,12 +1,12 @@
 import {
-  validateTitle,
-  validateDescription,
-  validatePrizeValue,
-  validatePrizeImages,
-  validateDuration,
   calculateCategory,
+  calculateDefaultDuration,
   calculateMaxParticipants,
-  calculateDefaultDuration
+  validateDescription,
+  validateDuration,
+  validatePrizeImages,
+  validatePrizeValue,
+  validateTitle
 } from '../lib/validators/business-rules.js'
 
 describe('Validación del título', () => {

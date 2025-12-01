@@ -1,15 +1,20 @@
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
-import {
-  getRaffle,
-  incrementParticipantCount
-} from './lib/repositories/raffle-repository.js'
+
+import { logger, metrics } from './lib/powertools.js'
+
+import { validateEventDetail } from './lib/validators/event-validator.js'
+
 import {
   checkExistingParticipation,
   createParticipation
 } from './lib/repositories/participation-repository.js'
+import {
+  getRaffle,
+  incrementParticipantCount
+} from './lib/repositories/raffle-repository.js'
+
 import { sendParticipationConfirmation } from './lib/services/email-service.js'
-import { logger, metrics } from './lib/powertools.js'
-import { validateEventDetail } from './lib/validators/event-validator.js'
+
 import { ErrorCodes } from './lib/errors.js'
 
 const Actions = {

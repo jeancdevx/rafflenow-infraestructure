@@ -1,6 +1,6 @@
 import {
-  extractClaims,
   ensureIsAdmin,
+  extractClaims,
   getUserEmail
 } from '../lib/validators/auth.js'
 
