@@ -37,7 +37,7 @@ export async function handleGetRaffle(event) {
     current_participants: raffle.current_participants
   })
 
-  const { email: userEmail, userId } = await extractUserInfo(event)
+  const { userId } = await extractUserInfo(event)
   const userHasParticipated = await checkUserParticipation(raffleId, userId)
 
   logger.info('User participation checked', {
