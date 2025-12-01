@@ -7,6 +7,49 @@ resource "aws_wafv2_web_acl" "regional" {
     allow {}
   }
 
+  dynamic "rule" {
+    for_each = var.origin_verify_header_value != null ? [1] : []
+    content {
+      name     = "RequireOriginVerifyHeader"
+      priority = 0
+
+      action {
+        block {
+          custom_response {
+            response_code            = 403
+            custom_response_body_key = "blocked-direct-access"
+          }
+        }
+      }
+
+      statement {
+        not_statement {
+          statement {
+            byte_match_statement {
+              search_string = var.origin_verify_header_value
+              field_to_match {
+                single_header {
+                  name = "x-origin-verify"
+                }
+              }
+              text_transformation {
+                priority = 0
+                type     = "NONE"
+              }
+              positional_constraint = "EXACTLY"
+            }
+          }
+        }
+      }
+
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "${var.name_prefix}-origin-verify"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
   rule {
     name     = "GeoBlockNonPeru"
     priority = 1
@@ -251,6 +294,15 @@ resource "aws_wafv2_web_acl" "regional" {
     cloudwatch_metrics_enabled = true
     metric_name                = "${var.name_prefix}-waf-regional"
     sampled_requests_enabled   = true
+  }
+
+  dynamic "custom_response_body" {
+    for_each = var.origin_verify_header_value != null ? [1] : []
+    content {
+      key          = "blocked-direct-access"
+      content      = jsonencode({ message = "Direct API access is not allowed. Please use the application." })
+      content_type = "APPLICATION_JSON"
+    }
   }
 
   tags = merge(var.tags, {

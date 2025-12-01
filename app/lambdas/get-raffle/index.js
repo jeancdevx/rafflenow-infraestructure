@@ -2,6 +2,7 @@ import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
 import { handleGetRaffle } from './handler.js'
 import { NotFoundError, ValidationError, ErrorCodes } from './lib/errors.js'
+import { getCorsHeaders } from './lib/cors.js'
 
 const Actions = {
   REQUEST_RECEIVED: 'REQUEST_RECEIVED',
@@ -9,12 +10,9 @@ const Actions = {
   REQUEST_FAILED: 'REQUEST_FAILED'
 }
 
-const CORS_HEADERS = {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*'
-}
-
 export const handler = async (event, context) => {
+  const corsHeaders = getCorsHeaders(event)
+
   try {
     logger.addContext(context)
 
@@ -32,7 +30,7 @@ export const handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: CORS_HEADERS,
+      headers: corsHeaders,
       body: JSON.stringify(result)
     }
   } catch (error) {
@@ -45,7 +43,7 @@ export const handler = async (event, context) => {
       metrics.addMetric('ValidationError', MetricUnit.Count, 1)
       return {
         statusCode: error.statusCode,
-        headers: CORS_HEADERS,
+        headers: corsHeaders,
         body: JSON.stringify({ error: error.message })
       }
     }
@@ -59,7 +57,7 @@ export const handler = async (event, context) => {
       metrics.addMetric('RaffleNotFound', MetricUnit.Count, 1)
       return {
         statusCode: error.statusCode,
-        headers: CORS_HEADERS,
+        headers: corsHeaders,
         body: JSON.stringify({ error: error.message })
       }
     }
@@ -74,7 +72,7 @@ export const handler = async (event, context) => {
 
     return {
       statusCode: 500,
-      headers: CORS_HEADERS,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Internal server error' })
     }
   } finally {

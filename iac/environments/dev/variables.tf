@@ -86,3 +86,15 @@ variable "ses_sender_email" {
   description = "Email address to use as sender for SES (must be verified)"
   type        = string
 }
+
+variable "domain_name" {
+  description = "Primary domain name for the application"
+  type        = string
+  default     = "rafflenow.es"
+}
+
+variable "origin_verify_header_value" {
+  description = "Secret value for X-Origin-Verify header to validate requests come from CloudFront. Generate with: openssl rand -hex 32"
+  type        = string
+  sensitive   = true
+}

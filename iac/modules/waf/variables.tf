@@ -42,6 +42,13 @@ variable "api_gateway_authenticated_arn" {
   type        = string
 }
 
+variable "origin_verify_header_value" {
+  description = "Secret value for X-Origin-Verify header to validate requests come from CloudFront"
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
 variable "tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)

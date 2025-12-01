@@ -1,6 +1,7 @@
 import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
 import { handleImageUpload } from './handler.js'
+import { getCorsHeaders } from './lib/cors.js'
 import {
   ValidationError,
   UnauthorizedError,
@@ -14,16 +15,18 @@ const Actions = {
   REQUEST_FAILED: 'REQUEST_FAILED'
 }
 
-const buildResponse = (statusCode, body) => ({
+const buildResponse = (statusCode, body, corsHeaders) => ({
   statusCode,
   headers: {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*'
+    ...corsHeaders
   },
   body: JSON.stringify(body)
 })
 
 export const handler = async (event, context) => {
+  const corsHeaders = getCorsHeaders(event)
+
   try {
     logger.addContext(context)
 
@@ -39,7 +42,7 @@ export const handler = async (event, context) => {
 
     metrics.publishStoredMetrics()
 
-    return buildResponse(200, result)
+    return buildResponse(200, result, corsHeaders)
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       logger.warn('Unauthorized upload attempt', {
@@ -49,9 +52,13 @@ export const handler = async (event, context) => {
       })
       metrics.addMetric('UnauthorizedAttempt', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
-      return buildResponse(error.statusCode, {
-        message: error.message
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message
+        },
+        corsHeaders
+      )
     }
 
     if (error instanceof ForbiddenError) {
@@ -62,9 +69,13 @@ export const handler = async (event, context) => {
       })
       metrics.addMetric('ForbiddenAttempt', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
-      return buildResponse(error.statusCode, {
-        message: error.message
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message
+        },
+        corsHeaders
+      )
     }
 
     if (error instanceof ValidationError) {
@@ -75,11 +86,15 @@ export const handler = async (event, context) => {
       })
       metrics.addMetric('ValidationError', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
-      return buildResponse(error.statusCode, {
-        message: 'Validation error',
-        error: error.message,
-        ...error.details
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: 'Validation error',
+          error: error.message,
+          ...error.details
+        },
+        corsHeaders
+      )
     }
 
     logger.error('Error generating presigned URL', {
@@ -92,9 +107,13 @@ export const handler = async (event, context) => {
     metrics.addMetric('PresignedUrlError', MetricUnit.Count, 1)
     metrics.publishStoredMetrics()
 
-    return buildResponse(500, {
-      message: 'Error generating presigned URL',
-      error: error.message
-    })
+    return buildResponse(
+      500,
+      {
+        message: 'Error generating presigned URL',
+        error: error.message
+      },
+      corsHeaders
+    )
   }
 }

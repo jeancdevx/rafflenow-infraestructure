@@ -1,8 +1,17 @@
-# Lambda: list-raffles
 data "archive_file" "list_raffles_zip" {
   type        = "zip"
   source_dir  = "${path.root}/../../../app/lambdas/list-raffles"
   output_path = "${path.module}/../../../app/lambdas/list-raffles.zip"
+}
+
+locals {
+  production_origins = var.domain_name != null ? ["https://${var.domain_name}", "https://www.${var.domain_name}"] : []
+
+  all_cors_origins = concat(local.production_origins, var.cors_allowed_origins)
+
+  cors_allowed_origins = join(",", local.all_cors_origins)
+
+  cloudfront_url = var.domain_name != null ? "https://${var.domain_name}" : var.cloudfront_distribution_domain_name != null ? "https://${var.cloudfront_distribution_domain_name}" : ""
 }
 
 resource "aws_lambda_function" "list_raffles" {
@@ -17,7 +26,8 @@ resource "aws_lambda_function" "list_raffles" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE = var.dynamodb_table_name
+      DYNAMODB_TABLE       = var.dynamodb_table_name
+      CORS_ALLOWED_ORIGINS = local.cors_allowed_origins
     }
   }
 
@@ -46,8 +56,9 @@ resource "aws_lambda_function" "create_raffle" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE = var.dynamodb_table_name
-      EVENT_BUS_NAME = var.event_bus_name
+      DYNAMODB_TABLE       = var.dynamodb_table_name
+      EVENT_BUS_NAME       = var.event_bus_name
+      CORS_ALLOWED_ORIGINS = local.cors_allowed_origins
     }
   }
 
@@ -80,6 +91,7 @@ resource "aws_lambda_function" "get_raffle" {
       DYNAMODB_PARTICIPATIONS_TABLE = var.dynamodb_participations_table_name
       COGNITO_USER_POOL_ID          = var.cognito_user_pool_id
       COGNITO_CLIENT_ID             = var.cognito_client_id
+      CORS_ALLOWED_ORIGINS          = local.cors_allowed_origins
     }
   }
 
@@ -111,6 +123,7 @@ resource "aws_lambda_function" "ingest_participation" {
       DYNAMODB_RAFFLES_TABLE        = var.dynamodb_table_name
       DYNAMODB_PARTICIPATIONS_TABLE = var.dynamodb_participations_table_name
       EVENT_BUS_NAME                = var.event_bus_name
+      CORS_ALLOWED_ORIGINS          = local.cors_allowed_origins
     }
   }
 
@@ -142,6 +155,7 @@ resource "aws_lambda_function" "close_raffle" {
       DYNAMODB_RAFFLES_TABLE = var.dynamodb_table_name
       SQS_QUEUE_URL          = var.sqs_queue_url
       EVENT_BUS_NAME         = var.event_bus_name
+      CORS_ALLOWED_ORIGINS   = local.cors_allowed_origins
     }
   }
 
@@ -279,8 +293,9 @@ resource "aws_lambda_function" "upload_image" {
 
   environment {
     variables = {
-      S3_BUCKET_NAME = var.s3_assets_bucket_name
-      CLOUDFRONT_URL = var.cloudfront_url
+      S3_BUCKET_NAME       = var.s3_assets_bucket_name
+      CLOUDFRONT_URL       = local.cloudfront_url
+      CORS_ALLOWED_ORIGINS = local.cors_allowed_origins
     }
   }
 
@@ -343,7 +358,7 @@ resource "aws_lambda_function" "image_optimizer" {
   environment {
     variables = {
       S3_BUCKET_NAME         = var.s3_assets_bucket_name
-      CLOUDFRONT_URL         = var.cloudfront_url
+      CLOUDFRONT_URL         = local.cloudfront_url
       DYNAMODB_RAFFLES_TABLE = var.dynamodb_table_name
     }
   }

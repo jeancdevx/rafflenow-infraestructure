@@ -8,11 +8,16 @@ output "public_api_url" {
   value       = aws_api_gateway_stage.public_api_stage.invoke_url
 }
 
+output "public_api_domain" {
+  description = "Domain name of the Public API Gateway (without protocol)"
+  value       = "${aws_api_gateway_rest_api.public_api.id}.execute-api.${data.aws_region.current.id}.amazonaws.com"
+}
+
 output "public_api_endpoints" {
-  description = "Public API endpoints"
+  description = "Public API endpoints (via CloudFront)"
   value = {
-    list_raffles = "${aws_api_gateway_stage.public_api_stage.invoke_url}/api/v1/raffles"
-    get_raffle   = "${aws_api_gateway_stage.public_api_stage.invoke_url}/api/v1/raffles/{id}"
+    list_raffles = "/api/v1/public/raffles"
+    get_raffle   = "/api/v1/public/raffles/{id}"
   }
 }
 
@@ -26,28 +31,33 @@ output "authenticated_api_url" {
   value       = aws_api_gateway_stage.authenticated_api_stage.invoke_url
 }
 
+output "authenticated_api_domain" {
+  description = "Domain name of the Authenticated API Gateway (without protocol)"
+  value       = "${aws_api_gateway_rest_api.authenticated_api.id}.execute-api.${data.aws_region.current.id}.amazonaws.com"
+}
+
 output "authenticated_api_endpoints" {
-  description = "Authenticated API endpoints"
+  description = "Authenticated API endpoints (via CloudFront)"
   value = {
-    create_raffle = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles"
-    participate   = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles/{id}/participate"
-    close_raffle  = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles/{id}/close"
-    upload_image  = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/assets/upload"
+    create_raffle = "/api/v1/raffles"
+    participate   = "/api/v1/raffles/{id}/participate"
+    close_raffle  = "/api/v1/raffles/{id}/close"
+    upload_image  = "/api/v1/assets/upload"
   }
 }
 
 output "api_endpoints" {
-  description = "All API endpoints (public and authenticated)"
+  description = "All API endpoints (via CloudFront)"
   value = {
     public = {
-      list_raffles = "${aws_api_gateway_stage.public_api_stage.invoke_url}/api/v1/raffles"
-      get_raffle   = "${aws_api_gateway_stage.public_api_stage.invoke_url}/api/v1/raffles/{id}"
+      list_raffles = "/api/v1/public/raffles"
+      get_raffle   = "/api/v1/public/raffles/{id}"
     }
     authenticated = {
-      create_raffle = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles"
-      participate   = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles/{id}/participate"
-      close_raffle  = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/raffles/{id}/close"
-      upload_image  = "${aws_api_gateway_stage.authenticated_api_stage.invoke_url}/api/v1/assets/upload"
+      create_raffle = "/api/v1/raffles"
+      participate   = "/api/v1/raffles/{id}/participate"
+      close_raffle  = "/api/v1/raffles/{id}/close"
+      upload_image  = "/api/v1/assets/upload"
     }
   }
 }

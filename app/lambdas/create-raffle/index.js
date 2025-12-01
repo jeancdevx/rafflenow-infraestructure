@@ -8,6 +8,7 @@ import {
   ConflictError,
   ErrorCodes
 } from './lib/errors.js'
+import { getCorsHeaders } from './lib/cors.js'
 
 const Actions = {
   REQUEST_RECEIVED: 'REQUEST_RECEIVED',
@@ -15,16 +16,15 @@ const Actions = {
   REQUEST_FAILED: 'REQUEST_FAILED'
 }
 
-const buildResponse = (statusCode, body) => ({
+const buildResponse = (statusCode, body, corsHeaders) => ({
   statusCode,
-  headers: {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*'
-  },
+  headers: corsHeaders,
   body: JSON.stringify(body)
 })
 
 export const handler = async (event, context) => {
+  const corsHeaders = getCorsHeaders(event)
+
   try {
     logger.addContext(context)
 
@@ -43,10 +43,14 @@ export const handler = async (event, context) => {
 
     metrics.publishStoredMetrics()
 
-    return buildResponse(201, {
-      message: 'Raffle created successfully',
-      raffle: raffle
-    })
+    return buildResponse(
+      201,
+      {
+        message: 'Raffle created successfully',
+        raffle: raffle
+      },
+      corsHeaders
+    )
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       logger.warn('Unauthorized attempt', {
@@ -56,9 +60,13 @@ export const handler = async (event, context) => {
       })
       metrics.addMetric('UnauthorizedAttempt', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
-      return buildResponse(error.statusCode, {
-        message: error.message
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message
+        },
+        corsHeaders
+      )
     }
 
     if (error instanceof ForbiddenError) {
@@ -69,9 +77,13 @@ export const handler = async (event, context) => {
       })
       metrics.addMetric('ForbiddenAttempt', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
-      return buildResponse(error.statusCode, {
-        message: error.message
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message
+        },
+        corsHeaders
+      )
     }
 
     if (error instanceof ValidationError) {
@@ -82,11 +94,15 @@ export const handler = async (event, context) => {
       })
       metrics.addMetric('ValidationError', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
-      return buildResponse(error.statusCode, {
-        message: 'Validation error',
-        error: error.message,
-        ...error.details
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: 'Validation error',
+          error: error.message,
+          ...error.details
+        },
+        corsHeaders
+      )
     }
 
     if (error instanceof ConflictError) {
@@ -97,9 +113,13 @@ export const handler = async (event, context) => {
       })
       metrics.addMetric('ConflictError', MetricUnit.Count, 1)
       metrics.publishStoredMetrics()
-      return buildResponse(error.statusCode, {
-        message: error.message
-      })
+      return buildResponse(
+        error.statusCode,
+        {
+          message: error.message
+        },
+        corsHeaders
+      )
     }
 
     logger.error('Error creating raffle', {
@@ -112,9 +132,13 @@ export const handler = async (event, context) => {
     metrics.addMetric('CreateRaffleError', MetricUnit.Count, 1)
     metrics.publishStoredMetrics()
 
-    return buildResponse(500, {
-      message: 'Error creating raffle',
-      error: error.message
-    })
+    return buildResponse(
+      500,
+      {
+        message: 'Error creating raffle',
+        error: error.message
+      },
+      corsHeaders
+    )
   }
 }

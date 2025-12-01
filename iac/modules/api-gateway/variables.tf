@@ -20,10 +20,26 @@ variable "cloudfront_url" {
   default     = ""
 }
 
+variable "domain_name" {
+  description = "Custom domain name for CORS (e.g., rafflenow.es)"
+  type        = string
+  default     = null
+}
+
+variable "origin_verify_header_value" {
+  description = "Secret value for X-Origin-Verify header to validate requests come from CloudFront"
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
 variable "cognito_user_pool_arn" {
   description = "ARN of the Cognito User Pool for authorization"
   type        = string
 }
+
+# Data source for current region
+data "aws_region" "current" {}
 
 variable "list_raffles_invoke_arn" {
   description = "Invoke ARN of the list raffles Lambda function"

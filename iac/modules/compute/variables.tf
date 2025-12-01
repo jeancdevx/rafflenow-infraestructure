@@ -58,9 +58,22 @@ variable "s3_assets_bucket_name" {
   type        = string
 }
 
-variable "cloudfront_url" {
-  description = "CloudFront distribution URL"
+variable "domain_name" {
+  description = "Custom domain name for CORS and CloudFront URL (e.g., rafflenow.es)"
   type        = string
+  default     = null
+}
+
+variable "cloudfront_distribution_domain_name" {
+  description = "CloudFront distribution domain name (e.g., d123abc.cloudfront.net). Only needed when domain_name is not set."
+  type        = string
+  default     = null
+}
+
+variable "cors_allowed_origins" {
+  description = "List of allowed origins for CORS (includes localhost for development)"
+  type        = list(string)
+  default     = ["http://localhost:5173", "http://localhost:3000"]
 }
 
 variable "cognito_user_pool_id" {

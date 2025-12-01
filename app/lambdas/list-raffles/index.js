@@ -2,6 +2,7 @@ import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
 import { handleListRaffles } from './handler.js'
 import { ValidationError, ErrorCodes } from './lib/errors.js'
+import { getCorsHeaders } from './lib/cors.js'
 
 const Actions = {
   REQUEST_RECEIVED: 'REQUEST_RECEIVED',
@@ -10,6 +11,8 @@ const Actions = {
 }
 
 export const handler = async (event, context) => {
+  const corsHeaders = getCorsHeaders(event)
+
   try {
     logger.addContext(context)
 
@@ -33,10 +36,7 @@ export const handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Raffles retrieved successfully',
         ...result
@@ -53,10 +53,7 @@ export const handler = async (event, context) => {
       metrics.publishStoredMetrics()
       return {
         statusCode: error.statusCode,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
+        headers: corsHeaders,
         body: JSON.stringify({
           message: 'Validation error',
           error: error.message,
@@ -77,10 +74,7 @@ export const handler = async (event, context) => {
 
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Error retrieving raffles',
         error: error.message
