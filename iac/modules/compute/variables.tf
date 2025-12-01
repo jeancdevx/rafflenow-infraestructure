@@ -91,6 +91,11 @@ variable "event_bus_name" {
   type        = string
 }
 
+variable "event_bus_arn" {
+  description = "ARN of the EventBridge custom event bus"
+  type        = string
+}
+
 variable "ses_sender_email" {
   description = "Verified SES sender email address"
   type        = string

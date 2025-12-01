@@ -26,6 +26,8 @@ resource "aws_api_gateway_deployment" "public_api_deployment" {
 }
 
 resource "aws_api_gateway_stage" "public_api_stage" {
+  #checkov:skip=CKV_AWS_120:API Gateway caching disabled - responses are dynamic and cache handled at CloudFront layer
+  #checkov:skip=CKV2_AWS_29:WAF association exists in waf/associations.tf - Checkov cannot trace cross-module relationships
   rest_api_id   = aws_api_gateway_rest_api.public_api.id
   deployment_id = aws_api_gateway_deployment.public_api_deployment.id
   stage_name    = var.environment
@@ -60,4 +62,16 @@ resource "aws_api_gateway_stage" "public_api_stage" {
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-public-api-${var.environment}"
   })
+}
+
+resource "aws_api_gateway_method_settings" "public_all" {
+  rest_api_id = aws_api_gateway_rest_api.public_api.id
+  stage_name  = aws_api_gateway_stage.public_api_stage.stage_name
+  method_path = "*/*"
+
+  settings {
+    logging_level      = "INFO"
+    metrics_enabled    = true
+    data_trace_enabled = false
+  }
 }

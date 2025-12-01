@@ -1,3 +1,5 @@
+#checkov:skip=CKV_AWS_119:AWS-owned encryption is sufficient - no compliance requirement for CMK
+
 resource "aws_dynamodb_table" "raffles" {
   name         = "${var.name_prefix}-raffles"
   billing_mode = "PAY_PER_REQUEST"
@@ -23,6 +25,10 @@ resource "aws_dynamodb_table" "raffles" {
     hash_key        = "status"
     range_key       = "end_date"
     projection_type = "ALL"
+  }
+
+  point_in_time_recovery {
+    enabled = true
   }
 
   tags = merge(var.tags, {
@@ -75,6 +81,10 @@ resource "aws_dynamodb_table" "participations" {
     projection_type = "ALL"
   }
 
+  point_in_time_recovery {
+    enabled = true
+  }
+
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-participations-table"
     Type = "DynamoDB"
@@ -100,6 +110,10 @@ resource "aws_dynamodb_table" "winners" {
     name            = "UserIdIndex"
     hash_key        = "user_id"
     projection_type = "ALL"
+  }
+
+  point_in_time_recovery {
+    enabled = true
   }
 
   tags = merge(var.tags, {

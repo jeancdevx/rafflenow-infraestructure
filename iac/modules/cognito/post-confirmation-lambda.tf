@@ -44,6 +44,11 @@ resource "aws_iam_role_policy_attachment" "post_confirmation_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "post_confirmation_xray" {
+  role       = aws_iam_role.post_confirmation_lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "post_confirmation_cognito" {
   role       = aws_iam_role.post_confirmation_lambda_role.name
   policy_arn = aws_iam_policy.post_confirmation_cognito_policy.arn
@@ -57,6 +62,11 @@ data "archive_file" "post_confirmation_zip" {
 }
 
 resource "aws_lambda_function" "post_confirmation" {
+  #checkov:skip=CKV_AWS_115:Cognito trigger, low frequency function
+  #checkov:skip=CKV_AWS_116:Cognito trigger Lambda - DLQ not applicable for synchronous Cognito triggers
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses Cognito via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.post_confirmation_zip.output_path
   function_name    = "${var.name_prefix}-post-confirmation"
   role             = aws_iam_role.post_confirmation_lambda_role.arn
@@ -65,6 +75,10 @@ resource "aws_lambda_function" "post_confirmation" {
   runtime          = "nodejs22.x"
   timeout          = 5
   memory_size      = 128
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {

@@ -35,7 +35,7 @@ resource "aws_iam_role_policy" "api_gateway_cloudwatch" {
           "logs:GetLogEvents",
           "logs:FilterLogEvents"
         ]
-        Resource = "*"
+        Resource = "arn:aws:logs:*:*:log-group:/aws/api-gateway/${var.name_prefix}-*"
       }
     ]
   })
@@ -46,6 +46,9 @@ resource "aws_api_gateway_account" "main" {
 
   depends_on = [aws_iam_role_policy.api_gateway_cloudwatch]
 }
+
+#checkov:skip=CKV_AWS_338:30 day retention sufficient - no compliance requirement for 1 year
+#checkov:skip=CKV_AWS_158:KMS encryption not required - logs contain no sensitive data
 
 resource "aws_cloudwatch_log_group" "public_api_access_logs" {
   name              = "/aws/api-gateway/${var.name_prefix}-public-api-${var.environment}/access-logs"

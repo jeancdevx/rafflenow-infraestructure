@@ -53,6 +53,11 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_xray" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "lambda_dynamodb" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = aws_iam_policy.lambda_dynamodb_policy.arn
@@ -72,7 +77,11 @@ resource "aws_iam_policy" "lambda_sqs_policy" {
           "sqs:DeleteMessage",
           "sqs:GetQueueAttributes",
         ]
-        Resource = "*"
+        Resource = [
+          var.sqs_queue_arn,
+          var.sqs_participations_queue_arn,
+          var.sqs_image_optimizer_queue_arn
+        ]
       }
     ]
   })
@@ -118,7 +127,7 @@ resource "aws_iam_policy" "lambda_eventbridge_policy" {
         Action = [
           "events:PutEvents",
         ]
-        Resource = "*"
+        Resource = var.event_bus_arn
       }
     ]
   })
@@ -130,6 +139,8 @@ resource "aws_iam_role_policy_attachment" "lambda_eventbridge" {
 }
 
 resource "aws_iam_policy" "lambda_ses_policy" {
+  #checkov:skip=CKV_AWS_355:SES SendEmail/SendTemplatedEmail actions do not support resource-level permissions
+  #checkov:skip=CKV_AWS_290:SES SendEmail/SendTemplatedEmail actions do not support resource-level permissions
   name = "${var.name_prefix}-lambda-ses-policy"
 
   policy = jsonencode({
