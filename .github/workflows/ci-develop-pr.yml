@@ -145,7 +145,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend-config="profile="
 
       - name: Terraform Plan
         id: plan
