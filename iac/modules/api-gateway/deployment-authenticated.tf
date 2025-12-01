@@ -36,6 +36,8 @@ resource "aws_api_gateway_deployment" "authenticated_api_deployment" {
 }
 
 resource "aws_api_gateway_stage" "authenticated_api_stage" {
+  #checkov:skip=CKV_AWS_120:API Gateway caching disabled - authenticated responses must not be cached
+  #checkov:skip=CKV2_AWS_29:WAF association exists in waf/associations.tf - Checkov cannot trace cross-module relationships
   rest_api_id   = aws_api_gateway_rest_api.authenticated_api.id
   deployment_id = aws_api_gateway_deployment.authenticated_api_deployment.id
   stage_name    = var.environment
@@ -72,4 +74,16 @@ resource "aws_api_gateway_stage" "authenticated_api_stage" {
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-authenticated-api-${var.environment}"
   })
+}
+
+resource "aws_api_gateway_method_settings" "authenticated_all" {
+  rest_api_id = aws_api_gateway_rest_api.authenticated_api.id
+  stage_name  = aws_api_gateway_stage.authenticated_api_stage.stage_name
+  method_path = "*/*"
+
+  settings {
+    logging_level      = "INFO"
+    metrics_enabled    = true
+    data_trace_enabled = false
+  }
 }

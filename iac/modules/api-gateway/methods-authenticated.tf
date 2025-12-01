@@ -39,6 +39,7 @@ resource "aws_api_gateway_method" "authenticated_post_assets_upload" {
 }
 
 resource "aws_api_gateway_method" "authenticated_options_raffles" {
+  #checkov:skip=CKV_AWS_59:CORS preflight OPTIONS requests do not require authorization
   rest_api_id   = aws_api_gateway_rest_api.authenticated_api.id
   resource_id   = aws_api_gateway_resource.authenticated_raffles.id
   http_method   = "OPTIONS"
@@ -46,6 +47,7 @@ resource "aws_api_gateway_method" "authenticated_options_raffles" {
 }
 
 resource "aws_api_gateway_method" "authenticated_options_participate" {
+  #checkov:skip=CKV_AWS_59:CORS preflight OPTIONS requests do not require authorization
   rest_api_id   = aws_api_gateway_rest_api.authenticated_api.id
   resource_id   = aws_api_gateway_resource.authenticated_participate.id
   http_method   = "OPTIONS"
@@ -53,6 +55,7 @@ resource "aws_api_gateway_method" "authenticated_options_participate" {
 }
 
 resource "aws_api_gateway_method" "authenticated_options_close" {
+  #checkov:skip=CKV_AWS_59:CORS preflight OPTIONS requests do not require authorization
   rest_api_id   = aws_api_gateway_rest_api.authenticated_api.id
   resource_id   = aws_api_gateway_resource.authenticated_close.id
   http_method   = "OPTIONS"
@@ -60,6 +63,7 @@ resource "aws_api_gateway_method" "authenticated_options_close" {
 }
 
 resource "aws_api_gateway_method" "authenticated_options_assets_upload" {
+  #checkov:skip=CKV_AWS_59:CORS preflight OPTIONS requests do not require authorization
   rest_api_id   = aws_api_gateway_rest_api.authenticated_api.id
   resource_id   = aws_api_gateway_resource.authenticated_assets_upload.id
   http_method   = "OPTIONS"

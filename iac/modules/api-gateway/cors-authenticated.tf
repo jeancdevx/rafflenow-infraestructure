@@ -1,6 +1,4 @@
 locals {
-  # En desarrollo permitimos cualquier origen, en producción solo CloudFront
-  # Para producción estricta, cambiar a: cors_origin = var.cloudfront_url
   cors_origin = "*"
 }
 
