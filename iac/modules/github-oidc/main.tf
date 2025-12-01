@@ -93,7 +93,9 @@ resource "aws_iam_role_policy" "terraform_permissions" {
           "lambda:GetFunctionConfiguration",
           "lambda:GetPolicy",
           "lambda:ListVersionsByFunction",
-          "lambda:GetFunctionCodeSigningConfig"
+          "lambda:GetFunctionCodeSigningConfig",
+          "lambda:GetEventSourceMapping",
+          "lambda:ListEventSourceMappings"
         ]
         Resource = "*"
       },
@@ -132,7 +134,8 @@ resource "aws_iam_role_policy" "terraform_permissions" {
           "s3:GetEncryptionConfiguration",
           "s3:GetBucketPublicAccessBlock",
           "s3:GetBucketOwnershipControls",
-          "s3:GetBucketNotification"
+          "s3:GetBucketNotification",
+          "s3:GetAccelerateConfiguration"
         ]
         Resource = "*"
       },
@@ -217,7 +220,8 @@ resource "aws_iam_role_policy" "terraform_permissions" {
         Action = [
           "wafv2:GetWebACL",
           "wafv2:ListTagsForResource",
-          "wafv2:GetLoggingConfiguration"
+          "wafv2:GetLoggingConfiguration",
+          "wafv2:GetWebACLForResource"
         ]
         Resource = "*"
       },
@@ -228,7 +232,8 @@ resource "aws_iam_role_policy" "terraform_permissions" {
           "route53:GetHostedZone",
           "route53:ListResourceRecordSets",
           "route53:ListHostedZones",
-          "route53:ListHostedZonesByName"
+          "route53:ListHostedZonesByName",
+          "route53:ListTagsForResource"
         ]
         Resource = "*"
       },
@@ -257,7 +262,8 @@ resource "aws_iam_role_policy" "terraform_permissions" {
         Effect = "Allow"
         Action = [
           "cloudwatch:DescribeAlarms",
-          "cloudwatch:ListTagsForResource"
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:DescribeInsightRules"
         ]
         Resource = "*"
       }
@@ -314,7 +320,10 @@ resource "aws_iam_role_policy" "terraform_apply_permissions" {
           "lambda:CreateAlias",
           "lambda:DeleteAlias",
           "lambda:UpdateAlias",
-          "lambda:PutFunctionConcurrency"
+          "lambda:PutFunctionConcurrency",
+          "lambda:CreateEventSourceMapping",
+          "lambda:DeleteEventSourceMapping",
+          "lambda:UpdateEventSourceMapping"
         ]
         Resource = "*"
       },
@@ -527,7 +536,11 @@ resource "aws_iam_role_policy" "terraform_apply_permissions" {
           "cloudwatch:PutMetricAlarm",
           "cloudwatch:DeleteAlarms",
           "cloudwatch:TagResource",
-          "cloudwatch:UntagResource"
+          "cloudwatch:UntagResource",
+          "cloudwatch:PutInsightRule",
+          "cloudwatch:DeleteInsightRules",
+          "cloudwatch:EnableInsightRules",
+          "cloudwatch:DisableInsightRules"
         ]
         Resource = "*"
       }
@@ -536,4 +549,3 @@ resource "aws_iam_role_policy" "terraform_apply_permissions" {
 }
 
 data "aws_caller_identity" "current" {}
-
