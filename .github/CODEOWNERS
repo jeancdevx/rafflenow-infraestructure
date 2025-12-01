@@ -1,0 +1,18 @@
+# Default - Todo el repo
+* @jeancdevx
+
+# Infraestructura
+/iac/ @jeancdevx
+
+# Lambdas
+/app/lambdas/worker-process/ @jeancdevx
+/app/lambdas/participation-process/ @jeancdevx
+/app/lambdas/close-raffle/ @jeancdevx
+
+# CI/CD
+/.github/ @jeancdevx
+
+# Configuración de seguridad
+/iac/modules/waf/ @jeancdevx
+/iac/modules/cognito/ @jeancdevx
+/iac/modules/github-oidc/ @jeancdevx
