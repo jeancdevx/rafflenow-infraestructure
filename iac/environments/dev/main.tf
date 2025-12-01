@@ -21,6 +21,16 @@ module "cdn" {
   assets_bucket_regional_domain_name = module.storage.s3_assets_bucket_regional_domain_name
   web_acl_id                         = module.waf.cloudfront_web_acl_arn
 
+  # API Gateway origins for CloudFront
+  api_gateway_public_domain        = module.api_gateway.public_api_domain
+  api_gateway_public_stage         = module.api_gateway.public_api_stage_name
+  api_gateway_authenticated_domain = module.api_gateway.authenticated_api_domain
+  api_gateway_authenticated_stage  = module.api_gateway.authenticated_api_stage_name
+  origin_verify_header_value       = var.origin_verify_header_value
+
+  domain_name         = var.domain_name
+  acm_certificate_arn = module.route53.cloudfront_certificate_arn
+
   tags = {
     Environment = var.environment
     Project     = "RaffleNow"
@@ -41,7 +51,8 @@ module "compute" {
   sqs_image_optimizer_queue_arn      = module.storage.sqs_image_optimizer_queue_arn
   s3_assets_bucket_arn               = module.storage.s3_assets_bucket_arn
   s3_assets_bucket_name              = module.storage.s3_assets_bucket_id
-  cloudfront_url                     = module.cdn.cloudfront_distribution_url
+  domain_name                        = var.domain_name
+  cors_allowed_origins               = ["http://localhost:5173", "http://localhost:3000"]
   cognito_user_pool_id               = module.cognito.user_pool_id
   cognito_client_id                  = module.cognito.user_pool_client_id
   event_bus_name                     = module.eventbridge.event_bus_name
@@ -93,7 +104,9 @@ module "api_gateway" {
 
   cognito_user_pool_arn = module.cognito.user_pool_arn
 
-  cloudfront_url = module.cdn.cloudfront_distribution_url
+  # CloudFront URL no longer needed - CORS is handled in Lambdas and API Gateway uses domain_name
+  domain_name                = var.domain_name
+  origin_verify_header_value = var.origin_verify_header_value
 
   tags = {
     Environment = var.environment
@@ -163,6 +176,7 @@ module "waf" {
   rate_limit_auth               = 25
   api_gateway_public_arn        = module.api_gateway.public_api_stage_arn
   api_gateway_authenticated_arn = module.api_gateway.authenticated_api_stage_arn
+  origin_verify_header_value    = var.origin_verify_header_value
 
   tags = {
     Environment = var.environment
@@ -215,6 +229,32 @@ module "monitoring" {
   cloudfront_distribution_id = module.cdn.cloudfront_distribution_id
   cognito_user_pool_id       = module.cognito.user_pool_id
   s3_assets_bucket_name      = module.storage.s3_assets_bucket_name
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
+
+module "route53" {
+  source = "../../modules/route53"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  domain_name = var.domain_name
+  environment = var.environment
+
+  cloudfront_distribution_domain_name = module.cdn.cloudfront_domain_name
+
+  api_gateway_public_id                = module.api_gateway.public_api_id
+  api_gateway_public_stage_name        = module.api_gateway.public_api_stage_name
+  api_gateway_authenticated_id         = module.api_gateway.authenticated_api_id
+  api_gateway_authenticated_stage_name = module.api_gateway.authenticated_api_stage_name
+
+  cognito_domain = module.cognito.user_pool_domain
 
   tags = {
     Environment = var.environment
