@@ -1,6 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { EventBridgeClient } from '@aws-sdk/client-eventbridge'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+
 import { tracer } from './powertools.js'
 
 const dynamoClient = new DynamoDBClient({})

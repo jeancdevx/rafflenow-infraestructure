@@ -1,4 +1,5 @@
 import sharp from 'sharp'
+
 import { logger } from './powertools.js'
 
 const MAX_WIDTH = 1200

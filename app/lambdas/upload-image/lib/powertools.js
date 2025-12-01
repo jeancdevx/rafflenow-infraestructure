@@ -1,6 +1,6 @@
 import { Logger } from '@aws-lambda-powertools/logger'
-import { Tracer } from '@aws-lambda-powertools/tracer'
 import { Metrics } from '@aws-lambda-powertools/metrics'
+import { Tracer } from '@aws-lambda-powertools/tracer'
 
 const logger = new Logger({
   serviceName: 'upload-image',

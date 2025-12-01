@@ -1,4 +1,4 @@
-import { ValidationError, ErrorCodes } from '../errors.js'
+import { ErrorCodes, ValidationError } from '../errors.js'
 
 export function validateRaffleId(event) {
   const raffleId = event.pathParameters?.id

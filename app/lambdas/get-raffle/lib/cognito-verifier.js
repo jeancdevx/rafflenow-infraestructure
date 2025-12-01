@@ -1,4 +1,5 @@
 import { CognitoJwtVerifier } from 'aws-jwt-verify'
+
 import { logger } from './powertools.js'
 
 const USER_POOL_ID = process.env.COGNITO_USER_POOL_ID

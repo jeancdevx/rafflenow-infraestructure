@@ -1,0 +1,59 @@
+name: Auto PR - Develop to QA
+
+on:
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  create-pr:
+    name: Create PR to QA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Check if PR already exists
+        id: check-pr
+        run: |
+          PR_EXISTS=$(gh pr list --base qa --head develop --json number --jq 'length')
+          echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request
+        if: steps.check-pr.outputs.pr_exists == '0'
+        run: |
+          gh pr create \
+            --base qa \
+            --head develop \
+            --title "Auto PR: develop → qa" \
+            --body "## Automatic PR from develop to qa
+
+          This PR was automatically created after a merge to develop.
+
+          ### Checklist before merge:
+          - [ ] All CI checks pass
+          - [ ] SonarCloud analysis passes
+          - [ ] Unit tests pass
+
+          ### What's included:
+          $(git log qa..develop --oneline --pretty=format:'- %s' 2>/dev/null || echo 'First PR to qa')
+
+          ---
+          *This PR will auto-merge when all checks pass.*"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        if: steps.check-pr.outputs.pr_exists == '0'
+        run: |
+          PR_NUMBER=$(gh pr list --base qa --head develop --json number --jq '.[0].number')
+          gh pr merge $PR_NUMBER --auto --squash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

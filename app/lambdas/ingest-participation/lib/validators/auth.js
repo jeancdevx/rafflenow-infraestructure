@@ -1,4 +1,4 @@
-import { UnauthorizedError, ForbiddenError, ErrorCodes } from '../errors.js'
+import { ErrorCodes, ForbiddenError, UnauthorizedError } from '../errors.js'
 
 export function extractClaims(event) {
   const claims = event.requestContext?.authorizer?.claims

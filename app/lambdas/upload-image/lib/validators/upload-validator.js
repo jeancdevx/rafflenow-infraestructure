@@ -1,4 +1,4 @@
-import { ValidationError, ErrorCodes } from '../errors.js'
+import { ErrorCodes, ValidationError } from '../errors.js'
 
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
@@ -10,7 +10,7 @@ const ALLOWED_MIME_TYPES = [
 
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif']
 
-const MAX_FILE_SIZE_MB = 10
+const MAX_FILE_SIZE_MB = 20
 
 export function validateUploadRequest(body) {
   const { fileName, fileType, fileSize } = body

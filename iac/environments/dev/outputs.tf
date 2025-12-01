@@ -73,5 +73,11 @@ output "infrastructure" {
       zone_id      = module.route53.zone_id
       frontend_url = "https://${var.domain_name}"
     }
+
+    github_actions = {
+      role_arn          = module.github_oidc.role_arn
+      role_name         = module.github_oidc.role_name
+      oidc_provider_arn = module.github_oidc.oidc_provider_arn
+    }
   }
 }

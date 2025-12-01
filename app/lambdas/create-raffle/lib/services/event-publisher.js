@@ -1,4 +1,5 @@
 import { PutEventsCommand } from '@aws-sdk/client-eventbridge'
+
 import { eventBridgeClient } from '../clients.js'
 import { logger } from '../powertools.js'
 

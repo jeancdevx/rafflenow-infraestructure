@@ -1,17 +1,21 @@
-import { logger, metrics } from './lib/powertools.js'
 import { MetricUnit } from '@aws-lambda-powertools/metrics'
+
+import { logger, metrics } from './lib/powertools.js'
+
 import {
-  extractClaims,
   ensureIsAdmin,
+  extractClaims,
   getUserId
 } from './lib/validators/auth.js'
 import {
-  validateRaffleId,
-  ensureRaffleIsActive
+  ensureRaffleIsActive,
+  validateRaffleId
 } from './lib/validators/business-rules.js'
+
 import { getRaffle } from './lib/repositories/raffle-repository.js'
-import { closeRaffle } from './lib/services/raffle-service.js'
+
 import { publishRaffleClosedEvent } from './lib/services/event-publisher.js'
+import { closeRaffle } from './lib/services/raffle-service.js'
 
 const Actions = {
   AUTH_VALIDATED: 'AUTH_VALIDATED',

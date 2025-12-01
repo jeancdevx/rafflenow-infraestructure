@@ -1,5 +1,5 @@
-import { logger } from '../powertools.js'
 import { verifyToken } from '../cognito-verifier.js'
+import { logger } from '../powertools.js'
 
 export async function extractUserEmail(event) {
   const authHeader =

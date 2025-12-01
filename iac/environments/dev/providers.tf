@@ -5,8 +5,9 @@ variable "region" {
 }
 
 variable "aws_profile" {
-  type    = string
-  default = "default"
+  description = "AWS profile to use (leave null for CI/CD with OIDC)"
+  type        = string
+  default     = null
 }
 
 variable "env" {

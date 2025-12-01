@@ -1,6 +1,8 @@
 import { logger } from './lib/powertools.js'
+
 import { addUserToGroup } from './lib/services/cognito-service.js'
-import { TRIGGER_SOURCES, DEFAULT_GROUP } from './lib/constants.js'
+
+import { DEFAULT_GROUP, TRIGGER_SOURCES } from './lib/constants.js'
 
 export async function handlePostConfirmation(event) {
   const { triggerSource, userPoolId, userName, request } = event

@@ -1,4 +1,5 @@
 import { logger, metrics } from './lib/powertools.js'
+
 import { checkAndCloseExpiredRaffles } from './handler.js'
 
 const Actions = {
@@ -11,7 +12,7 @@ const ErrorCodes = {
   INTERNAL_ERROR: 'INTERNAL_ERROR'
 }
 
-export const handler = async (event) => {
+export const handler = async event => {
   try {
     logger.info('Scheduled check triggered', {
       action: Actions.SCHEDULED_TRIGGERED,

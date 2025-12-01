@@ -1,5 +1,6 @@
-import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb'
 import { randomUUID } from 'crypto'
+import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb'
+
 import { docClient } from '../clients.js'
 import { logger } from '../powertools.js'
 

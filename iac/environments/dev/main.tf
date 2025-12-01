@@ -263,3 +263,16 @@ module "route53" {
     Project     = "RaffleNow"
   }
 }
+
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  project_name = "rafflenow"
+  github_org   = "jeancdevx"
+  github_repo  = "rafflenow-infraestructure"
+
+  tags = {
+    Environment = var.environment
+    Project     = "RaffleNow"
+  }
+}
