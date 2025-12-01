@@ -1,0 +1,24 @@
+{
+  "arrowParens": "avoid",
+  "bracketSpacing": true,
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "none",
+  "tabWidth": 2,
+  "useTabs": false,
+  "printWidth": 80,
+  "plugins": ["@ianvs/prettier-plugin-sort-imports"],
+  "importOrder": [
+    "<THIRD_PARTY_MODULES>",
+    "",
+    "^\\./?lib/powertools",
+    "",
+    "^\\./?lib/validators/",
+    "",
+    "^\\./?lib/repositories/",
+    "",
+    "^\\./?lib/services/",
+    "",
+    "^\\."
+  ]
+}
