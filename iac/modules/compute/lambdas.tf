@@ -15,6 +15,11 @@ locals {
 }
 
 resource "aws_lambda_function" "list_raffles" {
+  #checkov:skip=CKV_AWS_115:Concurrency limit pending AWS Service Quotas increase
+  #checkov:skip=CKV_AWS_116:Synchronous API Lambda - DLQ not applicable for request/response pattern
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses DynamoDB, S3, SES via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.list_raffles_zip.output_path
   function_name    = "${var.name_prefix}-list-raffles"
   role             = aws_iam_role.lambda_role.arn
@@ -23,6 +28,12 @@ resource "aws_lambda_function" "list_raffles" {
   runtime          = "nodejs22.x"
   timeout          = 5
   memory_size      = 256
+
+  # reserved_concurrent_executions = 100
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -45,6 +56,11 @@ data "archive_file" "create_raffle_zip" {
 }
 
 resource "aws_lambda_function" "create_raffle" {
+  #checkov:skip=CKV_AWS_115:Low frequency admin function, concurrency limit not needed
+  #checkov:skip=CKV_AWS_116:Synchronous API Lambda - DLQ not applicable for request/response pattern
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses DynamoDB, S3, SES via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.create_raffle_zip.output_path
   function_name    = "${var.name_prefix}-create-raffle"
   role             = aws_iam_role.lambda_role.arn
@@ -53,6 +69,10 @@ resource "aws_lambda_function" "create_raffle" {
   runtime          = "nodejs22.x"
   timeout          = 5
   memory_size      = 256
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -76,6 +96,11 @@ data "archive_file" "get_raffle_zip" {
 }
 
 resource "aws_lambda_function" "get_raffle" {
+  #checkov:skip=CKV_AWS_115:Concurrency limit pending AWS Service Quotas increase
+  #checkov:skip=CKV_AWS_116:Synchronous API Lambda - DLQ not applicable for request/response pattern
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses DynamoDB, S3, SES via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.get_raffle_zip.output_path
   function_name    = "${var.name_prefix}-get-raffle"
   role             = aws_iam_role.lambda_role.arn
@@ -84,6 +109,12 @@ resource "aws_lambda_function" "get_raffle" {
   runtime          = "nodejs22.x"
   timeout          = 5
   memory_size      = 512
+
+  # reserved_concurrent_executions = 200
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -109,6 +140,11 @@ data "archive_file" "ingest_participation_zip" {
 }
 
 resource "aws_lambda_function" "ingest_participation" {
+  #checkov:skip=CKV_AWS_115:Concurrency limit pending AWS Service Quotas increase
+  #checkov:skip=CKV_AWS_116:Synchronous API Lambda - DLQ not applicable for request/response pattern
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses DynamoDB, S3, SES via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.ingest_participation_zip.output_path
   function_name    = "${var.name_prefix}-ingest-participation"
   role             = aws_iam_role.lambda_role.arn
@@ -117,6 +153,12 @@ resource "aws_lambda_function" "ingest_participation" {
   runtime          = "nodejs22.x"
   timeout          = 5
   memory_size      = 512
+
+  # reserved_concurrent_executions = 500
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -141,6 +183,11 @@ data "archive_file" "close_raffle_zip" {
 }
 
 resource "aws_lambda_function" "close_raffle" {
+  #checkov:skip=CKV_AWS_115:Low frequency admin function, concurrency limit not needed
+  #checkov:skip=CKV_AWS_116:Synchronous API Lambda - DLQ not applicable for request/response pattern
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses DynamoDB, S3, SES via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.close_raffle_zip.output_path
   function_name    = "${var.name_prefix}-close-raffle"
   role             = aws_iam_role.lambda_role.arn
@@ -149,6 +196,10 @@ resource "aws_lambda_function" "close_raffle" {
   runtime          = "nodejs22.x"
   timeout          = 10
   memory_size      = 256
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -171,14 +222,7 @@ resource "null_resource" "build_python_layer" {
   }
 
   provisioner "local-exec" {
-    command     = <<-EOT
-      $layerDir = "${path.root}/../../../app/lambdas/worker-process/layer"
-      if (Test-Path $layerDir) { Remove-Item -Recurse -Force $layerDir }
-      New-Item -ItemType Directory -Force -Path "$layerDir/python" | Out-Null
-      pip install -r "${path.root}/../../../app/lambdas/worker-process/requirements.txt" -t "$layerDir/python" --quiet --upgrade
-      Write-Host "Lambda Layer dependencies installed successfully"
-    EOT
-    interpreter = ["pwsh", "-Command"]
+    command = "python3 ${path.module}/scripts/build_layer.py ${path.root}/../../../app/lambdas/worker-process"
   }
 }
 
@@ -215,6 +259,11 @@ data "archive_file" "worker_process_zip" {
 }
 
 resource "aws_lambda_function" "worker_process" {
+  #checkov:skip=CKV_AWS_115:Concurrency limit pending AWS Service Quotas increase
+  #checkov:skip=CKV_AWS_116:SQS-triggered Lambda - uses SQS DLQ for failed messages instead of Lambda DLQ
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses DynamoDB, SES via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.worker_process_zip.output_path
   function_name    = "${var.name_prefix}-worker-process"
   role             = aws_iam_role.lambda_role.arn
@@ -223,6 +272,12 @@ resource "aws_lambda_function" "worker_process" {
   runtime          = "python3.12"
   timeout          = 30
   memory_size      = 1024
+
+  # reserved_concurrent_executions = 10
+
+  tracing_config {
+    mode = "Active"
+  }
 
   layers = [aws_lambda_layer_version.worker_process_dependencies.arn]
 
@@ -251,6 +306,11 @@ data "archive_file" "check_expired_raffles_zip" {
 }
 
 resource "aws_lambda_function" "check_expired_raffles" {
+  #checkov:skip=CKV_AWS_115:Cron job runs once daily, concurrency limit not needed
+  #checkov:skip=CKV_AWS_116:EventBridge-triggered Lambda - uses EventBridge retry policies instead of Lambda DLQ
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses DynamoDB, SQS via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.check_expired_raffles_zip.output_path
   function_name    = "${var.name_prefix}-check-expired-raffles"
   role             = aws_iam_role.lambda_role.arn
@@ -259,6 +319,10 @@ resource "aws_lambda_function" "check_expired_raffles" {
   runtime          = "nodejs22.x"
   timeout          = 30
   memory_size      = 512
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -282,6 +346,11 @@ data "archive_file" "upload_image_zip" {
 }
 
 resource "aws_lambda_function" "upload_image" {
+  #checkov:skip=CKV_AWS_115:Low frequency admin function, concurrency limit not needed
+  #checkov:skip=CKV_AWS_116:Synchronous API Lambda - DLQ not applicable for request/response pattern
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses S3 via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.upload_image_zip.output_path
   function_name    = "${var.name_prefix}-upload-image"
   role             = aws_iam_role.lambda_role.arn
@@ -290,6 +359,10 @@ resource "aws_lambda_function" "upload_image" {
   runtime          = "nodejs22.x"
   timeout          = 10
   memory_size      = 512
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -313,6 +386,11 @@ data "archive_file" "participation_process_zip" {
 }
 
 resource "aws_lambda_function" "participation_process" {
+  #checkov:skip=CKV_AWS_115:Concurrency limit pending AWS Service Quotas increase
+  #checkov:skip=CKV_AWS_116:SQS-triggered Lambda - uses SQS DLQ for failed messages instead of Lambda DLQ
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses DynamoDB, SES via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.participation_process_zip.output_path
   function_name    = "${var.name_prefix}-participation-process"
   role             = aws_iam_role.lambda_role.arn
@@ -321,6 +399,12 @@ resource "aws_lambda_function" "participation_process" {
   runtime          = "nodejs22.x"
   timeout          = 60
   memory_size      = 512
+
+  # reserved_concurrent_executions = 100
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -346,6 +430,11 @@ data "archive_file" "image_optimizer_zip" {
 }
 
 resource "aws_lambda_function" "image_optimizer" {
+  #checkov:skip=CKV_AWS_115:Low frequency function triggered by S3 uploads, concurrency limit not needed
+  #checkov:skip=CKV_AWS_116:SQS-triggered Lambda - uses SQS DLQ for failed messages instead of Lambda DLQ
+  #checkov:skip=CKV_AWS_117:Intentionally not in VPC - accesses S3, DynamoDB via IAM
+  #checkov:skip=CKV_AWS_272:Code signing not required for this project
+  #checkov:skip=CKV_AWS_173:Using AWS managed encryption for environment variables
   filename         = data.archive_file.image_optimizer_zip.output_path
   function_name    = "${var.name_prefix}-image-optimizer"
   role             = aws_iam_role.lambda_role.arn
@@ -354,6 +443,10 @@ resource "aws_lambda_function" "image_optimizer" {
   runtime          = "nodejs22.x"
   timeout          = 60
   memory_size      = 2048
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
