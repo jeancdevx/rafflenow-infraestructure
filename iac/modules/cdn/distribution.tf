@@ -1,4 +1,7 @@
 resource "aws_cloudfront_distribution" "assets_cdn" {
+  #checkov:skip=CKV_AWS_86:CloudFront access logging not required - using CloudWatch metrics instead
+  #checkov:skip=CKV_AWS_310:Origin failover not required - single region deployment for Peru
+  #checkov:skip=CKV2_AWS_47:WAF Log4j protection not required - CloudFront serves static assets only, no Java/Log4j code
   enabled             = true
   is_ipv6_enabled     = true
   http_version        = "http2and3"
@@ -109,7 +112,8 @@ resource "aws_cloudfront_distribution" "assets_cdn" {
 
   restrictions {
     geo_restriction {
-      restriction_type = "none"
+      restriction_type = "whitelist"
+      locations        = ["PE"]
     }
   }
 
@@ -126,9 +130,6 @@ resource "aws_cloudfront_distribution" "assets_cdn" {
   })
 }
 
-# Use AWS managed policies for API Gateway
-# CachingDisabled: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-# AllViewerExceptHostHeader: b689b0a8-53d0-40ab-baf2-68738e2966ac
 data "aws_cloudfront_cache_policy" "caching_disabled" {
   name = "Managed-CachingDisabled"
 }

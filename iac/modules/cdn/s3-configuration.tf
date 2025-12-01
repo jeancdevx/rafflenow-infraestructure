@@ -25,7 +25,18 @@ resource "aws_s3_bucket_cors_configuration" "assets_cors" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET", "HEAD", "PUT", "POST"]
-    allowed_origins = ["*"] # todo: Restringir a dominios específicos en producción
+    allowed_origins = concat(
+      var.domain_name != null ? [
+        "https://${var.domain_name}",
+        "https://www.${var.domain_name}"
+      ] : [],
+      [
+        "https://${aws_cloudfront_distribution.assets_cdn.domain_name}",
+        "http://localhost:3000",
+        "http://localhost:4321",
+        "http://localhost:5173"
+      ]
+    )
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
   }
