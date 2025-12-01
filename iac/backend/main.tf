@@ -68,12 +68,7 @@ resource "aws_s3_bucket_policy" "terraform_state_https_only" {
   depends_on = [aws_s3_bucket_public_access_block.terraform_state]
 }
 
-# Logging bucket for terraform state access logs
-# This bucket intentionally does not have its own logging to avoid infinite recursion
-# tfsec:ignore:aws-s3-enable-bucket-logging
-#checkov:skip=CKV_AWS_18:This is the logging destination bucket
 resource "aws_s3_bucket" "terraform_state_logs" {
-  #ts:skip=AWS.S3Bucket.LM.MEDIUM.0078 This is the logging destination bucket
   bucket = "rafflenow-terraform-state-logs-${data.aws_caller_identity.current.account_id}"
 
   tags = {
