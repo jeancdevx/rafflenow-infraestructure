@@ -133,6 +133,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build Python Lambda Layer
+        run: python3 ../../modules/compute/scripts/build_layer.py ../../../app/lambdas/worker-process
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
